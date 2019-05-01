@@ -1,0 +1,2495 @@
+#!/usr/bin/env perl
+use strict;
+use warnings;
+
+use FindBin;
+use Getopt::Long;
+
+use lib "$FindBin::RealBin/../lib";
+
+#--------------------------------------------------------------------------------
+#----------------------------------- MAIN ---------------------------------------
+#--------------------------------------------------------------------------------
+
+my $usage = "
+
+Description:
+
+arty - a suite of tools for hacking genomics data
+
+Commands:
+
+    help   Show this message and exit.
+
+    ### File Formats
+
+    fasta   Work with Fasta files. Not yet implimented.
+
+";
+
+#     bed     Work with BED files. Not yet implimented.
+# 
+#     fastq   Work with Fastq files. Not yet implimented.
+# 
+#     gff3    Work with GFF3 files. Not yet implimented.
+# 
+#     vcf     Work with VCF files. Not yet implimented.
+# 
+#     ### Data Sources
+# 
+#     clinvar Work with ClinVar data.
+# 
+#     dbsnp   Work with dbSNP data. Not yet implimented.
+# 
+#     go      Work with data Gene Onology data. Not yet implimented.
+# 
+#     hgnc    Work with data HGNC data. Not yet implimented.
+# 
+#     hpo     Work with Human Phenotype Ontology data. Not yet implimented.
+# 
+#     omim    Work with OMIM data. Not yet implimented.
+# 
+#     so      Work with Sequence Ontology data. Not yet implimented.
+
+# Dispatch command
+#--------------------------------------------------------------------------------
+
+my $command = shift @ARGV || '';
+
+if (! $command) {
+    die "$usage\n\nFATAL : missing_command : You must provide a command to ugp_db2\n";
+}
+elsif ($command eq 'bed') {
+    command_bed();
+}
+elsif ($command eq 'fasta') {
+    command_fasta();
+}
+elsif ($command eq 'fastq') {
+    command_fastq();
+}
+elsif ($command eq 'gff3') {
+    command_gff3();
+}
+elsif ($command eq 'vcf') {
+    command_vcf();
+}
+elsif ($command eq 'clinvar') {
+    command_clinvar();
+}
+elsif ($command eq 'dbsnp') {
+    command_dbsnp();
+}
+elsif ($command eq 'go') {
+    command_go();
+}
+elsif ($command eq 'hgnc') {
+    command_hgnc();
+}
+elsif ($command eq 'hpo') {
+    command_hpo();
+}
+elsif ($command eq 'omim') {
+    command_omim();
+}
+elsif ($command eq 'so') {
+    command_so();
+}
+else {
+    die "$usage\n\nFATAL : unknown_command : $command\n";
+}
+
+#--------------------------------------------------------------------------------
+#---------------------------------- Commands ------------------------------------
+#--------------------------------------------------------------------------------
+
+sub command_bed {
+
+      my $usage = "
+
+Synopsis:
+
+  arty bed
+
+Description:
+
+  Work with bed data.
+
+Options:
+
+  --option, -o [default]
+
+    This options does something.
+
+";
+
+      my ($help);
+      my %opt = (help        => \$help,
+	  );
+
+      my $opt_success = GetOptions(\%opt,
+				   'help|h',
+	  );
+
+      if ($help) {
+	  print $usage;
+	  exit(0);
+      }
+
+      die $usage if ! $opt_success;
+
+      die "FATAL : function_not_yet_implimented : arty bed\n";
+
+}
+
+#--------------------------------------------------------------------------------
+
+sub command_fasta {
+
+      my $usage = "
+
+Synopsis:
+
+  arty fasta rev_comp sequence.fa
+
+  arty fasta translate sequence.fa
+
+  arty fasta m50 sequence.fa
+
+Description:
+
+  Work with fasta data.  The `arty fasta` tool provides a variety
+  of methods to manipulate and report on sequence data in fasta
+  format.
+
+Functions:
+
+  chunk <integer>
+
+    Split a single multi-fasta file into the given number of sub
+    files specified by chunks.
+
+  split
+
+    Split a multi-fasta into individual files.  One for each fasta
+    record.
+
+  break <integer>
+
+  Break the sequence from a single-fasta file into a multi-fasta
+  file with subsequences of the given size.
+
+  eval_code <code>
+
+    Run the given code on (\$seq_obj, \$seq or \$header).  If
+    the code block returns a positive value then the sequence is
+    printed.  This can be used to build complex and custom filters.
+
+  eval_all <code>
+
+    Run the given code on (\$seq_obj, \$seq or \$header).
+    Prints all sequences regardless of the return value of the
+    evaled code.  This can but used to perform operations (e.g. soft
+    to hard masking with s/[a-z]/N/g, but still print every sequence
+    even if it's unaltered.
+
+  extract_ids <id_file.txt>
+
+    Extract all of the sequences who's IDs are found in the given
+    file.
+
+  grep_header <pattern>
+
+    Grep through a multi fasta file and print out only the fasta
+    sequences that have a match in the header. Use grepv_header for
+    negation.
+
+  grep_seq <pattern>
+
+    Grep through a multi fasta file and print out only the fasta
+    sequences that have a match in the sequence. Use grepv_seq for
+    negation.
+
+  wrap <integer>
+
+    Wrap the sequence output to a given number of columns.
+
+  translate <string>
+
+    Translate a given nucleotide sequence to protein sequence.
+    Accepts 0,1,2 (for the phase) or 'maker' if you want to use the
+    frame from MAKER produced headers
+
+  trim_maker_utr
+
+    Prints MAKER produced transcipts without the leading and
+    trailing UTR sequence
+
+  seq_only
+
+    Print only the sequence (without the header) to STDOUT.  This
+    can also be accomplished with grep -v '>' fasta_file.
+
+  nt_count
+
+    Print the number and percentage of every nt/aa found in the
+    sequence.
+
+  length
+
+    Print the length of each sequence.
+
+  mapable_length
+
+    Print the mapable length (remove all Ns) of each sequence.
+
+  total_length
+
+    Print the total length of all sequences.
+
+  n50
+
+    Calculate the N-50 (http://en.wikipedia.org/wiki/N50_statistic)
+    of the sequences in the file.
+
+  tab
+
+    Print the header and sequence on the same line separated by a
+    tab.
+
+  table
+
+    Print in table format rather than fasta format.
+
+  print
+
+    Print the sequence.  Use in conjuction with 'wrap' or other
+    formatting commands to reformat the sequence.
+
+  reverse
+
+    Reverse the order of the sequences in a fasta file.
+
+  rev_seq
+
+    Reverse the sequence (the order of the nt/aa).
+
+  comp_seq
+
+    Complement the nucleotide sequence.
+
+  rev_comp
+
+    Reverse compliment a sequence.  Same as --rev_seq && --comp_seq
+    together.
+
+  uniq
+
+  Print only uniq sequences.  This method only compares complete
+  sequences.
+
+  uniq_sub
+
+  Print only uniq sequences, but also check that shorter sequences
+  are not perfect substrings of longer sequences.
+
+  shuffle_order
+
+    Randomize the order of the sequences in a multi-fasta file.
+
+  shuffle_seq
+
+    Randomize the sequence (the order of the nt/aa).
+
+  shuffle_codon
+
+    Randomize the order of the codons in a nucleotide sequence.
+
+  shuffle_pick
+
+    Pick a given number of sequences from a multi-fasta file.
+
+  select
+
+    Pass in a file with IDs and return sequences with these IDs.
+
+  remove
+
+    Pass in a file with IDs and remove sequences with these IDs.
+
+  map_ids
+
+    Pass in a file with two columns of IDs and map the IDs in the
+    fasta headers from the first column of the ID file to the second
+    column of the ID file.  If an ID in the fasta header is not
+    found in the first column of the ID file then issue a warning,
+    but leave the ID unmapped.
+
+  fix_prot
+
+    Fix protein fasta files for use as blast database.  Removes spaces
+    and '*' and replaces any non amino acid codes with C.
+
+  subseq
+
+    Grab a sub-sequence from a fasta file based on coordinates.  The
+    requested coordinates are in the form seqid:start-end;
+
+  filter_horter
+
+    Filter (remove) entries shorter than the filter. IE \"--filter_shorter 800\"
+    will filter all sequences <= 800 basepairs long.
+
+  filter_longer
+
+    Filter (remove entries longer than the filter. IE \"--filter_longer 800\"
+    will filter all sequences > 800 basepairs long.
+
+  mask_fasta
+
+    Masks the genome using coordinates from a gff3 file
+
+";
+
+
+      # Dispatch command
+      #--------------------------------------------------------------------------------
+
+      my $command = shift @ARGV || '';
+
+      if (! $command) {
+	die "$usage\n\nFATAL : missing_command : You must provide a command to ugp_db2\n";
+      }
+      elsif ($command eq 'help') {
+	print "$usage\n";
+      }
+      elsif ($command eq 'chunk') {
+	command_fasta_chunk();
+      }
+      elsif ($command eq 'split') {
+	command_fasta_split();
+      }
+      elsif ($command eq 'break') {
+	command_fasta_break();
+      }
+      elsif ($command eq 'eval_code') {
+	command_fasta_eval_code();
+      }
+      elsif ($command eq 'eval_all') {
+	command_fasta_eval_all();
+      }
+      elsif ($command eq 'extract_ids') {
+	command_fasta_extract_ids();
+      }
+      elsif ($command eq 'grep_header') {
+	command_fasta_grep_header();
+      }
+      elsif ($command eq 'grep_seq') {
+	command_fasta_grep_seq();
+      }
+      elsif ($command eq 'wrap') {
+	command_fasta_wrap();
+      }
+      elsif ($command eq 'translate') {
+	command_fasta_translate();
+      }
+      elsif ($command eq 'trim_maker_utr') {
+	command_fasta_trim_maker_utr();
+      }
+      elsif ($command eq 'seq_only') {
+	command_fasta_seq_only();
+      }
+      elsif ($command eq 'nt_count') {
+	command_fasta_nt_count();
+      }
+      elsif ($command eq 'length') {
+	command_fasta_length();
+      }
+      elsif ($command eq 'mapable_length') {
+	command_fasta_mapable_length();
+      }
+      elsif ($command eq 'total_length') {
+	command_fasta_total_length();
+      }
+      elsif ($command eq 'n50') {
+	command_fasta_n50();
+      }
+      elsif ($command eq 'tab') {
+	command_fasta_tab();
+      }
+      elsif ($command eq 'table') {
+	command_fasta_table();
+      }
+      elsif ($command eq 'print') {
+	command_fasta_print();
+      }
+      elsif ($command eq 'reverse') {
+	command_fasta_reverse();
+      }
+      elsif ($command eq 'rev_seq') {
+	command_fasta_rev_seq();
+      }
+      elsif ($command eq 'comp_seq') {
+	command_fasta_comp_seq();
+      }
+      elsif ($command eq 'rev_comp') {
+	command_fasta_rev_comp();
+      }
+      elsif ($command eq 'uniq') {
+	command_fasta_uniq();
+      }
+      elsif ($command eq 'uniq_sub') {
+	command_fasta_uniq_sub();
+      }
+      elsif ($command eq 'shuffle_order') {
+	command_fasta_shuffle_order();
+      }
+      elsif ($command eq 'shuffle_seq') {
+	command_fasta_shuffle_seq();
+      }
+      elsif ($command eq 'shuffle_codon') {
+	command_fasta_shuffle_codon();
+      }
+      elsif ($command eq 'shuffle_pick') {
+	command_fasta_shuffle_pick();
+      }
+      elsif ($command eq 'select') {
+	command_fasta_select();
+      }
+      elsif ($command eq 'remove') {
+	command_fasta_remove();
+      }
+      elsif ($command eq 'map_ids') {
+	command_fasta_map_ids();
+      }
+      elsif ($command eq 'fix_prot') {
+	command_fasta_fix_prot();
+      }
+      elsif ($command eq 'subseq') {
+	command_fasta_subseq();
+      }
+      elsif ($command eq 'filter_shorter') {
+	command_fasta_filter_shorter();
+      }
+      elsif ($command eq 'filter_longer') {
+	command_fasta_filter_longer();
+      }
+      elsif ($command eq 'mask_fasta') {
+	command_fasta_mask_fasta();
+      }
+      else {
+	die "$usage\n\nFATAL : unknown_command : $command\n";
+      }
+
+      die $usage if ! $opt_success;
+}
+
+#--------------------------------------------------------------------------------
+
+sub command_fasta_chunk {
+
+      my $usage = "
+
+Synopsis:
+
+  arty fasta chunk
+
+Description:
+
+  Apply the chunk function on fasta data.
+
+Options:
+
+  --option, -o [default]
+
+    This options does something.
+
+";
+
+      my ($help);
+      my %opt = (help        => \$help,
+	  );
+
+      my $opt_success = GetOptions(\%opt,
+				   'help|h',
+	  );
+
+      if ($help) {
+	  print $usage;
+	  exit(0);
+      }
+
+      die $usage if ! $opt_success;
+
+      die "FATAL : function_not_yet_implimented : arty fastq\n";
+
+}
+
+#--------------------------------------------------------------------------------
+
+sub command_fasta_split {
+
+      my $usage = "
+
+Synopsis:
+
+  arty fasta split
+
+Description:
+
+  Apply the split function on fasta data.
+
+Options:
+
+  --option, -o [default]
+
+    This options does something.
+
+";
+
+      my ($help);
+      my %opt = (help        => \$help,
+	  );
+
+      my $opt_success = GetOptions(\%opt,
+				   'help|h',
+	  );
+
+      if ($help) {
+	  print $usage;
+	  exit(0);
+      }
+
+      die $usage if ! $opt_success;
+
+      die "FATAL : function_not_yet_implimented : arty fastq\n";
+
+}
+
+#--------------------------------------------------------------------------------
+
+sub command_fasta_break {
+
+      my $usage = "
+
+Synopsis:
+
+  arty fasta break
+
+Description:
+
+  Apply the break function on fasta data.
+
+Options:
+
+  --option, -o [default]
+
+    This options does something.
+
+";
+
+      my ($help);
+      my %opt = (help        => \$help,
+	  );
+
+      my $opt_success = GetOptions(\%opt,
+				   'help|h',
+	  );
+
+      if ($help) {
+	  print $usage;
+	  exit(0);
+      }
+
+      die $usage if ! $opt_success;
+
+      die "FATAL : function_not_yet_implimented : arty fastq\n";
+
+}
+
+#--------------------------------------------------------------------------------
+
+sub command_fasta_eval_code {
+
+      my $usage = "
+
+Synopsis:
+
+  arty fasta eval_code
+
+Description:
+
+  Apply the eval_code function on fasta data.
+
+Options:
+
+  --option, -o [default]
+
+    This options does something.
+
+";
+
+      my ($help);
+      my %opt = (help        => \$help,
+	  );
+
+      my $opt_success = GetOptions(\%opt,
+				   'help|h',
+	  );
+
+      if ($help) {
+	  print $usage;
+	  exit(0);
+      }
+
+      die $usage if ! $opt_success;
+
+      die "FATAL : function_not_yet_implimented : arty fastq\n";
+
+}
+
+#--------------------------------------------------------------------------------
+
+sub command_fasta_eval_all {
+
+      my $usage = "
+
+Synopsis:
+
+  arty fasta eval_all
+
+Description:
+
+  Apply the eval_all function on fasta data.
+
+Options:
+
+  --option, -o [default]
+
+    This options does something.
+
+";
+
+      my ($help);
+      my %opt = (help        => \$help,
+	  );
+
+      my $opt_success = GetOptions(\%opt,
+				   'help|h',
+	  );
+
+      if ($help) {
+	  print $usage;
+	  exit(0);
+      }
+
+      die $usage if ! $opt_success;
+
+      die "FATAL : function_not_yet_implimented : arty fastq\n";
+
+}
+
+#--------------------------------------------------------------------------------
+
+sub command_fasta_extract_ids {
+
+      my $usage = "
+
+Synopsis:
+
+  arty fasta extract_ids
+
+Description:
+
+  Apply the extract_ids function on fasta data.
+
+Options:
+
+  --option, -o [default]
+
+    This options does something.
+
+";
+
+      my ($help);
+      my %opt = (help        => \$help,
+	  );
+
+      my $opt_success = GetOptions(\%opt,
+				   'help|h',
+	  );
+
+      if ($help) {
+	  print $usage;
+	  exit(0);
+      }
+
+      die $usage if ! $opt_success;
+
+      die "FATAL : function_not_yet_implimented : arty fastq\n";
+
+}
+
+#--------------------------------------------------------------------------------
+
+sub command_fasta_grep_header {
+
+      my $usage = "
+
+Synopsis:
+
+  arty fasta grep_header
+
+Description:
+
+  Apply the grep_header function on fasta data.
+
+Options:
+
+  --option, -o [default]
+
+    This options does something.
+
+";
+
+      my ($help);
+      my %opt = (help        => \$help,
+	  );
+
+      my $opt_success = GetOptions(\%opt,
+				   'help|h',
+	  );
+
+      if ($help) {
+	  print $usage;
+	  exit(0);
+      }
+
+      die $usage if ! $opt_success;
+
+      die "FATAL : function_not_yet_implimented : arty fastq\n";
+
+}
+
+#--------------------------------------------------------------------------------
+
+sub command_fasta_grep_seq {
+
+      my $usage = "
+
+Synopsis:
+
+  arty fasta grep_seq
+
+Description:
+
+  Apply the grep_seq function on fasta data.
+
+Options:
+
+  --option, -o [default]
+
+    This options does something.
+
+";
+
+      my ($help);
+      my %opt = (help        => \$help,
+	  );
+
+      my $opt_success = GetOptions(\%opt,
+				   'help|h',
+	  );
+
+      if ($help) {
+	  print $usage;
+	  exit(0);
+      }
+
+      die $usage if ! $opt_success;
+
+      die "FATAL : function_not_yet_implimented : arty fastq\n";
+
+}
+
+#--------------------------------------------------------------------------------
+
+sub command_fasta_wrap {
+
+      my $usage = "
+
+Synopsis:
+
+  arty fasta wrap
+
+Description:
+
+  Apply the wrap function on fasta data.
+
+Options:
+
+  --option, -o [default]
+
+    This options does something.
+
+";
+
+      my ($help);
+      my %opt = (help        => \$help,
+	  );
+
+      my $opt_success = GetOptions(\%opt,
+				   'help|h',
+	  );
+
+      if ($help) {
+	  print $usage;
+	  exit(0);
+      }
+
+      die $usage if ! $opt_success;
+
+      die "FATAL : function_not_yet_implimented : arty fastq\n";
+
+}
+
+#--------------------------------------------------------------------------------
+
+sub command_fasta_translate {
+
+      my $usage = "
+
+Synopsis:
+
+  arty fasta translate
+
+Description:
+
+  Apply the translate function on fasta data.
+
+Options:
+
+  --option, -o [default]
+
+    This options does something.
+
+";
+
+      my ($help);
+      my %opt = (help        => \$help,
+	  );
+
+      my $opt_success = GetOptions(\%opt,
+				   'help|h',
+	  );
+
+      if ($help) {
+	  print $usage;
+	  exit(0);
+      }
+
+      die $usage if ! $opt_success;
+
+      die "FATAL : function_not_yet_implimented : arty fastq\n";
+
+}
+
+#--------------------------------------------------------------------------------
+
+sub command_fasta_trim_maker_utr {
+
+      my $usage = "
+
+Synopsis:
+
+  arty fasta trim_maker_utr
+
+Description:
+
+  Apply the trim_maker_utr function on fasta data.
+
+Options:
+
+  --option, -o [default]
+
+    This options does something.
+
+";
+
+      my ($help);
+      my %opt = (help        => \$help,
+	  );
+
+      my $opt_success = GetOptions(\%opt,
+				   'help|h',
+	  );
+
+      if ($help) {
+	  print $usage;
+	  exit(0);
+      }
+
+      die $usage if ! $opt_success;
+
+      die "FATAL : function_not_yet_implimented : arty fastq\n";
+
+}
+
+#--------------------------------------------------------------------------------
+
+sub command_fasta_seq_only {
+
+      my $usage = "
+
+Synopsis:
+
+  arty fasta seq_only
+
+Description:
+
+  Apply the seq_only function on fasta data.
+
+Options:
+
+  --option, -o [default]
+
+    This options does something.
+
+";
+
+      my ($help);
+      my %opt = (help        => \$help,
+	  );
+
+      my $opt_success = GetOptions(\%opt,
+				   'help|h',
+	  );
+
+      if ($help) {
+	  print $usage;
+	  exit(0);
+      }
+
+      die $usage if ! $opt_success;
+
+      die "FATAL : function_not_yet_implimented : arty fastq\n";
+
+}
+
+#--------------------------------------------------------------------------------
+
+sub command_fasta_nt_count {
+
+      my $usage = "
+
+Synopsis:
+
+  arty fasta nt_count
+
+Description:
+
+  Apply the nt_count function on fasta data.
+
+Options:
+
+  --option, -o [default]
+
+    This options does something.
+
+";
+
+      my ($help);
+      my %opt = (help        => \$help,
+	  );
+
+      my $opt_success = GetOptions(\%opt,
+				   'help|h',
+	  );
+
+      if ($help) {
+	  print $usage;
+	  exit(0);
+      }
+
+      die $usage if ! $opt_success;
+
+      die "FATAL : function_not_yet_implimented : arty fastq\n";
+
+}
+
+#--------------------------------------------------------------------------------
+
+sub command_fasta_length {
+
+      my $usage = "
+
+Synopsis:
+
+  arty fasta length
+
+Description:
+
+  Apply the length function on fasta data.
+
+Options:
+
+  --option, -o [default]
+
+    This options does something.
+
+";
+
+      my ($help);
+      my %opt = (help        => \$help,
+	  );
+
+      my $opt_success = GetOptions(\%opt,
+				   'help|h',
+	  );
+
+      if ($help) {
+	  print $usage;
+	  exit(0);
+      }
+
+      die $usage if ! $opt_success;
+
+      die "FATAL : function_not_yet_implimented : arty fastq\n";
+
+}
+
+#--------------------------------------------------------------------------------
+
+sub command_fasta_mapable_length {
+
+      my $usage = "
+
+Synopsis:
+
+  arty fasta mapable_length
+
+Description:
+
+  Apply the mapable_length function on fasta data.
+
+Options:
+
+  --option, -o [default]
+
+    This options does something.
+
+";
+
+      my ($help);
+      my %opt = (help        => \$help,
+	  );
+
+      my $opt_success = GetOptions(\%opt,
+				   'help|h',
+	  );
+
+      if ($help) {
+	  print $usage;
+	  exit(0);
+      }
+
+      die $usage if ! $opt_success;
+
+      die "FATAL : function_not_yet_implimented : arty fastq\n";
+
+}
+
+#--------------------------------------------------------------------------------
+
+sub command_fasta_total_length {
+
+      my $usage = "
+
+Synopsis:
+
+  arty fasta total_length
+
+Description:
+
+  Apply the total_length function on fasta data.
+
+Options:
+
+  --option, -o [default]
+
+    This options does something.
+
+";
+
+      my ($help);
+      my %opt = (help        => \$help,
+	  );
+
+      my $opt_success = GetOptions(\%opt,
+				   'help|h',
+	  );
+
+      if ($help) {
+	  print $usage;
+	  exit(0);
+      }
+
+      die $usage if ! $opt_success;
+
+      die "FATAL : function_not_yet_implimented : arty fastq\n";
+
+}
+
+#--------------------------------------------------------------------------------
+
+sub command_fasta_n50 {
+
+      my $usage = "
+
+Synopsis:
+
+  arty fasta n50
+
+Description:
+
+  Apply the n50 function on fasta data.
+
+Options:
+
+  --option, -o [default]
+
+    This options does something.
+
+";
+
+      my ($help);
+      my %opt = (help        => \$help,
+	  );
+
+      my $opt_success = GetOptions(\%opt,
+				   'help|h',
+	  );
+
+      if ($help) {
+	  print $usage;
+	  exit(0);
+      }
+
+      die $usage if ! $opt_success;
+
+      die "FATAL : function_not_yet_implimented : arty fastq\n";
+
+}
+
+#--------------------------------------------------------------------------------
+
+sub command_fasta_tab {
+
+      my $usage = "
+
+Synopsis:
+
+  arty fasta tab
+
+Description:
+
+  Apply the tab function on fasta data.
+
+Options:
+
+  --option, -o [default]
+
+    This options does something.
+
+";
+
+      my ($help);
+      my %opt = (help        => \$help,
+	  );
+
+      my $opt_success = GetOptions(\%opt,
+				   'help|h',
+	  );
+
+      if ($help) {
+	  print $usage;
+	  exit(0);
+      }
+
+      die $usage if ! $opt_success;
+
+      die "FATAL : function_not_yet_implimented : arty fastq\n";
+
+}
+
+#--------------------------------------------------------------------------------
+
+sub command_fasta_table {
+
+      my $usage = "
+
+Synopsis:
+
+  arty fasta table
+
+Description:
+
+  Apply the table function on fasta data.
+
+Options:
+
+  --option, -o [default]
+
+    This options does something.
+
+";
+
+      my ($help);
+      my %opt = (help        => \$help,
+	  );
+
+      my $opt_success = GetOptions(\%opt,
+				   'help|h',
+	  );
+
+      if ($help) {
+	  print $usage;
+	  exit(0);
+      }
+
+      die $usage if ! $opt_success;
+
+      die "FATAL : function_not_yet_implimented : arty fastq\n";
+
+}
+
+#--------------------------------------------------------------------------------
+
+sub command_fasta_print {
+
+      my $usage = "
+
+Synopsis:
+
+  arty fasta print
+
+Description:
+
+  Apply the print function on fasta data.
+
+Options:
+
+  --option, -o [default]
+
+    This options does something.
+
+";
+
+      my ($help);
+      my %opt = (help        => \$help,
+	  );
+
+      my $opt_success = GetOptions(\%opt,
+				   'help|h',
+	  );
+
+      if ($help) {
+	  print $usage;
+	  exit(0);
+      }
+
+      die $usage if ! $opt_success;
+
+      die "FATAL : function_not_yet_implimented : arty fastq\n";
+
+}
+
+#--------------------------------------------------------------------------------
+
+sub command_fasta_reverse {
+
+      my $usage = "
+
+Synopsis:
+
+  arty fasta reverse
+
+Description:
+
+  Apply the reverse function on fasta data.
+
+Options:
+
+  --option, -o [default]
+
+    This options does something.
+
+";
+
+      my ($help);
+      my %opt = (help        => \$help,
+	  );
+
+      my $opt_success = GetOptions(\%opt,
+				   'help|h',
+	  );
+
+      if ($help) {
+	  print $usage;
+	  exit(0);
+      }
+
+      die $usage if ! $opt_success;
+
+      die "FATAL : function_not_yet_implimented : arty fastq\n";
+
+}
+
+#--------------------------------------------------------------------------------
+
+sub command_fasta_rev_seq {
+
+      my $usage = "
+
+Synopsis:
+
+  arty fasta rev_seq
+
+Description:
+
+  Apply the rev_seq function on fasta data.
+
+Options:
+
+  --option, -o [default]
+
+    This options does something.
+
+";
+
+      my ($help);
+      my %opt = (help        => \$help,
+	  );
+
+      my $opt_success = GetOptions(\%opt,
+				   'help|h',
+	  );
+
+      if ($help) {
+	  print $usage;
+	  exit(0);
+      }
+
+      die $usage if ! $opt_success;
+
+      die "FATAL : function_not_yet_implimented : arty fastq\n";
+
+}
+
+#--------------------------------------------------------------------------------
+
+sub command_fasta_comp_seq {
+
+      my $usage = "
+
+Synopsis:
+
+  arty fasta comp_seq
+
+Description:
+
+  Apply the comp_seq function on fasta data.
+
+Options:
+
+  --option, -o [default]
+
+    This options does something.
+
+";
+
+      my ($help);
+      my %opt = (help        => \$help,
+	  );
+
+      my $opt_success = GetOptions(\%opt,
+				   'help|h',
+	  );
+
+      if ($help) {
+	  print $usage;
+	  exit(0);
+      }
+
+      die $usage if ! $opt_success;
+
+      die "FATAL : function_not_yet_implimented : arty fastq\n";
+
+}
+
+#--------------------------------------------------------------------------------
+
+sub command_fasta_rev_comp {
+
+      my $usage = "
+
+Synopsis:
+
+  arty fasta rev_comp
+
+Description:
+
+  Apply the rev_comp function on fasta data.
+
+Options:
+
+  --option, -o [default]
+
+    This options does something.
+
+";
+
+      my ($help);
+      my %opt = (help        => \$help,
+	  );
+
+      my $opt_success = GetOptions(\%opt,
+				   'help|h',
+	  );
+
+      if ($help) {
+	  print $usage;
+	  exit(0);
+      }
+
+      die $usage if ! $opt_success;
+
+      die "FATAL : function_not_yet_implimented : arty fastq\n";
+
+}
+
+#--------------------------------------------------------------------------------
+
+sub command_fasta_uniq {
+
+      my $usage = "
+
+Synopsis:
+
+  arty fasta uniq
+
+Description:
+
+  Apply the uniq function on fasta data.
+
+Options:
+
+  --option, -o [default]
+
+    This options does something.
+
+";
+
+      my ($help);
+      my %opt = (help        => \$help,
+	  );
+
+      my $opt_success = GetOptions(\%opt,
+				   'help|h',
+	  );
+
+      if ($help) {
+	  print $usage;
+	  exit(0);
+      }
+
+      die $usage if ! $opt_success;
+
+      die "FATAL : function_not_yet_implimented : arty fastq\n";
+
+}
+
+#--------------------------------------------------------------------------------
+
+sub command_fasta_uniq_sub {
+
+      my $usage = "
+
+Synopsis:
+
+  arty fasta uniq_sub
+
+Description:
+
+  Apply the uniq_sub function on fasta data.
+
+Options:
+
+  --option, -o [default]
+
+    This options does something.
+
+";
+
+      my ($help);
+      my %opt = (help        => \$help,
+	  );
+
+      my $opt_success = GetOptions(\%opt,
+				   'help|h',
+	  );
+
+      if ($help) {
+	  print $usage;
+	  exit(0);
+      }
+
+      die $usage if ! $opt_success;
+
+      die "FATAL : function_not_yet_implimented : arty fastq\n";
+
+}
+
+#--------------------------------------------------------------------------------
+
+sub command_fasta_shuffle_order {
+
+      my $usage = "
+
+Synopsis:
+
+  arty fasta shuffle_order
+
+Description:
+
+  Apply the shuffle_order function on fasta data.
+
+Options:
+
+  --option, -o [default]
+
+    This options does something.
+
+";
+
+      my ($help);
+      my %opt = (help        => \$help,
+	  );
+
+      my $opt_success = GetOptions(\%opt,
+				   'help|h',
+	  );
+
+      if ($help) {
+	  print $usage;
+	  exit(0);
+      }
+
+      die $usage if ! $opt_success;
+
+      die "FATAL : function_not_yet_implimented : arty fastq\n";
+
+}
+
+#--------------------------------------------------------------------------------
+
+sub command_fasta_shuffle_seq {
+
+      my $usage = "
+
+Synopsis:
+
+  arty fasta shuffle_seq
+
+Description:
+
+  Apply the shuffle_seq function on fasta data.
+
+Options:
+
+  --option, -o [default]
+
+    This options does something.
+
+";
+
+      my ($help);
+      my %opt = (help        => \$help,
+	  );
+
+      my $opt_success = GetOptions(\%opt,
+				   'help|h',
+	  );
+
+      if ($help) {
+	  print $usage;
+	  exit(0);
+      }
+
+      die $usage if ! $opt_success;
+
+      die "FATAL : function_not_yet_implimented : arty fastq\n";
+
+}
+
+#--------------------------------------------------------------------------------
+
+sub command_fasta_shuffle_codon {
+
+      my $usage = "
+
+Synopsis:
+
+  arty fasta shuffle_codon
+
+Description:
+
+  Apply the shuffle_codon function on fasta data.
+
+Options:
+
+  --option, -o [default]
+
+    This options does something.
+
+";
+
+      my ($help);
+      my %opt = (help        => \$help,
+	  );
+
+      my $opt_success = GetOptions(\%opt,
+				   'help|h',
+	  );
+
+      if ($help) {
+	  print $usage;
+	  exit(0);
+      }
+
+      die $usage if ! $opt_success;
+
+      die "FATAL : function_not_yet_implimented : arty fastq\n";
+
+}
+
+#--------------------------------------------------------------------------------
+
+sub command_fasta_shuffle_pick {
+
+      my $usage = "
+
+Synopsis:
+
+  arty fasta shuffle_pick
+
+Description:
+
+  Apply the shuffle_pick function on fasta data.
+
+Options:
+
+  --option, -o [default]
+
+    This options does something.
+
+";
+
+      my ($help);
+      my %opt = (help        => \$help,
+	  );
+
+      my $opt_success = GetOptions(\%opt,
+				   'help|h',
+	  );
+
+      if ($help) {
+	  print $usage;
+	  exit(0);
+      }
+
+      die $usage if ! $opt_success;
+
+      die "FATAL : function_not_yet_implimented : arty fastq\n";
+
+}
+
+#--------------------------------------------------------------------------------
+
+sub command_fasta_select {
+
+      my $usage = "
+
+Synopsis:
+
+  arty fasta select
+
+Description:
+
+  Apply the select function on fasta data.
+
+Options:
+
+  --option, -o [default]
+
+    This options does something.
+
+";
+
+      my ($help);
+      my %opt = (help        => \$help,
+	  );
+
+      my $opt_success = GetOptions(\%opt,
+				   'help|h',
+	  );
+
+      if ($help) {
+	  print $usage;
+	  exit(0);
+      }
+
+      die $usage if ! $opt_success;
+
+      die "FATAL : function_not_yet_implimented : arty fastq\n";
+
+}
+
+#--------------------------------------------------------------------------------
+
+sub command_fasta_remove {
+
+      my $usage = "
+
+Synopsis:
+
+  arty fasta remove
+
+Description:
+
+  Apply the remove function on fasta data.
+
+Options:
+
+  --option, -o [default]
+
+    This options does something.
+
+";
+
+      my ($help);
+      my %opt = (help        => \$help,
+	  );
+
+      my $opt_success = GetOptions(\%opt,
+				   'help|h',
+	  );
+
+      if ($help) {
+	  print $usage;
+	  exit(0);
+      }
+
+      die $usage if ! $opt_success;
+
+      die "FATAL : function_not_yet_implimented : arty fastq\n";
+
+}
+
+#--------------------------------------------------------------------------------
+
+sub command_fasta_map_ids {
+
+      my $usage = "
+
+Synopsis:
+
+  arty fasta map_ids
+
+Description:
+
+  Apply the map_ids function on fasta data.
+
+Options:
+
+  --option, -o [default]
+
+    This options does something.
+
+";
+
+      my ($help);
+      my %opt = (help        => \$help,
+	  );
+
+      my $opt_success = GetOptions(\%opt,
+				   'help|h',
+	  );
+
+      if ($help) {
+	  print $usage;
+	  exit(0);
+      }
+
+      die $usage if ! $opt_success;
+
+      die "FATAL : function_not_yet_implimented : arty fastq\n";
+
+}
+
+#--------------------------------------------------------------------------------
+
+sub command_fasta_fix_prot {
+
+      my $usage = "
+
+Synopsis:
+
+  arty fasta fix_prot
+
+Description:
+
+  Apply the fix_prot function on fasta data.
+
+Options:
+
+  --option, -o [default]
+
+    This options does something.
+
+";
+
+      my ($help);
+      my %opt = (help        => \$help,
+	  );
+
+      my $opt_success = GetOptions(\%opt,
+				   'help|h',
+	  );
+
+      if ($help) {
+	  print $usage;
+	  exit(0);
+      }
+
+      die $usage if ! $opt_success;
+
+      die "FATAL : function_not_yet_implimented : arty fastq\n";
+
+}
+
+#--------------------------------------------------------------------------------
+
+sub command_fasta_subseq {
+
+      my $usage = "
+
+Synopsis:
+
+  arty fasta subseq
+
+Description:
+
+  Apply the subseq function on fasta data.
+
+Options:
+
+  --option, -o [default]
+
+    This options does something.
+
+";
+
+      my ($help);
+      my %opt = (help        => \$help,
+	  );
+
+      my $opt_success = GetOptions(\%opt,
+				   'help|h',
+	  );
+
+      if ($help) {
+	  print $usage;
+	  exit(0);
+      }
+
+      die $usage if ! $opt_success;
+
+      die "FATAL : function_not_yet_implimented : arty fastq\n";
+
+}
+
+#--------------------------------------------------------------------------------
+
+sub command_fasta_filter_shorter {
+
+      my $usage = "
+
+Synopsis:
+
+  arty fasta filter_shorter
+
+Description:
+
+  Apply the filter_shorter function on fasta data.
+
+Options:
+
+  --option, -o [default]
+
+    This options does something.
+
+";
+
+      my ($help);
+      my %opt = (help        => \$help,
+	  );
+
+      my $opt_success = GetOptions(\%opt,
+				   'help|h',
+	  );
+
+      if ($help) {
+	  print $usage;
+	  exit(0);
+      }
+
+      die $usage if ! $opt_success;
+
+      die "FATAL : function_not_yet_implimented : arty fastq\n";
+
+}
+
+#--------------------------------------------------------------------------------
+
+sub command_fasta_filter_longer {
+
+      my $usage = "
+
+Synopsis:
+
+  arty fasta filter_longer
+
+Description:
+
+  Apply the filter_longer function on fasta data.
+
+Options:
+
+  --option, -o [default]
+
+    This options does something.
+
+";
+
+      my ($help);
+      my %opt = (help        => \$help,
+	  );
+
+      my $opt_success = GetOptions(\%opt,
+				   'help|h',
+	  );
+
+      if ($help) {
+	  print $usage;
+	  exit(0);
+      }
+
+      die $usage if ! $opt_success;
+
+      die "FATAL : function_not_yet_implimented : arty fastq\n";
+
+}
+
+#--------------------------------------------------------------------------------
+
+sub command_fasta_mask_fasta {
+
+      my $usage = "
+
+Synopsis:
+
+  arty fasta mask_fasta
+
+Description:
+
+  Apply the mask_fasta function on fasta data.
+
+Options:
+
+  --option, -o [default]
+
+    This options does something.
+
+";
+
+      my ($help);
+      my %opt = (help        => \$help,
+	  );
+
+      my $opt_success = GetOptions(\%opt,
+				   'help|h',
+	  );
+
+      if ($help) {
+	  print $usage;
+	  exit(0);
+      }
+
+      die $usage if ! $opt_success;
+
+      die "FATAL : function_not_yet_implimented : arty fastq\n";
+
+}
+
+#--------------------------------------------------------------------------------
+
+sub command_fastq {
+
+      my $usage = "
+
+Synopsis:
+
+  arty fastq
+
+Description:
+
+  Work with fastq data.
+
+Options:
+
+  --option, -o [default]
+
+    This options does something.
+
+";
+
+      my ($help);
+      my %opt = (help        => \$help,
+	  );
+
+      my $opt_success = GetOptions(\%opt,
+				   'help|h',
+	  );
+
+      if ($help) {
+	  print $usage;
+	  exit(0);
+      }
+
+      die $usage if ! $opt_success;
+
+      die "FATAL : function_not_yet_implimented : arty fastq\n";
+
+}
+
+#--------------------------------------------------------------------------------
+
+sub command_gff3 {
+
+      my $usage = "
+
+Synopsis:
+
+  arty gff3
+
+Description:
+
+  Work with gff3 data.
+
+Options:
+
+  --option, -o [default]
+
+    This options does something.
+
+";
+
+      my ($help);
+      my %opt = (help        => \$help,
+	  );
+
+      my $opt_success = GetOptions(\%opt,
+				   'help|h',
+	  );
+
+      if ($help) {
+	  print $usage;
+	  exit(0);
+      }
+
+      die $usage if ! $opt_success;
+
+      die "FATAL : function_not_yet_implimented : arty gff3\n";
+
+}
+
+#--------------------------------------------------------------------------------
+
+sub command_vcf {
+
+      my $usage = "
+
+Synopsis:
+
+  arty vcf
+
+Description:
+
+  Work with vcf data.
+
+Options:
+
+  --option, -o [default]
+
+    This options does something.
+
+";
+
+      my ($help);
+      my %opt = (help        => \$help,
+	  );
+
+      my $opt_success = GetOptions(\%opt,
+				   'help|h',
+	  );
+
+      if ($help) {
+	  print $usage;
+	  exit(0);
+      }
+
+      die $usage if ! $opt_success;
+
+      die "FATAL : function_not_yet_implimented : arty vcf\n";
+
+}
+
+#--------------------------------------------------------------------------------
+
+sub command_clinvar {
+
+      my $usage = "
+
+Synopsis:
+
+  arty clinvar
+
+Description:
+
+  Work with clinvar data.
+
+Options:
+
+  --option, -o [default]
+
+    This options does something.
+
+";
+
+      my ($help);
+      my %opt = (help        => \$help,
+	  );
+
+      my $opt_success = GetOptions(\%opt,
+				   'help|h',
+	  );
+
+      if ($help) {
+	  print $usage;
+	  exit(0);
+      }
+
+      die $usage if ! $opt_success;
+
+      die "FATAL : function_not_yet_implimented : arty clinvar\n";
+
+}
+
+#--------------------------------------------------------------------------------
+
+sub command_dbsnp {
+
+      my $usage = "
+
+Synopsis:
+
+  arty dbsnp
+
+Description:
+
+  Work with dbsnp data.
+
+Options:
+
+  --option, -o [default]
+
+    This options does something.
+
+";
+
+      my ($help);
+      my %opt = (help        => \$help,
+	  );
+
+      my $opt_success = GetOptions(\%opt,
+				   'help|h',
+	  );
+
+      if ($help) {
+	  print $usage;
+	  exit(0);
+      }
+
+      die $usage if ! $opt_success;
+
+      die "FATAL : function_not_yet_implimented : arty dbsnp\n";
+
+}
+
+#--------------------------------------------------------------------------------
+
+sub command_go {
+
+      my $usage = "
+
+Synopsis:
+
+  arty go
+
+Description:
+
+  Work with go data.
+
+Options:
+
+  --option, -o [default]
+
+    This options does something.
+
+";
+
+      my ($help);
+      my %opt = (help        => \$help,
+	  );
+
+      my $opt_success = GetOptions(\%opt,
+				   'help|h',
+	  );
+
+      if ($help) {
+	  print $usage;
+	  exit(0);
+      }
+
+      die $usage if ! $opt_success;
+
+      die "FATAL : function_not_yet_implimented : arty go\n";
+
+}
+
+#--------------------------------------------------------------------------------
+
+sub command_hgnc {
+
+      my $usage = "
+
+Synopsis:
+
+  arty hgnc
+
+Description:
+
+  Work with hgnc data.
+
+Options:
+
+  --option, -o [default]
+
+    This options does something.
+
+";
+
+      my ($help);
+      my %opt = (help        => \$help,
+	  );
+
+      my $opt_success = GetOptions(\%opt,
+				   'help|h',
+	  );
+
+      if ($help) {
+	  print $usage;
+	  exit(0);
+      }
+
+      die $usage if ! $opt_success;
+
+      die "FATAL : function_not_yet_implimented : arty hgnc\n";
+
+}
+
+#--------------------------------------------------------------------------------
+
+sub command_hpo {
+
+      my $usage = "
+
+Synopsis:
+
+  arty hpo
+
+Description:
+
+  Work with hpo data.
+
+Options:
+
+  --option, -o [default]
+
+    This options does something.
+
+";
+
+      my ($help);
+      my %opt = (help        => \$help,
+	  );
+
+      my $opt_success = GetOptions(\%opt,
+				   'help|h',
+	  );
+
+      if ($help) {
+	  print $usage;
+	  exit(0);
+      }
+
+      die $usage if ! $opt_success;
+
+      die "FATAL : function_not_yet_implimented : arty hpo\n";
+
+}
+
+#--------------------------------------------------------------------------------
+
+sub command_omim {
+
+      my $usage = "
+
+Synopsis:
+
+  arty omim
+
+Description:
+
+  Work with omim data.
+
+Options:
+
+  --option, -o [default]
+
+    This options does something.
+
+";
+
+      my ($help);
+      my %opt = (help        => \$help,
+	  );
+
+      my $opt_success = GetOptions(\%opt,
+				   'help|h',
+	  );
+
+      if ($help) {
+	  print $usage;
+	  exit(0);
+      }
+
+      die $usage if ! $opt_success;
+
+      die "FATAL : function_not_yet_implimented : arty omim\n";
+
+}
+
+#--------------------------------------------------------------------------------
+
+sub command_so {
+
+      my $usage = "
+
+Synopsis:
+
+  arty so
+
+Description:
+
+  Work with so data.
+
+Options:
+
+  --option, -o [default]
+
+    This options does something.
+
+";
+
+      my ($help);
+      my %opt = (help        => \$help,
+	  );
+
+      my $opt_success = GetOptions(\%opt,
+				   'help|h',
+	  );
+
+      if ($help) {
+	  print $usage;
+	  exit(0);
+      }
+
+      die $usage if ! $opt_success;
+
+      die "FATAL : function_not_yet_implimented : arty so\n";
+
+}
+
+#--------------------------------------------------------------------------------
+
+sub command_name {
+
+      my $usage = "
+
+Synopsis:
+
+  arty _name
+
+Description:
+
+  Work with _name data.
+
+Options:
+
+  --option, -o [default]
+
+    This options does something.
+
+";
+
+      my ($help);
+      my %opt = (help        => \$help,
+		);
+
+      my $opt_success = GetOptions(\%opt,
+				   'help|h',
+				  );
+
+      if ($help) {
+	print $usage;
+	exit(0);
+      }
+
+      die $usage if ! $opt_success;
+
+      die "FATAL : function_not_yet_implimented : arty _name\n";
+
+}
+
