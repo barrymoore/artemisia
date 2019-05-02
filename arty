@@ -480,8 +480,6 @@ Functions:
       else {
 	die "$usage\n\nFATAL : unknown_command : $command\n";
       }
-
-      die $usage if ! $opt_success;
 }
 
 #--------------------------------------------------------------------------------
@@ -1435,27 +1433,21 @@ sub command_fasta_rev_comp {
 
 Synopsis:
 
-  arty fasta rev_comp
+  arty fasta rev_comp sequence.fa
 
 Description:
 
   Apply the rev_comp function on fasta data.
 
-Options:
-
-  --option, -o [default]
-
-    This options does something.
-
 ";
 
       my ($help);
       my %opt = (help        => \$help,
-	  );
+		);
 
       my $opt_success = GetOptions(\%opt,
 				   'help|h',
-	  );
+				  );
 
       if ($help) {
 	  print $usage;
@@ -1464,8 +1456,16 @@ Options:
 
       die $usage if ! $opt_success;
 
-      die "FATAL : function_not_yet_implimented : arty fastq\n";
+      my $file = shift @ARGV;
 
+      my $fasta = Arty::fasta->new(file => $file);
+
+      while (my $seq = $fasta->next_seq) {
+	$seq->{header} .= " Reverse Compliment";
+	$seq->{seq} = reverse $seq->{seq};
+	$seq->{seq} =~ tr/ATGC/TACG/;
+	print join "\n", ('>' . $seq->{header}), $seq->{seq};
+      }
 }
 
 #--------------------------------------------------------------------------------
