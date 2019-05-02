@@ -1,3 +1,3 @@
 # Artemisia
 
-Tools for hacking genomics data
+Tools for hacking genomic data
