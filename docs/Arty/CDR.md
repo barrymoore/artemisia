@@ -20,6 +20,56 @@ This document describes Arty::CDR version 0.0.1
 [Arty::CDR](https://metacpan.org/pod/Arty::CDR) provides CDR parsing ability for the Artemisia suite
 of genomics tools.
 
+# DATA STRUCTURE
+
+    HASH(0x2a78530)
+    'chrom' => 1
+    'effect' => ARRAY(0x2d40440)
+       0  'exon_variant'
+       1  'transcript_variant'
+       2  'missense_variant'
+       3  'coding_sequence_variant'
+       4  'sequence_variant'
+       5  'gene_variant'
+       6  'amino_acid_substitution'
+    'end' => 69428
+    'gts' => ARRAY(0x2d404b8)
+       0  HASH(0x2a3b068)
+          'aa' => ARRAY(0x2a3afa8)
+             0  'C'
+             1  'C'
+          'indvs' => ARRAY(0x2a78b18)
+             0  7
+             1  27
+             2  73
+          'nt' => ARRAY(0x2a3aee8)
+             0  'G'
+             1  'G'
+       1  HASH(0x29e5de0)
+          'aa' => ARRAY(0x280e3e8)
+             0  '^'
+             1  '^'
+          'indvs' => ARRAY(0x2d40b60)
+             0  2
+             1  3
+             2  4
+             3  6
+             ... 
+             32  86
+             33  87
+             34  90
+             35  91
+             36  103
+             37  104
+          'nt' => ARRAY(0x2d405f0)
+             0  '^'
+             1  '^'
+    'ref' => HASH(0x2d40458)
+       'aa' => 'F'
+       'nt' => 'T'
+    'start' => 69428
+    'type' => 'SNV'
+
 # CONSTRUCTOR
 
 New [Arty::CDR](https://metacpan.org/pod/Arty::CDR) objects are created by the class method new.
