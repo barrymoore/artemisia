@@ -438,31 +438,6 @@ sub set_attributes {
 C<Arty::Base::_prepare_args> accepts an array, a hash or a reference to
 either an array or hash, but it was passed something different.
 
-=item C<< invalid_ipuac_nucleotide_code >>
-
-C<Arty::Base::expand_iupac_nt_codes> was passed a charachter that is
-not a valid IUPAC nucleotide code
-(http://en.wikipedia.org/wiki/Nucleic_acid_notation).
-
-=item C<< failed_to_load_module >>
-
-C<Arty::Base::load_module> was unable to load (require) the specified
-module.  The module may not be installed or it may have a compile time
-error.
-
-=item C<< invalid_arguments_to_get_feature_bins >>
-
-C<Arty::Base::get_feature_bins> was called with invalid arguments.  It
-must have either a hash with the keys qw(seqid start end) or an object
-with those same keys as methods.  The error message will try to give
-you some idea of what arguments were passed.
-
-=item C<< invalid_aa_datum_code >>
-
-An invalid amino acid code was passed to
-C<Arty::Base::amino_acid_data>.  Single-letter or three-letter amino
-acid codes are required.
-
 =back
 
 =head1 CONFIGURATION AND ENVIRONMENT

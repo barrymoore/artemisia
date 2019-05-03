@@ -164,31 +164,6 @@ list (or referenece) of key value pairs.
     `Arty::Base::_prepare_args` accepts an array, a hash or a reference to
     either an array or hash, but it was passed something different.
 
-- `invalid_ipuac_nucleotide_code`
-
-    `Arty::Base::expand_iupac_nt_codes` was passed a charachter that is
-    not a valid IUPAC nucleotide code
-    (http://en.wikipedia.org/wiki/Nucleic\_acid\_notation).
-
-- `failed_to_load_module`
-
-    `Arty::Base::load_module` was unable to load (require) the specified
-    module.  The module may not be installed or it may have a compile time
-    error.
-
-- `invalid_arguments_to_get_feature_bins`
-
-    `Arty::Base::get_feature_bins` was called with invalid arguments.  It
-    must have either a hash with the keys qw(seqid start end) or an object
-    with those same keys as methods.  The error message will try to give
-    you some idea of what arguments were passed.
-
-- `invalid_aa_datum_code`
-
-    An invalid amino acid code was passed to
-    `Arty::Base::amino_acid_data`.  Single-letter or three-letter amino
-    acid codes are required.
-
 # CONFIGURATION AND ENVIRONMENT
 
 [Arty::Base](https://metacpan.org/pod/Arty::Base) requires no configuration files or environment variables.
