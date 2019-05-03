@@ -1,15 +1,15 @@
 # NAME
 
-Arty::Template - Parse Template files
+Arty::CDR - Parse CDR files
 
 # VERSION
 
-This document describes Arty::Template version 0.0.1
+This document describes Arty::CDR version 0.0.1
 
 # SYNOPSIS
 
-    use Arty::Template;
-    my $template = Arty::Template->new('data.template');
+    use Arty::CDR;
+    my $cdr = Arty::CDR->new('cases.cdr');
 
     while (my $record = $parser->next_record) {
         print $record->{gene} . "\n";
@@ -17,28 +17,28 @@ This document describes Arty::Template version 0.0.1
 
 # DESCRIPTION
 
-[Arty::Template](https://metacpan.org/pod/Arty::Template) provides Template parsing ability for the Artemisia suite
+[Arty::CDR](https://metacpan.org/pod/Arty::CDR) provides CDR parsing ability for the Artemisia suite
 of genomics tools.
 
 # CONSTRUCTOR
 
-New [Arty::Template](https://metacpan.org/pod/Arty::Template) objects are created by the class method new.
+New [Arty::CDR](https://metacpan.org/pod/Arty::CDR) objects are created by the class method new.
 Arguments should be passed to the constructor as a list (or reference)
 of key value pairs.  If the argument list has only a single argument,
 then this argument is applied to the 'file' attribute and thus
-specifies the Template filename.  All attributes of the [Arty::Template](https://metacpan.org/pod/Arty::Template)
+specifies the CDR filename.  All attributes of the [Arty::CDR](https://metacpan.org/pod/Arty::CDR)
 object can be set in the call to new. An simple example of object
 creation would look like this:
 
-    my $parser = Arty::Template->new('data.template');
+    my $parser = Arty::CDR->new('cases.cdr');
 
     # This is the same as above
-    my $parser = Arty::Template->new('file' => 'data.template');
+    my $parser = Arty::CDR->new('file' => 'cases.cdr');
 
 The constructor recognizes the following parameters which will set the
 appropriate attributes:
 
-- `file => data.template`
+- `file => cases.cdr`
 
     This optional parameter provides the filename for the file containing
     the data to be parsed. While this parameter is optional either it, or
@@ -53,9 +53,9 @@ appropriate attributes:
 ## new
 
      Title   : new
-     Usage   : Arty::Template->new();
-     Function: Creates a Arty::Template object;
-     Returns : An Arty::Template object
+     Usage   : Arty::CDR->new();
+     Function: Creates a Arty::CDR object;
+     Returns : An Arty::CDR object
      Args    :
 
 # PRIVATE METHODS
@@ -87,25 +87,25 @@ appropriate attributes:
 
     Title   : next_record
     Usage   : $record = $vcf->next_record();
-    Function: Return the next record from the Template file.
-    Returns : A hash (or reference) of Template record data.
+    Function: Return the next record from the CDR file.
+    Returns : A hash (or reference) of CDR record data.
     Args    : N/A
 
 ## parse\_record
 
     Title   : parse_record
     Usage   : $record = $tempalte->parse_record($line);
-    Function: Parse Template line into a data structure.
-    Returns : A hash (or reference) of Template record data.
+    Function: Parse CDR line into a data structure.
+    Returns : A hash (or reference) of CDR record data.
     Args    : A scalar containing a string of Tempalte record text.
 
 # DIAGNOSTICS
 
-[Arty::Template](https://metacpan.org/pod/Arty::Template) does not throw any warnings or errors.
+[Arty::CDR](https://metacpan.org/pod/Arty::CDR) does not throw any warnings or errors.
 
 # CONFIGURATION AND ENVIRONMENT
 
-[Arty::Template](https://metacpan.org/pod/Arty::Template) requires no configuration files or environment variables.
+[Arty::CDR](https://metacpan.org/pod/Arty::CDR) requires no configuration files or environment variables.
 
 # DEPENDENCIES
 
