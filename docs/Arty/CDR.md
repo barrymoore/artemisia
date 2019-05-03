@@ -22,6 +22,9 @@ of genomics tools.
 
 # DATA STRUCTURE
 
+Arty::CDR returns records as a complex datastructure which has the
+following format.
+
     HASH(0x2a78530)
     'chrom' => 1
     'effect' => ARRAY(0x2d40440)
