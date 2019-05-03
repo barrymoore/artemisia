@@ -20,7 +20,7 @@ This document describes Arty::VAAST version 0.0.1
 [Arty::VAAST](https://metacpan.org/pod/Arty::VAAST) provides VAAST parsing ability for the artemisia suite
 of genomics tools.
 
-# Constructor
+# CONSTRUCTOR
 
 New [Arty::VAAST](https://metacpan.org/pod/Arty::VAAST) objects are created by the class method new.
 Arguments should be passed to the constructor as a list (or reference)
@@ -58,6 +58,24 @@ appropriate attributes:
      Returns : A Arty::VAAST object
      Args    :
 
+# PRIVATE METHODS
+
+sub \_initialize\_args {
+  my ($self, @args) = @\_;
+
+    ######################################################################
+    # This block of code handels class attributes.  Use the
+    # @valid_attributes below to define the valid attributes for
+    # this class.  You must have identically named get/set methods
+    # for each attribute.  Leave the rest of this block alone!
+    ######################################################################
+    my $args = $self->SUPER::_initialize_args(@args);
+    # Set valid class attributes here
+    my @valid_attributes = qw();
+    $self->set_attributes($args, @valid_attributes);
+    ######################################################################
+  }
+
 ## \_process\_header
 
     Title   : _process_header
@@ -65,6 +83,30 @@ appropriate attributes:
     Function: Parse and store header data
     Returns : N/A
     Args    : N/A
+
+# ATTRIBUTES
+
+\# =head2 attribute
+\#
+\#   Title   : attribute
+\#   Usage   : $attribute = $self->attribute($attribute\_value);
+\#   Function: Get/set attribute
+\#   Returns : An attribute value
+\#   Args    : An attribute value
+\#
+\# =cut
+\#
+\#  sub attribute {
+\#    my ($self, $attribute\_value) = @\_;
+\#
+\#    if ($attribute) {
+\#      $self->{attribute} = $attribute;
+\#    }
+\#
+\#    return $self->{attribute};
+\#  }
+
+# METHODS
 
 ## next\_record
 

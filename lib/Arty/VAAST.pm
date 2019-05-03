@@ -30,7 +30,7 @@ This document describes Arty::VAAST version 0.0.1
 L<Arty::VAAST> provides VAAST parsing ability for the artemisia suite
 of genomics tools.
 
-=head1 Constructor
+=head1 CONSTRUCTOR
 
 New L<Arty::VAAST> objects are created by the class method new.
 Arguments should be passed to the constructor as a list (or reference)
@@ -66,10 +66,6 @@ must be set.
 
 =cut
 
-#-----------------------------------------------------------------------------
-#-------------------------------- Constructor --------------------------------
-#-----------------------------------------------------------------------------
-
 =head2 new
 
      Title   : new
@@ -87,9 +83,7 @@ sub new {
 	return $self;
 }
 
-#-----------------------------------------------------------------------------
-#----------------------------- Private Methods -------------------------------
-#-----------------------------------------------------------------------------
+=head1 PRIVATE METHODS
 
 sub _initialize_args {
   my ($self, @args) = @_;
@@ -134,9 +128,7 @@ sub _initialize_args {
      }
 }
 
-#-----------------------------------------------------------------------------
-#-------------------------------- Attributes ---------------------------------
-#-----------------------------------------------------------------------------
+=head1 ATTRIBUTES
 
 # =head2 attribute
 #
@@ -158,9 +150,7 @@ sub _initialize_args {
 #    return $self->{attribute};
 #  }
 
-#-----------------------------------------------------------------------------
-#---------------------------------- Methods ----------------------------------
-#-----------------------------------------------------------------------------
+=head1 METHODS
 
 =head2 next_record
 
