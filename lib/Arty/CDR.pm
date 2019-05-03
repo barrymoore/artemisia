@@ -1,4 +1,4 @@
-package Arty::Template;
+package Arty::CDR;
 
 use strict;
 use warnings;
@@ -7,19 +7,20 @@ use vars qw($VERSION);
 $VERSION = 0.0.1;
 use base qw(Arty::Base);
 use Arty::Utils qw(:all);
+use File::ReadBackwards;
 
 =head1 NAME
 
-Arty::Template - Parse Template files
+Arty::CDR - Parse CDR files
 
 =head1 VERSION
 
-This document describes Arty::Template version 0.0.1
+This document describes Arty::CDR version 0.0.1
 
 =head1 SYNOPSIS
 
-    use Arty::Template;
-    my $template = Arty::Template->new('data.template');
+    use Arty::CDR;
+    my $cdr = Arty::CDR->new('cases.cdr');
 
     while (my $record = $parser->next_record) {
 	print $record->{gene} . "\n";
@@ -27,23 +28,23 @@ This document describes Arty::Template version 0.0.1
 
 =head1 DESCRIPTION
 
-L<Arty::Template> provides Template parsing ability for the Artemisia suite
+L<Arty::CDR> provides CDR parsing ability for the Artemisia suite
 of genomics tools.
 
 =head1 CONSTRUCTOR
 
-New L<Arty::Template> objects are created by the class method new.
+New L<Arty::CDR> objects are created by the class method new.
 Arguments should be passed to the constructor as a list (or reference)
 of key value pairs.  If the argument list has only a single argument,
 then this argument is applied to the 'file' attribute and thus
-specifies the Template filename.  All attributes of the L<Arty::Template>
+specifies the CDR filename.  All attributes of the L<Arty::CDR>
 object can be set in the call to new. An simple example of object
 creation would look like this:
 
-    my $parser = Arty::Template->new('data.template');
+    my $parser = Arty::CDR->new('cases.cdr');
 
     # This is the same as above
-    my $parser = Arty::Template->new('file' => 'data.template');
+    my $parser = Arty::CDR->new('file' => 'cases.cdr');
 
 
 The constructor recognizes the following parameters which will set the
@@ -51,7 +52,7 @@ appropriate attributes:
 
 =over
 
-=item * C<< file => data.template >>
+=item * C<< file => cases.cdr >>
 
 This optional parameter provides the filename for the file containing
 the data to be parsed. While this parameter is optional either it, or
@@ -74,9 +75,9 @@ must be set.
 =head2 new
 
      Title   : new
-     Usage   : Arty::Template->new();
-     Function: Creates a Arty::Template object;
-     Returns : An Arty::Template object
+     Usage   : Arty::CDR->new();
+     Function: Creates a Arty::CDR object;
+     Returns : An Arty::CDR object
      Args    :
 
 =cut
@@ -139,17 +140,66 @@ sub _initialize_args {
  sub _process_header {
      my $self = shift @_;
 
+     my $file = $self->file;
+
+     my $fh = File::ReadBackwards->new($file) ||
+         throw('cant_open_file_for_reading', $file);
+
+     my %footer;
    LINE:
-     while (my $line = $self->readline) {
+     while (my $line = $fh->readline) {
+         return undef if ! defined $line;
+	 
          if ($line =~ /^\#/) {
              chomp $line;
-             push @{$self->{header}}, $line;
-         }
-         else {
-	     $self->_push_readline_stack($line);
+	     my ($hash, $key, $value) = split(/\t/, $line, 3);
+	     if ($key eq 'COMMAND-LINE') {
+		 $footer{$key} = $value;
+	     }
+	     elsif ($key eq 'FILE-INDEX') {
+		 my ($idx, $id) = split /\t/, $value;
+		 $footer{$key}{$idx} = $id;
+	     }
+	     elsif ($key eq 'GENOME-COUNT') {
+		 $footer{$key} = $value;
+	     }
+	     elsif ($key eq 'GENOME-LENGTH') {
+		 $footer{$key} = $value;
+	     }
+	     elsif ($key eq 'GFF3-FEATURE-FILE') {
+		 my ($file, $md5) = split /\t/, $value;
+		 $footer{$key} = {file => $file,
+				  md5  => $md5};
+	     }
+	     elsif ($key eq 'PROGRAM-VERSION') {
+		 $footer{$key} = $value;
+	     }
+	     elsif ($key eq 'SEX') {
+		 my @sexes = split /\t/, $value;
+		 my %sex_data;
+		 for my $sex (@sexes) {
+		     my ($sex_key, $set) = split /:/, $sex;
+		     my @indvs;
+		     for my $indv (split /,/, $set) {
+			 if ($indv =~ /(\d+)\-(\d+)/) {
+			     push @indvs, ($1..$2);
+			 }
+			 else {
+			     push @indvs, $indv;
+			 }
+		     }
+		     push @{$footer{$key}{$sex_key}}, @indvs;
+		 }
+	     }
+	     else {
+		 warn('unknown_cdr_metadata', $line);
+	     }
+	 }
+	 else {
              last LINE;
          }
      }
+     $self->{footer} = \%footer;
 }
 
 #-----------------------------------------------------------------------------
@@ -190,8 +240,8 @@ sub _initialize_args {
 
  Title   : next_record
  Usage   : $record = $vcf->next_record();
- Function: Return the next record from the Template file.
- Returns : A hash (or reference) of Template record data.
+ Function: Return the next record from the CDR file.
+ Returns : A hash (or reference) of CDR record data.
  Args    : N/A
 
 =cut
@@ -200,7 +250,7 @@ sub next_record {
     my $self = shift @_;
 
     my $line = $self->readline;
-    return undef if ! defined $line;
+    return undef if ! defined $line || $line =~ /^\#/;
 
     my $record = $self->parse_record($line);
     
@@ -213,8 +263,8 @@ sub next_record {
 
  Title   : parse_record
  Usage   : $record = $tempalte->parse_record($line);
- Function: Parse Template line into a data structure.
- Returns : A hash (or reference) of Template record data.
+ Function: Parse CDR line into a data structure.
+ Returns : A hash (or reference) of CDR record data.
  Args    : A scalar containing a string of Tempalte record text.
 
 =cut
@@ -227,7 +277,38 @@ sub parse_record {
     
     my %record;
     
-    @record{qw(chrom start end)} = @cols;
+    @record{qw(chrom start end type effect ref)} = splice(@cols, 0, 6);
+
+    my ($nt_ref, $aa_ref) = split /\|/, $record{ref};
+
+    # Parse Effects column
+    $record{effect} = [split /,/, $record{effect}];
+    
+    # Parse REF column
+    $record{ref} = {nt => $nt_ref,
+		    aa => $aa_ref};
+
+    # Parse GT columns
+    for my $gt (@cols) {
+	my ($set, $nt, $aa) = split /\|/, $gt;
+	$nt ||= '';
+	$aa ||= '';
+	my @indvs;
+	for my $indv (split /,/, $set) {
+	    if ($indv =~ /(\d+)\-(\d+)/) {
+		push @indvs, ($1..$2);
+	    }
+	    else {
+		push @indvs, $indv;
+	    }
+	}
+	my @nts = split /:/, $nt;
+	my @aas = split /:/, $aa;
+	my %gt_data = (indvs => \@indvs,
+		       nt    => \@nts,
+		       aa    => \@aas);
+	push @{$record{gts}}, \%gt_data;
+    }
     
     return wantarray ? %record : \%record;
 }
@@ -236,11 +317,11 @@ sub parse_record {
 
 =head1 DIAGNOSTICS
 
-L<Arty::Template> does not throw any warnings or errors.
+L<Arty::CDR> does not throw any warnings or errors.
 
 =head1 CONFIGURATION AND ENVIRONMENT
 
-L<Arty::Template> requires no configuration files or environment variables.
+L<Arty::CDR> requires no configuration files or environment variables.
 
 =head1 DEPENDENCIES
 
