@@ -47,10 +47,6 @@ This means that Arty::Base - at the bottom of the inheritance chain
 does the actual object creation.  It creates the new object based on
 the calling class.
 
-\#-----------------------------------------------------------------------------
-\#--------------------------------- Constructor -------------------------------
-\#-----------------------------------------------------------------------------
-
 ## new
 
      Title   : new
@@ -58,6 +54,8 @@ the calling class.
      Function: Creates on object of the calling class
      Returns : An object of the calling class
      Args    : See the attributes described above.
+
+# PRIVATE METHODS
 
 ## \_prepare\_args
 
@@ -69,6 +67,15 @@ the calling class.
               context.
     Returns : Hash or hash reference.
     Args    : An array, hash or reference to either.
+
+## \_initialize\_args
+
+    Title   : _initialize_args
+    Usage   : $self->_initialize_args($args);
+    Function: Initialize the arguments passed to the constructor.  In particular
+              set all attributes passed.
+    Returns : N/A
+    Args    : A hash or array reference of arguments.
 
 ## \_push\_stack
 
@@ -129,8 +136,6 @@ list (or referenece) of key value pairs.
     Args    : A reference to a file handle
 
 # METHODS
-
-\#-----------------------------------------------------------------------------
 
 ## readline
 
@@ -237,11 +242,3 @@ RENDERED INACCURATE OR LOSSES SUSTAINED BY YOU OR THIRD PARTIES OR A
 FAILURE OF THE SOFTWARE TO OPERATE WITH ANY OTHER SOFTWARE), EVEN IF
 SUCH HOLDER OR OTHER PARTY HAS BEEN ADVISED OF THE POSSIBILITY OF
 SUCH DAMAGES.
-
-# POD ERRORS
-
-Hey! **The above document had some coding errors, which are explained below:**
-
-- Around line 46:
-
-    You forgot a '=back' before '=head1'

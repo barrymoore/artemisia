@@ -43,6 +43,8 @@ None
 
 =item L<Phevor.pm>
 
+=back
+
 =head1 USES
 
 =over
@@ -65,9 +67,7 @@ This means that Arty::Base - at the bottom of the inheritance chain
 does the actual object creation.  It creates the new object based on
 the calling class.
 
-#-----------------------------------------------------------------------------
-#--------------------------------- Constructor -------------------------------
-#-----------------------------------------------------------------------------
+=cut
 
 =head2 new
 
@@ -101,9 +101,7 @@ sub new {
 	return $self;
 }
 
-#-----------------------------------------------------------------------------
-#------------------------------ Private Methods ------------------------------
-#-----------------------------------------------------------------------------
+=head1 PRIVATE METHODS
 
 =head2 _prepare_args
 
@@ -151,6 +149,17 @@ sub _prepare_args {
 }
 
 #-----------------------------------------------------------------------------
+
+=head2 _initialize_args
+
+ Title   : _initialize_args
+ Usage   : $self->_initialize_args($args);
+ Function: Initialize the arguments passed to the constructor.  In particular
+           set all attributes passed.
+ Returns : N/A
+ Args    : A hash or array reference of arguments.
+
+=cut
 
 sub _initialize_args {
 	my ($self, $args) = @_;
@@ -201,10 +210,6 @@ sub _shift_stack {
 	my $self = shift @_;
 	return shift @{$self->{_readline_stack}};
 }
-
-#-----------------------------------------------------------------------------
-#-------------------------------- Attributes ---------------------------------
-#-----------------------------------------------------------------------------
 
 =head1  ATTRIBUTES
 
@@ -359,13 +364,7 @@ sub fh {
 #    return $self->{attribute};
 #  }
 
-#-----------------------------------------------------------------------------
-#------------------------------------ Methods --------------------------------
-#-----------------------------------------------------------------------------
-
 =head1 METHODS
-
-#-----------------------------------------------------------------------------
 
 =head2 readline
 
