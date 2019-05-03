@@ -60,22 +60,6 @@ appropriate attributes:
 
 # PRIVATE METHODS
 
-sub \_initialize\_args {
-  my ($self, @args) = @\_;
-
-    ######################################################################
-    # This block of code handels class attributes.  Use the
-    # @valid_attributes below to define the valid attributes for
-    # this class.  You must have identically named get/set methods
-    # for each attribute.  Leave the rest of this block alone!
-    ######################################################################
-    my $args = $self->SUPER::_initialize_args(@args);
-    # Set valid class attributes here
-    my @valid_attributes = qw();
-    $self->set_attributes($args, @valid_attributes);
-    ######################################################################
-  }
-
 ## \_process\_header
 
     Title   : _process_header

@@ -85,6 +85,8 @@ sub new {
 
 =head1 PRIVATE METHODS
 
+=cut
+    
 sub _initialize_args {
   my ($self, @args) = @_;
 
