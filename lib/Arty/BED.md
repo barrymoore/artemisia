@@ -60,7 +60,7 @@ appropriate attributes:
      Title   : new
      Usage   : Arty::BED->new();
      Function: Creates a Arty::BED object;
-     Returns : A Arty::BED object
+     Returns : An Arty::BED object
      Args    :
 
 # PRIVATE METHODS

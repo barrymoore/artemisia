@@ -55,7 +55,7 @@ appropriate attributes:
      Title   : new
      Usage   : Arty::Template->new();
      Function: Creates a Arty::Template object;
-     Returns : A Arty::Template object
+     Returns : An Arty::Template object
      Args    :
 
 # PRIVATE METHODS
@@ -86,10 +86,18 @@ appropriate attributes:
 ## next\_record
 
     Title   : next_record
-    Usage   : $record = $template->next_record();
-    Function: Return the next record from the template file.
-    Returns : A hash (or reference) of template record data.
+    Usage   : $record = $vcf->next_record();
+    Function: Return the next record from the Template file.
+    Returns : A hash (or reference) of Template record data.
     Args    : N/A
+
+## parse\_record
+
+    Title   : parse_record
+    Usage   : $record = $tempalte->parse_record($line);
+    Function: Parse Template line into a data structure.
+    Returns : A hash (or reference) of Template record data.
+    Args    : A scalar containing a string of Tempalte record text.
 
 # DIAGNOSTICS
 

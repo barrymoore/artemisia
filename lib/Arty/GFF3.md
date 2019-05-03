@@ -1,44 +1,44 @@
 # NAME
 
-Arty::VCF - Parse VCF files
+Arty::GFF3 - Parse GFF3 files
 
 # VERSION
 
-This document describes Arty::VCF version 0.0.1
+This document describes Arty::GFF3 version 0.0.1
 
 # SYNOPSIS
 
-    use Arty::VCF;
-    my $vcf = Arty::VCF->new('samples.vcf');
+    use Arty::GFF3;
+    my $gff3 = Arty::GFF3->new('data.txt');
 
     while (my $record = $parser->next_record) {
-        print $record->{ref}) . "\n";
+        print $record->{gene} . "\n";
     }
 
 # DESCRIPTION
 
-[Arty::VCF](https://metacpan.org/pod/Arty::VCF) provides VCF parsing ability for the artemisia suite
+[Arty::GFF3](https://metacpan.org/pod/Arty::GFF3) provides GFF3 parsing ability for the Artemisia suite
 of genomics tools.
 
-# Constructor
+# CONSTRUCTOR
 
-New [Arty::VCF](https://metacpan.org/pod/Arty::VCF) objects are created by the class method new.
+New [Arty::GFF3](https://metacpan.org/pod/Arty::GFF3) objects are created by the class method new.
 Arguments should be passed to the constructor as a list (or reference)
 of key value pairs.  If the argument list has only a single argument,
 then this argument is applied to the 'file' attribute and thus
-specifies the VCF filename.  All attributes of the [Arty::VCF](https://metacpan.org/pod/Arty::VCF)
+specifies the GFF3 filename.  All attributes of the [Arty::GFF3](https://metacpan.org/pod/Arty::GFF3)
 object can be set in the call to new. An simple example of object
 creation would look like this:
 
-    my $parser = Arty::VCF->new('samples.vcf.gz');
+    my $parser = Arty::GFF3->new('gff3.txt');
 
     # This is the same as above
-    my $parser = Arty::VCF->new('file' => 'samples.vcf.gz');
+    my $parser = Arty::GFF3->new('file' => 'gff3.txt');
 
 The constructor recognizes the following parameters which will set the
 appropriate attributes:
 
-- `file => samples.vcf.gz`
+- `file => gff3.txt`
 
     This optional parameter provides the filename for the file containing
     the data to be parsed. While this parameter is optional either it, or
@@ -53,10 +53,23 @@ appropriate attributes:
 ## new
 
      Title   : new
-     Usage   : Arty::VCF->new();
-     Function: Creates a Arty::VCF object;
-     Returns : An Arty::VCF object
+     Usage   : Arty::GFF3->new();
+     Function: Creates a Arty::GFF3 object;
+     Returns : An Arty::GFF3 object
      Args    :
+
+# PRIVATE METHODS
+
+## \_initialize\_args
+
+    Title   : _initialize_args
+    Usage   : $self->_initialize_args($args);
+    Function: Initialize the arguments passed to the constructor.  In particular
+              set all attributes passed.  For most classes you will just need to
+              customize the @valid_attributes array within this method as you add
+              Get/Set methods for each attribute.
+    Returns : N/A
+    Args    : A hash or array reference of arguments.
 
 ## \_process\_header
 
@@ -66,65 +79,45 @@ appropriate attributes:
     Returns : N/A
     Args    : N/A
 
-## parse\_record
+# ATTRIBUTES
 
-    Title   : parse_record
-    Usage   : $record = $vcf->parse_record();
-    Function: Parse VCF line into a data structure.
-    Returns : A hash (or reference) of VCF record data.
-    Args    : A scalar containing a string of VCF record text.
-
-## parse\_info
-
-    Title   : parse_info
-    Usage   : $vcf->parse_info($info_txt);
-    Function: Parse a VCF INFO string into a data structure.
-    Returns : A hash (or reference) of VCF INFO data.
-    Args    : A scalar containing a string of VCF INFO text.
-
-## parse\_format
-
-    Title   : parse_format
-    Usage   : $record = $vcf->parse_format($record->{format});
-    Function: Parse a VCF FORMAT string into a data structure.
-    Returns : A hash (or reference) of VCF FORMAT data.
-    Args    : A scalar containing a string of VCF FORMAT text.
-
-## parse\_gt
-
-    Title   : parse_gt
-    Usage   : $vcf = $vcf->parse_gt($record->{gt});
-    Function: Parse a VCF GT string into a data structure.
-    Returns : A hash (or reference) of VCF GT data.
-    Args    : A scalar containing a string of VCF GT text.
+# METHODS
 
 ## next\_record
 
     Title   : next_record
-    Usage   : $record = $vcf->next_record();
-    Function: Return the next record from the VCF file.
-    Returns : A hash (or reference) of VCF record data.
+    Usage   : $record = $gff3->next_record();
+    Function: Return the next record from the GFF3 file.
+    Returns : A hash (or reference) of GFF3 record data.
     Args    : N/A
 
-## all\_records
+## parse\_record
 
-    Title   : all_records
-    Usage   : $record = $vcf->all_records();
-    Function: Parse and return all records.
-    Returns : An array (or reference) of all VCF records.
-    Args    : N/A
+    Title   : parse_record
+    Usage   : $record = $gff3->parse_record($line);
+    Function: Parse GFF3 line into a data structure.
+    Returns : A hash (or reference) of GFF3 record data.
+    Args    : A scalar containing a string of Tempalte record text.
+
+## parse\_attributes
+
+    Title   : parse_attributes
+    Usage   : $gff3->parse_attributes($attrb_txt);
+    Function: Parse a GFF3 ATTRIBUTES string into a data structure.
+    Returns : A hash (or reference) of GFF3 ATTRIBUTES data.
+    Args    : A scalar containing a string of GFF3 ATTRIBUTES text.
 
 # DIAGNOSTICS
 
-[Arty::VCF](https://metacpan.org/pod/Arty::VCF) does not throw any warnings or errors.
+[Arty::GFF3](https://metacpan.org/pod/Arty::GFF3) does not throw any warnings or errors.
 
 # CONFIGURATION AND ENVIRONMENT
 
-[Arty::VCF](https://metacpan.org/pod/Arty::VCF) requires no configuration files or environment variables.
+[Arty::GFF3](https://metacpan.org/pod/Arty::GFF3) requires no configuration files or environment variables.
 
 # DEPENDENCIES
 
-[Arty](https://metacpan.org/pod/Arty)
+[Arty::Base](https://metacpan.org/pod/Arty::Base)
 
 # INCOMPATIBILITIES
 

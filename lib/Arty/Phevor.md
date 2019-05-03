@@ -55,7 +55,7 @@ appropriate attributes:
      Title   : new
      Usage   : Arty::Phevor->new();
      Function: Creates a Arty::Phevor object;
-     Returns : A Arty::Phevor object
+     Returns : An Arty::Phevor object
      Args    :
 
 ## \_process\_header
