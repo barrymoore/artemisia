@@ -1,57 +1,55 @@
-package Arty::fasta;
+package Arty::VAAST_Simple;
 
 use strict;
 use warnings;
 use vars qw($VERSION);
 
-
 $VERSION = 0.0.1;
+use base qw(Arty::Base);
 
 =head1 NAME
 
-Arty::fasta - Parse Fasta files
+Arty::VAAST_Simple - Parse VAAST_Simple files
 
 =head1 VERSION
 
-This document describes Arty::fasta version 0.0.1
+This document describes Arty::VAAST_Simple version 0.0.1
 
 =head1 SYNOPSIS
 
-    use Arty::fasta;
-    my $fasta = Arty::fasta->new('sequence.fa');
+    use Arty::VAAST_Simple;
+    my $vaast = Arty::VAAST_Simple->new('vaast.simple');
 
-    while (my $seq = $parser->next_seq) {
-	print '>' . $seq->{header} . "\n";
-	print wrap_text($seq->{sequence}) . \n;
+    while (my $record = $parser->next_record) {
+	print $record->{gene} . "\n";
     }
 
 =head1 DESCRIPTION
 
-L<Arty::fasta> provides Fasta parsing ability for the artemisia suite
+L<Arty::VAAST_Simple> provides VAAST_Simple parsing ability for the artemisia suite
 of genomics tools.
 
 =head1 Constructor
 
-New L<Arty::fasta> objects are created by the class method new.
+New L<Arty::VAAST_Simple> objects are created by the class method new.
 Arguments should be passed to the constructor as a list (or reference)
 of key value pairs.  If the argument list has only a single argument,
 then this argument is applied to the 'file' attribute and thus
-specifies the fasta filename.  All attributes of the L<Arty::fasta>
+specifies the VAAST_Simple filename.  All attributes of the L<Arty::VAAST_Simple>
 object can be set in the call to new. An simple example of object
 creation would look like this:
 
-    my $parser = Arty::fasta->new('sequence.fa');
+    my $parser = Arty::VAAST_Simple->new('vaast.simple');
 
     # This is the same as above
-    my $parser = Arty::fasta->new('file' => 'sequence.fa');
-
+    my $parser = Arty::VAAST_Simple->new('file' => 'vaast.simple');
 
 The constructor recognizes the following parameters which will set the
 appropriate attributes:
 
 =over
 
-=item * C<< file => sequence.fa >>
+=item * C<< file => vaast.simple >>
 
 This optional parameter provides the filename for the file containing
 the data to be parsed. While this parameter is optional either it, or
@@ -74,9 +72,9 @@ must be set.
 =head2 new
 
      Title   : new
-     Usage   : Arty::fasta->new();
-     Function: Creates a Arty::fasta object;
-     Returns : A Arty::fasta object
+     Usage   : Arty::VAAST_Simple->new();
+     Function: Creates a Arty::VAAST_Simple object;
+     Returns : A Arty::VAAST_Simple object
      Args    :
 
 =cut
@@ -84,6 +82,7 @@ must be set.
 sub new {
 	my ($class, @args) = @_;
 	my $self = $class->SUPER::new(@args);
+	$self->_process_header;
 	return $self;
 }
 
@@ -100,114 +99,140 @@ sub _initialize_args {
   # this class.  You must have identically named get/set methods
   # for each attribute.  Leave the rest of this block alone!
   ######################################################################
-  my @valid_attributes = qw(file fh); # Set valid class attributes here
+  my $args = $self->SUPER::_initialize_args(@args);
+  # Set valid class attributes here
+  my @valid_attributes = qw();
   $self->set_attributes($args, @valid_attributes);
   ######################################################################
+}
+
+=head2 _process_header
+
+  Title   : _process_header
+  Usage   : $self->_process_header
+  Function: Parse and store header data
+  Returns : N/A
+  Args    : N/A
+
+=cut
+
+ sub _process_header {
+     my $self = shift @_;
+
+     my $fh = $self->fh;
+
+   LINE:
+     while (my $line = $self->readline) {
+	 return undef if ! defined $line;
+	 if ($line =~ /^\#/) {
+	     chomp $line;
+	     push @{$self->{header}}, $line;
+	 }
+	 elsif ($line =~ /^RANK\t/) {
+	     chomp $line;
+	     if ($line =~ /\tLOD\t/) {
+		 $self->{_pvaast}++;
+		 $self->{_cols} = [qw(rank gene pval pval_ci score lod)];
+		 $self->{_col_count} = 6;
+	     }
+	     else {
+		 $self->{_cols} = [qw(rank gene pval pval_ci score)];
+		 $self->{_col_count} = 5;
+	     }
+	     push @{$self->{header}}, $line;
+	 }
+	 else {
+	     $self->_push_stack($line);
+	     last LINE;
+	 }
+     }
 }
 
 #-----------------------------------------------------------------------------
 #-------------------------------- Attributes ---------------------------------
 #-----------------------------------------------------------------------------
 
-=head2 file
-
- Title   : file
- Usage   : $file = $fasta->file('sequence.fa');
- Function: Get/Set the file for the object.
- Returns : The name of the fasta file.
- Args    : N/A
-
-=cut
-
-sub file {
-	my ($self, $file) = @_;
-
-	if (defined $file) {
-	  if (! -e $file) {
-	    $self->send_message('FATAL', 'file_does_not_exist', $file);
-	  }
-	  elsif (! -r $file) {
-	    $self->send_message('FATAL', 'file_not_readable', $file);
-	  }
-
-	  if (exists $self->{file} && defined $self->{file}) {
-	    $self->send_message('WARN', 'file_attribute_is_being_reset', $file);
-	  }
-	  $self->{file} = $file;
-	  open(my $fh, '<', $file) or
-	    $self->send_message('FATAL', 'cant_open_file_for_reading', $file);
-	  $self->fh($fh);
-	}
-
-	if (! exists $self->{file} || ! defined $self->{file}) {
-	  $self->send_message('WARN', 'file_attribute_undefined');
-	}
-
-	return $self->{file};
-}
-
-#-----------------------------------------------------------------------------
-
-=head2 fh
-
- Title   : fh
- Usage   : $fh = $fasta->fh('sequence.fa');
- Function: Get/Set the filehandle for the object.
- Returns : A reference to the file handle.
- Args    : A reference to a file handle
-
-=cut
-
-sub fh {
-
-  my ($self, $fh) = @_;
-
-  if (defined $fh) {
-    if (exists $self->{fh} && defined $self->{fh}) {
-      $self->send_message('WARN', 'fh_attribute_is_being_reset', $fh);
-    }
-    $self->{fh} = $fh;
-  }
-
-  if (! exists $self->{fh} || ! defined $self->{fh}) {
-    $self->send_message('WARN', 'fh_attribute_undefined');
-  }
-
-  return $self->{fh};
-}
+# =head2 attribute
+#
+#   Title   : attribute
+#   Usage   : $attribute = $self->attribute($attribute_value);
+#   Function: Get/set attribute
+#   Returns : An attribute value
+#   Args    : An attribute value
+#
+# =cut
+#
+#  sub attribute {
+#    my ($self, $attribute_value) = @_;
+#
+#    if ($attribute) {
+#      $self->{attribute} = $attribute;
+#    }
+#
+#    return $self->{attribute};
+#  }
 
 #-----------------------------------------------------------------------------
 #---------------------------------- Methods ----------------------------------
 #-----------------------------------------------------------------------------
 
-=head2 next_seq
+=head2 next_record
 
- Title   : next_seq
- Usage   : $seq = $fasta->next_seq();
- Function: Return the next sequence from the file.
- Returns : A hash (or reference) of sequence data.
+ Title   : next_record
+ Usage   : $record = $vaast->next_record();
+ Function: Return the next record from the VAAST simple file.
+ Returns : A hash (or reference) of VAAST simple record data.
  Args    : N/A
 
 =cut
 
-sub next_seq {
+sub next_record {
 	my $self = shift @_;
 
-	my $seq = {header => '>xyq',
-		   seq    => 'ATG'};
+	my $line = $self->readline;
+	return undef if ! defined $line;
+	chomp $line;
 
-	return wantarray ? %seq : \%seq;
+	my @cols = split /\t/, $line;
+	my @data = splice(@cols, 0, $self->{_col_count});
+	
+	my %record;
+	@record{@{$self->{_cols}}} = (@data, \@cols);
+
+	return wantarray ? %record : \%record;
+}
+
+#-----------------------------------------------------------------------------
+
+=head2 all_records
+
+ Title   : all_records
+ Usage   : $record = $vaast->all_records();
+ Function: Parse and return all records.
+ Returns : An array (or reference) of all VAAST simple records.
+ Args    : N/A
+
+=cut
+
+sub all_records {
+	my $self = shift @_;
+
+	my @records;
+	while (my $record = $self->next_record) {
+	    push @records, $record;
+	}
+	return wantarray ? @records : \@records;
 }
 
 #-----------------------------------------------------------------------------
 
 =head1 DIAGNOSTICS
 
-L<Arty::fasta> does not throw any warnings or errors.
+L<Arty::VAAST_Simple> does not throw any warnings or errors.
 
 =head1 CONFIGURATION AND ENVIRONMENT
 
-L<Arty::fasta> requires no configuration files or environment variables.
+L<Arty::VAAST_Simple> requires no configuration files or environment variables.
 
 =head1 DEPENDENCIES
 
@@ -230,7 +255,7 @@ Barry Moore <barry.moore@genetics.utah.edu>
 
 =head1 LICENCE AND COPYRIGHT
 
-Copyright (c) 2010-2014, Barry Moore <barry.moore@genetics.utah.edu>.
+Copyright (c) 2019, Barry Moore <barry.moore@genetics.utah.edu>.
 All rights reserved.
 
     This module is free software; you can redistribute it and/or
