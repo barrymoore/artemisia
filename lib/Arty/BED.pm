@@ -1,4 +1,4 @@
-package Arty::Template;
+package Arty::BED;
 
 use strict;
 use warnings;
@@ -10,16 +10,16 @@ use Arty::Utils qw(:all);
 
 =head1 NAME
 
-Arty::Template - Parse Template files
+Arty::BED - Parse BED files
 
 =head1 VERSION
 
-This document describes Arty::Template version 0.0.1
+This document describes Arty::BED version 0.0.1
 
 =head1 SYNOPSIS
 
-    use Arty::Template;
-    my $template = Arty::Template->new('data.txt');
+    use Arty::BED;
+    my $bed = Arty::BED->new('data.bed');
 
     while (my $record = $parser->next_record) {
 	print $record->{gene} . "\n";
@@ -27,23 +27,28 @@ This document describes Arty::Template version 0.0.1
 
 =head1 DESCRIPTION
 
-L<Arty::Template> provides Template parsing ability for the artemisia suite
-of genomics tools.
+L<Arty::BED> provides BED parsing ability for the artemisia suite of
+genomics tools.  The BED format supported is the first 5 columns of
+the UCSC genome browsers L<BED
+format|https://genome.ucsc.edu/FAQ/FAQformat.html#format1>.  BED files
+with the full 12 columns described in the UCSC BED specification can
+be used with this module, but all columns beyond the first 5 are
+discarded.
 
 =head1 CONSTRUCTOR
 
-New L<Arty::Template> objects are created by the class method new.
+New L<Arty::BED> objects are created by the class method new.
 Arguments should be passed to the constructor as a list (or reference)
 of key value pairs.  If the argument list has only a single argument,
 then this argument is applied to the 'file' attribute and thus
-specifies the Template filename.  All attributes of the L<Arty::Template>
+specifies the BED filename.  All attributes of the L<Arty::BED>
 object can be set in the call to new. An simple example of object
 creation would look like this:
 
-    my $parser = Arty::Template->new('template.txt');
+    my $parser = Arty::BED->new('data.bed');
 
     # This is the same as above
-    my $parser = Arty::Template->new('file' => 'template.txt');
+    my $parser = Arty::BED->new('file' => 'data.bed');
 
 
 The constructor recognizes the following parameters which will set the
@@ -51,7 +56,7 @@ appropriate attributes:
 
 =over
 
-=item * C<< file => template.txt >>
+=item * C<< file => data.bed >>
 
 This optional parameter provides the filename for the file containing
 the data to be parsed. While this parameter is optional either it, or
@@ -74,9 +79,9 @@ must be set.
 =head2 new
 
      Title   : new
-     Usage   : Arty::Template->new();
-     Function: Creates a Arty::Template object;
-     Returns : A Arty::Template object
+     Usage   : Arty::BED->new();
+     Function: Creates a Arty::BED object;
+     Returns : A Arty::BED object
      Args    :
 
 =cut
@@ -98,9 +103,7 @@ sub new {
  Title   : _initialize_args
  Usage   : $self->_initialize_args($args);
  Function: Initialize the arguments passed to the constructor.  In particular
-           set all attributes passed.  For most classes you will just need to
-           customize the @valid_attributes array within this method as you add
-           Get/Set methods for each attribute.
+           set all attributes passed.
  Returns : N/A
  Args    : A hash or array reference of arguments.
 
@@ -192,31 +195,83 @@ sub _initialize_args {
 =head2 next_record
 
  Title   : next_record
- Usage   : $record = $template->next_record();
- Function: Return the next record from the template file.
- Returns : A hash (or reference) of template record data.
+ Usage   : $record = $vcf->next_record();
+ Function: Return the next record from the BED file.
+ Returns : A hash (or reference) of BED record data.
  Args    : N/A
 
 =cut
 
 sub next_record {
-	my $self = shift @_;
+        my $self = shift @_;
 
-	my %record = (gene  => 'geneX',
-		      score => '24.37');
+        my $line = $self->readline;
+        return undef if ! defined $line;
 
-	return wantarray ? %record : \%record;
+	my $record = $self->parse_record($line);
+
+        return wantarray ? %{$record} : $record;
 }
+
+#-----------------------------------------------------------------------------
+
+=head2 parse_record
+
+ Title   : parse_record
+ Usage   : $record = $vcf->parse_record();
+ Function: Parse BED line into a data structure.
+ Returns : A hash (or reference) of BED record data.
+ Args    : A scalar containing a string of BED record text.
+
+=cut
+
+sub parse_record {
+        my ($self, $line) = @_;
+        chomp $line;
+
+        my @cols = split /\s+/, $line;
+
+	# chrom - The name of the chromosome (e.g. chr3, chrY,
+	#         chr2_random) or scaffold (e.g. scaffold10671).
+
+	# chromEnd - The ending position of the feature in the
+	# 	     chromosome or scaffold. The chromEnd base is not
+	# 	     included in the display of the feature. For
+	# 	     example, the first 100 bases of a chromosome are
+	# 	     defined as chromStart=0, chromEnd=100, and span
+	# 	     the bases numbered 0-99.
+
+	# name - Defines the name of the BED line. This label is
+	# 	 displayed to the left of the BED line in the Genome
+	# 	 Browser window when the track is open to full display
+	# 	 mode or directly to the left of the item in pack
+	# 	 mode.
+
+	# score - A score between 0 and 1000. If the track line
+	# 	  useScore attribute is set to 1 for this annotation data set,
+	# 	  the score value will determine the level of gray in which
+	# 	  this feature is displayed (higher numbers = darker
+	# 	  gray). This table shows the Genome Browser's translation of
+	# 	  BED score values into shades of gray:
+
+	# strand - Defines the strand. Either "." (=no strand) or "+"
+	#          or "-".
+
+	my %record;
+
+        @record{qw(chrom start end name score strand)} = @cols;
+
+	return wantarray ? %record : \%record; }
 
 #-----------------------------------------------------------------------------
 
 =head1 DIAGNOSTICS
 
-L<Arty::Template> does not throw any warnings or errors.
+L<Arty::BED> does not throw any warnings or errors.
 
 =head1 CONFIGURATION AND ENVIRONMENT
 
-L<Arty::Template> requires no configuration files or environment variables.
+L<Arty::BED> requires no configuration files or environment variables.
 
 =head1 DEPENDENCIES
 

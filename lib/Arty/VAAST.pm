@@ -85,6 +85,15 @@ sub new {
 
 =head1 PRIVATE METHODS
 
+=head2 _initialize_args
+
+ Title   : _initialize_args
+ Usage   : $self->_initialize_args($args);
+ Function: Initialize the arguments passed to the constructor.  In particular
+           set all attributes passed.
+ Returns : N/A
+ Args    : A hash or array reference of arguments.
+
 =cut
     
 sub _initialize_args {
@@ -132,6 +141,8 @@ sub _initialize_args {
 
 =head1 ATTRIBUTES
 
+=cut
+    
 # =head2 attribute
 #
 #   Title   : attribute
@@ -469,7 +480,7 @@ L<Arty::VAAST> requires no configuration files or environment variables.
 
 =head1 DEPENDENCIES
 
-L<Arty>
+L<Arty::Base>
 
 =head1 INCOMPATIBILITIES
 
