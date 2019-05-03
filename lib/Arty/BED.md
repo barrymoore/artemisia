@@ -1,15 +1,15 @@
 # NAME
 
-Arty::Template - Parse Template files
+Arty::BED - Parse BED files
 
 # VERSION
 
-This document describes Arty::Template version 0.0.1
+This document describes Arty::BED version 0.0.1
 
 # SYNOPSIS
 
-    use Arty::Template;
-    my $template = Arty::Template->new('data.txt');
+    use Arty::BED;
+    my $bed = Arty::BED->new('data.bed');
 
     while (my $record = $parser->next_record) {
         print $record->{gene} . "\n";
@@ -17,28 +17,33 @@ This document describes Arty::Template version 0.0.1
 
 # DESCRIPTION
 
-[Arty::Template](https://metacpan.org/pod/Arty::Template) provides Template parsing ability for the Artemisia suite
-of genomics tools.
+[Arty::BED](https://metacpan.org/pod/Arty::BED) provides BED parsing ability for the Artemisia suite of
+genomics tools.  The BED format supported is the first 5 columns of
+the UCSC genome browsers [BED
+format](https://genome.ucsc.edu/FAQ/FAQformat.html#format1).  BED files
+with the full 12 columns described in the UCSC BED specification can
+be used with this module, but all columns beyond the first 5 are
+discarded.
 
 # CONSTRUCTOR
 
-New [Arty::Template](https://metacpan.org/pod/Arty::Template) objects are created by the class method new.
+New [Arty::BED](https://metacpan.org/pod/Arty::BED) objects are created by the class method new.
 Arguments should be passed to the constructor as a list (or reference)
 of key value pairs.  If the argument list has only a single argument,
 then this argument is applied to the 'file' attribute and thus
-specifies the Template filename.  All attributes of the [Arty::Template](https://metacpan.org/pod/Arty::Template)
+specifies the BED filename.  All attributes of the [Arty::BED](https://metacpan.org/pod/Arty::BED)
 object can be set in the call to new. An simple example of object
 creation would look like this:
 
-    my $parser = Arty::Template->new('template.txt');
+    my $parser = Arty::BED->new('data.bed');
 
     # This is the same as above
-    my $parser = Arty::Template->new('file' => 'template.txt');
+    my $parser = Arty::BED->new('file' => 'data.bed');
 
 The constructor recognizes the following parameters which will set the
 appropriate attributes:
 
-- `file => template.txt`
+- `file => data.bed`
 
     This optional parameter provides the filename for the file containing
     the data to be parsed. While this parameter is optional either it, or
@@ -53,9 +58,9 @@ appropriate attributes:
 ## new
 
      Title   : new
-     Usage   : Arty::Template->new();
-     Function: Creates a Arty::Template object;
-     Returns : A Arty::Template object
+     Usage   : Arty::BED->new();
+     Function: Creates a Arty::BED object;
+     Returns : A Arty::BED object
      Args    :
 
 # PRIVATE METHODS
@@ -65,9 +70,7 @@ appropriate attributes:
     Title   : _initialize_args
     Usage   : $self->_initialize_args($args);
     Function: Initialize the arguments passed to the constructor.  In particular
-              set all attributes passed.  For most classes you will just need to
-              customize the @valid_attributes array within this method as you add
-              Get/Set methods for each attribute.
+              set all attributes passed.
     Returns : N/A
     Args    : A hash or array reference of arguments.
 
@@ -86,18 +89,26 @@ appropriate attributes:
 ## next\_record
 
     Title   : next_record
-    Usage   : $record = $template->next_record();
-    Function: Return the next record from the template file.
-    Returns : A hash (or reference) of template record data.
+    Usage   : $record = $vcf->next_record();
+    Function: Return the next record from the BED file.
+    Returns : A hash (or reference) of BED record data.
     Args    : N/A
+
+## parse\_record
+
+    Title   : parse_record
+    Usage   : $record = $vcf->parse_record();
+    Function: Parse BED line into a data structure.
+    Returns : A hash (or reference) of BED record data.
+    Args    : A scalar containing a string of BED record text.
 
 # DIAGNOSTICS
 
-[Arty::Template](https://metacpan.org/pod/Arty::Template) does not throw any warnings or errors.
+[Arty::BED](https://metacpan.org/pod/Arty::BED) does not throw any warnings or errors.
 
 # CONFIGURATION AND ENVIRONMENT
 
-[Arty::Template](https://metacpan.org/pod/Arty::Template) requires no configuration files or environment variables.
+[Arty::BED](https://metacpan.org/pod/Arty::BED) requires no configuration files or environment variables.
 
 # DEPENDENCIES
 

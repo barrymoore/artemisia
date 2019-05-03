@@ -27,7 +27,7 @@ This document describes Arty::Template version 0.0.1
 
 =head1 DESCRIPTION
 
-L<Arty::Template> provides Template parsing ability for the artemisia suite
+L<Arty::Template> provides Template parsing ability for the Artemisia suite
 of genomics tools.
 
 =head1 CONSTRUCTOR

@@ -60,6 +60,15 @@ appropriate attributes:
 
 # PRIVATE METHODS
 
+## \_initialize\_args
+
+    Title   : _initialize_args
+    Usage   : $self->_initialize_args($args);
+    Function: Initialize the arguments passed to the constructor.  In particular
+              set all attributes passed.
+    Returns : N/A
+    Args    : A hash or array reference of arguments.
+
 ## \_process\_header
 
     Title   : _process_header
@@ -69,26 +78,6 @@ appropriate attributes:
     Args    : N/A
 
 # ATTRIBUTES
-
-\# =head2 attribute
-\#
-\#   Title   : attribute
-\#   Usage   : $attribute = $self->attribute($attribute\_value);
-\#   Function: Get/set attribute
-\#   Returns : An attribute value
-\#   Args    : An attribute value
-\#
-\# =cut
-\#
-\#  sub attribute {
-\#    my ($self, $attribute\_value) = @\_;
-\#
-\#    if ($attribute) {
-\#      $self->{attribute} = $attribute;
-\#    }
-\#
-\#    return $self->{attribute};
-\#  }
 
 # METHODS
 
@@ -126,7 +115,7 @@ appropriate attributes:
 
 # DEPENDENCIES
 
-[Arty](https://metacpan.org/pod/Arty)
+[Arty::Base](https://metacpan.org/pod/Arty::Base)
 
 # INCOMPATIBILITIES
 

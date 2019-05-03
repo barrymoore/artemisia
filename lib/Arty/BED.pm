@@ -27,7 +27,7 @@ This document describes Arty::BED version 0.0.1
 
 =head1 DESCRIPTION
 
-L<Arty::BED> provides BED parsing ability for the artemisia suite of
+L<Arty::BED> provides BED parsing ability for the Artemisia suite of
 genomics tools.  The BED format supported is the first 5 columns of
 the UCSC genome browsers L<BED
 format|https://genome.ucsc.edu/FAQ/FAQformat.html#format1>.  BED files
