@@ -55,6 +55,12 @@ None
 
 =back
 
+=cut
+
+#-----------------------------------------------------------------------------
+#-------------------------------- Constructor --------------------------------
+#-----------------------------------------------------------------------------
+
 =head1 CONSTRUCTOR
 
 L<Arty::Base> is not intended to by instantiated on it's own.  It does
@@ -68,6 +74,8 @@ does the actual object creation.  It creates the new object based on
 the calling class.
 
 =cut
+
+#-----------------------------------------------------------------------------
 
 =head2 new
 
@@ -101,7 +109,15 @@ sub new {
 	return $self;
 }
 
+#-----------------------------------------------------------------------------
+#------------------------------ Private Methods ------------------------------
+#-----------------------------------------------------------------------------
+
 =head1 PRIVATE METHODS
+
+=cut
+
+#-----------------------------------------------------------------------------
 
 =head2 _prepare_args
 
@@ -211,12 +227,18 @@ sub _shift_stack {
 	return shift @{$self->{_readline_stack}};
 }
 
+#-----------------------------------------------------------------------------
+#--------------------------------- Attributes --------------------------------
+#-----------------------------------------------------------------------------
+
 =head1  ATTRIBUTES
 
 All attributes can be supplied as parameters to the constructor as a
 list (or referenece) of key value pairs.
 
 =cut
+
+#-----------------------------------------------------------------------------
 
 =head2 verbosity
 
@@ -364,7 +386,15 @@ sub fh {
 #    return $self->{attribute};
 #  }
 
+#-----------------------------------------------------------------------------
+#---------------------------------- Methods ----------------------------------
+#-----------------------------------------------------------------------------
+
 =head1 METHODS
+
+=cut
+
+#-----------------------------------------------------------------------------
 
 =head2 readline
 
@@ -425,6 +455,28 @@ sub set_attributes {
 		$self->$attribute($args->{$attribute});
 		delete $args->{$attribute};
 	}
+}
+
+#-----------------------------------------------------------------------------
+
+=head2 all_records
+
+ Title   : all_records
+ Usage   : $record = $phevor->all_records();
+ Function: Parse and return all records.
+ Returns : An array (or reference) of all Template records.
+ Args    : N/A
+
+=cut
+
+sub all_records {
+ my $self = shift @_;
+
+ my @records;
+ while (my $record = $self->next_record) {
+     push @records, $record;
+ }
+ return wantarray ? @records : \@records;
 }
 
 #-----------------------------------------------------------------------------

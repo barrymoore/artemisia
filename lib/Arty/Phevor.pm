@@ -170,7 +170,7 @@ sub _initialize_args {
  Title   : next_record
  Usage   : $record = $phevor->next_record();
  Function: Return the next record from the Phevor file.
- Returns : A hash (or reference) of VAAST simple record data.
+ Returns : A hash (or reference) of Phevor record data.
  Args    : N/A
 
 =cut
@@ -192,28 +192,6 @@ sub next_record {
 		   (@cols);
 
 	return wantarray ? %record : \%record;
-}
-
-#-----------------------------------------------------------------------------
-
-=head2 all_records
-
- Title   : all_records
- Usage   : $record = $phevor->all_records();
- Function: Parse and return all records.
- Returns : An array (or reference) of all VAAST simple records.
- Args    : N/A
-
-=cut
-
-sub all_records {
-	my $self = shift @_;
-
-	my @records;
-	while (my $record = $self->next_record) {
-	    push @records, $record;
-	}
-	return wantarray ? @records : \@records;
 }
 
 #-----------------------------------------------------------------------------

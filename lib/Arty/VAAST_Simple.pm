@@ -204,28 +204,6 @@ sub next_record {
 
 #-----------------------------------------------------------------------------
 
-=head2 all_records
-
- Title   : all_records
- Usage   : $record = $vaast->all_records();
- Function: Parse and return all records.
- Returns : An array (or reference) of all VAAST simple records.
- Args    : N/A
-
-=cut
-
-sub all_records {
-	my $self = shift @_;
-
-	my @records;
-	while (my $record = $self->next_record) {
-	    push @records, $record;
-	}
-	return wantarray ? @records : \@records;
-}
-
-#-----------------------------------------------------------------------------
-
 =head1 DIAGNOSTICS
 
 L<Arty::VAAST_Simple> does not throw any warnings or errors.

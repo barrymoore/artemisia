@@ -31,10 +31,15 @@ die $usage if $help || ! $opt_success;
 my $file = shift;
 die $usage unless $file;
 
-my $bed = Arty::BED->new(file => $file);
+my $bed = Arty::BED->new(file => $file)->all_records;
 
-while (my $record = $bed->next_record) {
-
+for my $record (@{$bed}) {
     print join "\t", @{$record}{qw(chrom start end)};
     print "\n";
 }
+
+# while (my $record = $bed->next_record) {
+# 
+#     print join "\t", @{$record}{qw(chrom start end)};
+#     print "\n";
+# }
