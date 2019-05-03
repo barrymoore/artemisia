@@ -71,7 +71,7 @@ must be set.
      Title   : new
      Usage   : Arty::VAAST->new();
      Function: Creates a Arty::VAAST object;
-     Returns : A Arty::VAAST object
+     Returns : An Arty::VAAST object
      Args    :
 
 =cut

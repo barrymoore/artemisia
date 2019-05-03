@@ -75,7 +75,7 @@ must be set.
      Title   : new
      Usage   : Arty::VCF->new();
      Function: Creates a Arty::VCF object;
-     Returns : A Arty::VCF object
+     Returns : An Arty::VCF object
      Args    :
 
 =cut
@@ -204,7 +204,7 @@ sub parse_record {
 =head2 parse_info
 
  Title   : parse_info
- Usage   : $vcf = $vcf->parse_info($record->{info});
+ Usage   : $vcf->parse_info($info_txt);
  Function: Parse a VCF INFO string into a data structure.
  Returns : A hash (or reference) of VCF INFO data.
  Args    : A scalar containing a string of VCF INFO text.

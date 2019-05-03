@@ -81,7 +81,7 @@ must be set.
      Title   : new
      Usage   : Arty::BED->new();
      Function: Creates a Arty::BED object;
-     Returns : A Arty::BED object
+     Returns : An Arty::BED object
      Args    :
 
 =cut
@@ -89,6 +89,7 @@ must be set.
 sub new {
 	my ($class, @args) = @_;
 	my $self = $class->SUPER::new(@args);
+	$self->_process_header;
 	return $self;
 }
 
@@ -231,37 +232,12 @@ sub parse_record {
 
         my @cols = split /\s+/, $line;
 
-	# chrom - The name of the chromosome (e.g. chr3, chrY,
-	#         chr2_random) or scaffold (e.g. scaffold10671).
-
-	# chromEnd - The ending position of the feature in the
-	# 	     chromosome or scaffold. The chromEnd base is not
-	# 	     included in the display of the feature. For
-	# 	     example, the first 100 bases of a chromosome are
-	# 	     defined as chromStart=0, chromEnd=100, and span
-	# 	     the bases numbered 0-99.
-
-	# name - Defines the name of the BED line. This label is
-	# 	 displayed to the left of the BED line in the Genome
-	# 	 Browser window when the track is open to full display
-	# 	 mode or directly to the left of the item in pack
-	# 	 mode.
-
-	# score - A score between 0 and 1000. If the track line
-	# 	  useScore attribute is set to 1 for this annotation data set,
-	# 	  the score value will determine the level of gray in which
-	# 	  this feature is displayed (higher numbers = darker
-	# 	  gray). This table shows the Genome Browser's translation of
-	# 	  BED score values into shades of gray:
-
-	# strand - Defines the strand. Either "." (=no strand) or "+"
-	#          or "-".
-
 	my %record;
 
         @record{qw(chrom start end name score strand)} = @cols;
 
-	return wantarray ? %record : \%record; }
+	return wantarray ? %record : \%record;
+}
 
 #-----------------------------------------------------------------------------
 

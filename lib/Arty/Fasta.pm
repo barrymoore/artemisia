@@ -76,7 +76,7 @@ must be set.
      Title   : new
      Usage   : Arty::Fasta->new();
      Function: Creates a Arty::Fasta object;
-     Returns : A Arty::Fasta object
+     Returns : An Arty::Fasta object
      Args    :
 
 =cut

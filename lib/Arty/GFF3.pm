@@ -1,4 +1,4 @@
-package Arty::Phevor;
+package Arty::GFF3;
 
 use strict;
 use warnings;
@@ -6,43 +6,44 @@ use vars qw($VERSION);
 
 $VERSION = 0.0.1;
 use base qw(Arty::Base);
+use Arty::Utils qw(:all);
 
 =head1 NAME
 
-Arty::Phevor - Parse Phevor files
+Arty::GFF3 - Parse GFF3 files
 
 =head1 VERSION
 
-This document describes Arty::Phevor version 0.0.1
+This document describes Arty::GFF3 version 0.0.1
 
 =head1 SYNOPSIS
 
-    use Arty::Phevor;
-    my $parser = Arty::Phevor->new('phevor.txt');
+    use Arty::GFF3;
+    my $gff3 = Arty::GFF3->new('data.txt');
 
     while (my $record = $parser->next_record) {
-	print $record->{gene}) . "\n";
+	print $record->{gene} . "\n";
     }
 
 =head1 DESCRIPTION
 
-L<Arty::Phevor> provides Phevor parsing ability for the artemisia suite
+L<Arty::GFF3> provides GFF3 parsing ability for the Artemisia suite
 of genomics tools.
 
-=head1 Constructor
+=head1 CONSTRUCTOR
 
-New L<Arty::Phevor> objects are created by the class method new.
+New L<Arty::GFF3> objects are created by the class method new.
 Arguments should be passed to the constructor as a list (or reference)
 of key value pairs.  If the argument list has only a single argument,
 then this argument is applied to the 'file' attribute and thus
-specifies the Phevor filename.  All attributes of the L<Arty::Phevor>
+specifies the GFF3 filename.  All attributes of the L<Arty::GFF3>
 object can be set in the call to new. An simple example of object
 creation would look like this:
 
-    my $parser = Arty::Phevor->new('phevor.txt');
+    my $parser = Arty::GFF3->new('gff3.txt');
 
     # This is the same as above
-    my $parser = Arty::Phevor->new('file' => 'phevor.txt');
+    my $parser = Arty::GFF3->new('file' => 'gff3.txt');
 
 
 The constructor recognizes the following parameters which will set the
@@ -50,7 +51,7 @@ appropriate attributes:
 
 =over
 
-=item * C<< file => phevor.txt >>
+=item * C<< file => gff3.txt >>
 
 This optional parameter provides the filename for the file containing
 the data to be parsed. While this parameter is optional either it, or
@@ -73,9 +74,9 @@ must be set.
 =head2 new
 
      Title   : new
-     Usage   : Arty::Phevor->new();
-     Function: Creates a Arty::Phevor object;
-     Returns : An Arty::Phevor object
+     Usage   : Arty::GFF3->new();
+     Function: Creates a Arty::GFF3 object;
+     Returns : An Arty::GFF3 object
      Args    :
 
 =cut
@@ -91,21 +92,39 @@ sub new {
 #----------------------------- Private Methods -------------------------------
 #-----------------------------------------------------------------------------
 
-sub _initialize_args {
-  my ($self, @args) = @_;
+=head1 PRIVATE METHODS
 
-  ######################################################################
-  # This block of code handels class attributes.  Use the
-  # @valid_attributes below to define the valid attributes for
-  # this class.  You must have identically named get/set methods
-  # for each attribute.  Leave the rest of this block alone!
-  ######################################################################
-  my $args = $self->SUPER::_initialize_args(@args);
-  # Set valid class attributes here
-  my @valid_attributes = qw();
-  $self->set_attributes($args, @valid_attributes);
-  ######################################################################
+=head2 _initialize_args
+
+ Title   : _initialize_args
+ Usage   : $self->_initialize_args($args);
+ Function: Initialize the arguments passed to the constructor.  In particular
+           set all attributes passed.  For most classes you will just need to
+           customize the @valid_attributes array within this method as you add
+           Get/Set methods for each attribute.
+ Returns : N/A
+ Args    : A hash or array reference of arguments.
+
+=cut
+
+sub _initialize_args {
+        my ($self, @args) = @_;
+
+        ######################################################################
+        # This block of code handels class attributes.  Use the
+        # @valid_attributes below to define the valid attributes for
+        # this class.  You must have identically named get/set methods
+        # for each attribute.  Leave the rest of this block alone!
+        ######################################################################
+        my $args = $self->SUPER::_initialize_args(@args);
+        # Set valid class attributes here
+        my @valid_attributes = qw();
+        $self->set_attributes($args, @valid_attributes);
+        ######################################################################
+        return $args;
 }
+
+#-----------------------------------------------------------------------------
 
 =head2 _process_header
 
@@ -124,16 +143,16 @@ sub _initialize_args {
 
    LINE:
      while (my $line = $self->readline) {
-	 return undef if ! defined $line;
+         return undef if ! defined $line;
 
-	 if ($line =~ /^RANK\s+/) {
-	     chomp $line;
-	     push @{$self->{header}}, $line;
-	 }
-	 else {
-	     $self->_push_stack($line);
-	     last LINE;
-	 }
+         if ($line =~ /^\#/) {
+             chomp $line;
+             push @{$self->{header}}, $line;
+         }
+         else {
+             $self->_push_stack($line);
+             last LINE;
+         }
      }
 }
 
@@ -141,23 +160,27 @@ sub _initialize_args {
 #-------------------------------- Attributes ---------------------------------
 #-----------------------------------------------------------------------------
 
+=head1 ATTRIBUTES
+
+=cut
+
 # =head2 attribute
-#
+# 
 #   Title   : attribute
 #   Usage   : $attribute = $self->attribute($attribute_value);
 #   Function: Get/set attribute
 #   Returns : An attribute value
 #   Args    : An attribute value
-#
+# 
 # =cut
-#
+# 
 #  sub attribute {
 #    my ($self, $attribute_value) = @_;
-#
+# 
 #    if ($attribute) {
 #      $self->{attribute} = $attribute;
 #    }
-#
+# 
 #    return $self->{attribute};
 #  }
 
@@ -165,70 +188,99 @@ sub _initialize_args {
 #---------------------------------- Methods ----------------------------------
 #-----------------------------------------------------------------------------
 
+=head1 METHODS
+
 =head2 next_record
 
  Title   : next_record
- Usage   : $record = $phevor->next_record();
- Function: Return the next record from the Phevor file.
- Returns : A hash (or reference) of VAAST simple record data.
+ Usage   : $record = $gff3->next_record();
+ Function: Return the next record from the GFF3 file.
+ Returns : A hash (or reference) of GFF3 record data.
  Args    : N/A
 
 =cut
 
 sub next_record {
-	my $self = shift @_;
+ my $self = shift @_;
 
-	my $line;
-	while (! $line) {
-	    $line = $self->readline;
-	    return undef if ! defined $line;
-	    chomp $line;
-	}
+ my $line = $self->readline;
+ return undef if ! defined $line;
 
-	my @cols = split /\s+/, $line; my %record;
+ my $record = $self->parse_record($line);
 
-	@record{qw(rank gene score prior raw_score go ext_fnl_prior
-		   cmbnd_prior fwrd_p orig_p p_disease p_healthy)} =
-		   (@cols);
-
-	return wantarray ? %record : \%record;
+ return wantarray ? %{$record} : $record;
 }
 
 #-----------------------------------------------------------------------------
 
-=head2 all_records
+=head2 parse_record
 
- Title   : all_records
- Usage   : $record = $phevor->all_records();
- Function: Parse and return all records.
- Returns : An array (or reference) of all VAAST simple records.
- Args    : N/A
+ Title   : parse_record
+ Usage   : $record = $gff3->parse_record($line);
+ Function: Parse GFF3 line into a data structure.
+ Returns : A hash (or reference) of GFF3 record data.
+ Args    : A scalar containing a string of Tempalte record text.
 
 =cut
 
-sub all_records {
-	my $self = shift @_;
+sub parse_record {
+    my ($self, $line) = @_;
+    chomp $line;
 
-	my @records;
-	while (my $record = $self->next_record) {
-	    push @records, $record;
-	}
-	return wantarray ? @records : \@records;
+    my @cols = split /\s+/, $line;
+
+    my %record;
+
+    @record{qw(chrom source type start end score strand phase
+               attributes)} = @cols;
+
+    $record{attributes} =
+	$self->parse_attributes($record{attributes});
+
+    return wantarray ? %record : \%record;
+}
+
+#-----------------------------------------------------------------------------
+
+=head2 parse_attributes
+
+ Title   : parse_attributes
+ Usage   : $gff3->parse_attributes($attrb_txt);
+ Function: Parse a GFF3 ATTRIBUTES string into a data structure.
+ Returns : A hash (or reference) of GFF3 ATTRIBUTES data.
+ Args    : A scalar containing a string of GFF3 ATTRIBUTES text.
+
+=cut
+
+sub parse_attributes {
+ my ($self, $attributes) = @_;
+ chomp $attributes;
+
+ my @pairs = split /;/, $attributes;
+
+ my %attributes;
+ for my $pair (@pairs) {
+     my ($key, $value) = split(/=/, $pair);
+     $value ||= '';
+    my @values = split /,/, $value;
+    push @{$attributes{$key}}, @values;
+ }
+ return wantarray ? %attributes : \%attributes;
 }
 
 #-----------------------------------------------------------------------------
 
 =head1 DIAGNOSTICS
 
-L<Arty::Phevor> does not throw any warnings or errors.
+L<Arty::GFF3> does not throw any warnings or errors.
 
 =head1 CONFIGURATION AND ENVIRONMENT
 
-L<Arty::Phevor> requires no configuration files or environment variables.
+L<Arty::GFF3> requires no configuration files or environment variables.
 
 =head1 DEPENDENCIES
 
-L<Arty>
+L<Arty::Base>
 
 =head1 INCOMPATIBILITIES
 

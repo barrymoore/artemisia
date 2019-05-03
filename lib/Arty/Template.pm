@@ -76,7 +76,7 @@ must be set.
      Title   : new
      Usage   : Arty::Template->new();
      Function: Creates a Arty::Template object;
-     Returns : A Arty::Template object
+     Returns : An Arty::Template object
      Args    :
 
 =cut
@@ -84,6 +84,7 @@ must be set.
 sub new {
 	my ($class, @args) = @_;
 	my $self = $class->SUPER::new(@args);
+	$self->_process_header;
 	return $self;
 }
 
@@ -192,20 +193,47 @@ sub _initialize_args {
 =head2 next_record
 
  Title   : next_record
- Usage   : $record = $template->next_record();
- Function: Return the next record from the template file.
- Returns : A hash (or reference) of template record data.
+ Usage   : $record = $vcf->next_record();
+ Function: Return the next record from the Template file.
+ Returns : A hash (or reference) of Template record data.
  Args    : N/A
 
 =cut
 
 sub next_record {
-	my $self = shift @_;
+    my $self = shift @_;
 
-	my %record = (gene  => 'geneX',
-		      score => '24.37');
+    my $line = $self->readline;
+    return undef if ! defined $line;
 
-	return wantarray ? %record : \%record;
+    my $record = $self->parse_record($line);
+    
+    return wantarray ? %{$record} : $record;
+}
+
+#-----------------------------------------------------------------------------
+
+=head2 parse_record
+
+ Title   : parse_record
+ Usage   : $record = $tempalte->parse_record($line);
+ Function: Parse Template line into a data structure.
+ Returns : A hash (or reference) of Template record data.
+ Args    : A scalar containing a string of Tempalte record text.
+
+=cut
+
+sub parse_record {
+    my ($self, $line) = @_;
+    chomp $line;
+    
+    my @cols = split /\s+/, $line;
+    
+    my %record;
+    
+    @record{qw(chrom start end)} = @cols;
+    
+    return wantarray ? %record : \%record;
 }
 
 #-----------------------------------------------------------------------------
