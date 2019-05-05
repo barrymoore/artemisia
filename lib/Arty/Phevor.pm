@@ -179,12 +179,19 @@ sub next_record {
 	my $self = shift @_;
 
 	my $line;
+      LINE:
 	while (! $line) {
 	    $line = $self->readline;
-	    return undef if ! defined $line;
-	    chomp $line;
+	    last LINE if ! defined $line;
+	    if ($line =~ /^\#/) {
+		push @{$self->{footer}}, $line;
+		undef($line);
+		next LINE;
+	    }
 	}
+	return undef if ! defined $line;
 
+	chomp $line;
 	my @cols = split /\s+/, $line; my %record;
 
 	@record{qw(rank gene score prior raw_score go ext_fnl_prior

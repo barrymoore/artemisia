@@ -102,7 +102,7 @@ sub _initialize_args {
   ######################################################################
   my $args = $self->SUPER::_initialize_args(@args);
   # Set valid class attributes here
-  my @valid_attributes = qw();
+  my @valid_attributes = qw(tabix);
   $self->set_attributes($args, @valid_attributes);
   ######################################################################
 }
@@ -148,7 +148,40 @@ sub _initialize_args {
 #-------------------------------- Attributes ---------------------------------
 #-----------------------------------------------------------------------------
 
-# =head2 attribute
+=head2 tabix
+
+ Title   : tabix
+ Usage   : $tabix = $self->tabix(chr1:1234567-7654321);
+ Function: Attribute to Get/Set a tabix range value.  If this attribute is set
+           the VCF file will be opened with a tabix pipe using the provided range.
+ Returns : The tabix range value
+ Args    : A tabix range value
+
+=cut
+
+sub tabix {
+  my ($self, $tabix_value) = @_;
+
+  if ($tabix_value) {
+      my ($chrom, $start, $end) = split /[:\-]/, $tabix_value;
+      if (! $chrom) {
+	  throw_msg('invalid_chr_to_tabix', $tabix_value);
+	  if ($start !~ /^\d+$/) {
+	      throw_msg('invalid_start_to_tabix', $tabix_value);
+	  }
+	  if ($end && $end !~ /^\d+/) {
+	      throw_msg('invalid_end_to_tabix', $tabix_value);
+	  }
+      }
+      $self->{tabix} = $tabix_value;
+  }
+
+  return $self->{tabix};
+}
+
+#-----------------------------------------------------------------------------
+
+#  =head2 attribute
 #
 #   Title   : attribute
 #   Usage   : $attribute = $self->attribute($attribute_value);
@@ -156,7 +189,7 @@ sub _initialize_args {
 #   Returns : An attribute value
 #   Args    : An attribute value
 #
-# =cut
+#  =cut
 #
 #  sub attribute {
 #    my ($self, $attribute_value) = @_;
@@ -241,11 +274,13 @@ sub parse_info {
 
 sub parse_format {
 	my ($self, $format) = @_;
+	$format ||= '';
 	chomp $format;
 
-	my @values = split /:/, $format;
+	my $values = [];
+	@{$values} = split /:/, $format;
 
-	return wantarray ? @values : \@values;
+	return wantarray ? @{$values} : $values;
 }
 
 #-----------------------------------------------------------------------------
@@ -262,6 +297,8 @@ sub parse_format {
 
 sub parse_gt {
     my ($self, $format, $gts) = @_;
+    
+    $gts ||= {};
     
     for my $gt_ref (@{$gts}) {
 	chomp $gt_ref;

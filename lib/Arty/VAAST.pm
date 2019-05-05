@@ -83,7 +83,15 @@ sub new {
 	return $self;
 }
 
+#-----------------------------------------------------------------------------
+#------------------------------ Private Methods ------------------------------
+#-----------------------------------------------------------------------------
+
 =head1 PRIVATE METHODS
+
+= cut
+
+#-----------------------------------------------------------------------------
 
 =head2 _initialize_args
 
@@ -107,10 +115,12 @@ sub _initialize_args {
   ######################################################################
   my $args = $self->SUPER::_initialize_args(@args);
   # Set valid class attributes here
-  my @valid_attributes = qw();
+  my @valid_attributes = qw(scored);
   $self->set_attributes($args, @valid_attributes);
   ######################################################################
 }
+
+#-----------------------------------------------------------------------------
 
 =head2 _process_header
 
@@ -139,10 +149,37 @@ sub _initialize_args {
      }
 }
 
+#-----------------------------------------------------------------------------
+#--------------------------------- Attributes --------------------------------
+#-----------------------------------------------------------------------------
+
 =head1 ATTRIBUTES
 
 =cut
     
+=head2 scored
+
+ Title   : scored
+ Usage   : $scored = $self->scored($scored_value);
+ Function: Get/set scored.  Setting this to a true value
+           causes Arty::VAAST to only load scored features.
+ Returns : Value of scored attribute
+ Args    : A value that evaluates by Perl to True or False
+
+=cut
+
+sub scored {
+  my ($self, $scored_value) = @_;
+
+  if ($scored_value) {
+    $self->{scored} = $scored_value;
+  }
+
+  return $self->{scored};
+}
+
+#-----------------------------------------------------------------------------
+
 # =head2 attribute
 #
 #   Title   : attribute
@@ -204,6 +241,7 @@ sub next_record {
   }
   return undef unless defined $record_lines[0];
   my $record = $self->parse_vaast_record(\@record_lines);
+  return undef if $self->{scored} && $record->{score} <= 0;
   return wantarray ? %{$record} : $record;
 }
 
@@ -221,229 +259,435 @@ sub next_record {
 
 sub parse_vaast_record {
 
-  my ($self, $record_lines) = @_;
+    my ($self, $record_lines) = @_;
 
-  my %record;
-  while (my $line = shift @{$record_lines}) {
+    my %record;
+  LINE:
+    while (my $line = shift @{$record_lines}) {
+	
+	## VAAST_VERSION 2.1.4
+	## COMMAND	VAAST --less_ram -q 40 -m lrt -k -d 10000000 -j 0.0000024 -fast_gp --iht r ...
+	## TOTAL_RUN_TIME	24171 seconds
+	# >NM_005961	MUC6
+	# chr11	-	1013456;1013633;-;chr11	1013899;1014001;-;chr11	...
+	# TU:	168.82	1017981@chr11	T|H	N|0-6|A:A|L:L
+	# T:        99.98   ins-chrX-101395783-1 ~ 0|!:G|!:AP 4|!:G|!:P 1|G:G|AP:AP 2-3,5-8|G:G|P:P
+	# TR:	0.00	1018374@chr11	T|N	B|5|A:A|I:I	B|4|A:T|I:N
+	# BR:	1013922@chr11	C|E	358,614,618,733,773,776,798,812,840,888,890,950,952-954,979,991|C:T|E:E
+	# BR:	1013992@chr11	C|S	898|C:T|S:N
+	# BR:	1015786@chr11	C|G	100,843,847,953|C:T|G:R
+	# RANK:0
+	# SCORE:168.82330347
+	# genome_permutation_p:2.65314941903305e-18
+	# genome_permutation_0.95_ci:2.65314941903305e-18,2.25166330953082e-06
+	
+	
+	#---------------------------------------
+	# Parse Variant Line
+	#---------------------------------------
+	if ($line =~ /^(T|TR|TU|P|PR|B|BR):\s+/) {
+	    my @fields = split /\s+/, $line;
+	    my ($tag, $score, $lod_score, $locus, $ref_seqs, @genotype_data);
+	    
+	    my %type_map = (ins => 'insertion',
+			    del => 'deletion',
+			    mnp => 'MNP',
+		);
+	    
+	    #---------------------------------------
+	    # Parse Target Variants
+	    #---------------------------------------
+	    if ($line =~ /^T[RU]?:\s+/) {
+		($tag, $score, $locus, $ref_seqs, @genotype_data) = @fields;
+		if ($score =~ /\(.*\)/) {
+		    $score =~ s/\(.*\)//;
+		    $lod_score = $1;
+		}
+	    }
+	    #---------------------------------------
+	    # Parse Background Variants
+	    #---------------------------------------
+	    elsif ($line =~ /^[BP]R?:\s+/) {
+		($tag, $locus, $ref_seqs, @genotype_data) = @fields;
+	    }
+	    #---------------------------------------
+	    # Handle Nonstandard Variants
+	    #---------------------------------------
+	    else {
+		throw_msg('invalid_vaast_record', $line);
+	    }
 
-    ## VAAST_VERSION 2.1.4
-    ## COMMAND	VAAST --less_ram -q 40 -m lrt -k -d 10000000 -j 0.0000024 -fast_gp --iht r ...
-    ## TOTAL_RUN_TIME	24171 seconds
-    # >NM_005961	MUC6
-    # chr11	-	1013456;1013633;-;chr11	1013899;1014001;-;chr11	...
-    # TU:	168.82	1017981@chr11	T|H	N|0-6|A:A|L:L
-    # T:        99.98   ins-chrX-101395783-1 ~ 0|!:G|!:AP 4|!:G|!:P 1|G:G|AP:AP 2-3,5-8|G:G|P:P
-    # TR:	0.00	1018374@chr11	T|N	B|5|A:A|I:I	B|4|A:T|I:N
-    # BR:	1013922@chr11	C|E	358,614,618,733,773,776,798,812,840,888,890,950,952-954,979,991|C:T|E:E
-    # BR:	1013992@chr11	C|S	898|C:T|S:N
-    # BR:	1015786@chr11	C|G	100,843,847,953|C:T|G:R
-    # RANK:0
-    # SCORE:168.82330347
-    # genome_permutation_p:2.65314941903305e-18
-    # genome_permutation_0.95_ci:2.65314941903305e-18,2.25166330953082e-06
+	    #---------------------------------------
+	    # Set Target/Background tags
+	    #---------------------------------------
+	    $tag =~ s/:$//;
+	    my ($short_tag) = substr($tag, 0, 1);
 
-    if ($line =~ /^(T|TR|TU|P|PR|B|BR):\s+/) {
-      my @fields = split /\s+/, $line;
-      my ($tag, $score, $lod_score, $locus, $ref_seqs, @genotype_data);
+	    #---------------------------------------
+	    # Parse variant details
+	    #---------------------------------------
+	    my ($type, $start, $chrom, $length);
+	    if ($tag =~ '^(T|P|B)$') {
+		($type, $chrom, $start, $length) = split /\-/, $locus;
+		$type = exists $type_map{$type} ? $type_map{$type} :
+		    $type;
+	    }
+	    else {
+		($start, $chrom) = split /\@/, $locus;
+		$type = 'SNV';
+	    }
+	    
+	    #---------------------------------------
+	    # Parse REF and create var_key
+	    #---------------------------------------
+	    my ($ref_nt, $ref_aa) = split /\|/, $ref_seqs;
+	    my $var_key = join ':', $chrom, $start, $ref_nt;
 
-      my %type_map = (ins => 'insertion',
-		      del => 'deletion',
-		      mnp => 'MNP',
-		      );
+	    #---------------------------------------
+	    # Parse Genotypes
+	    #---------------------------------------
+	    my @genotypes;
+	    my %allele_counts;
+	  GENOTYPE:
+	    for my $genotype_datum (@genotype_data) {
 
-      if ($line =~ /^T[RU]?:\s+/) {
-	($tag, $score, $locus, $ref_seqs, @genotype_data) = @fields;
-	if ($score =~ /\(.*\)/) {
-	  $score =~ s/\(.*\)//;
-	  $lod_score = $1;
+		#---------------------------------------
+		# Genotype flag
+		#---------------------------------------
+		my @fields = split /\|/, $genotype_datum;
+		my $flag = shift @fields if $tag =~ /^T[RU]/;
+		$flag ||= '';
+
+		#---------------------------------------
+		# Genotype nts & aas
+		#---------------------------------------
+		my ($set, $gt_nt_txt, $gt_aa_txt) = @fields;
+		$gt_aa_txt ||= '';
+		my @gt_nts = split /:/, $gt_nt_txt;
+		my @gt_aas = split /:/, $gt_aa_txt;
+		my @indvs;
+
+		#---------------------------------------
+		# Parse sample set string
+		#---------------------------------------
+		for my $indv (split /,/, $set) {
+		    if ($indv =~ /(\d+)\-(\d+)/) {
+			push @indvs, ($1..$2);
+		    }
+		    else {
+			push @indvs, $indv;
+		    }
+		}
+		
+		#---------------------------------------
+		# Count alleles
+		#---------------------------------------
+		my $indv_count = scalar @indvs;
+		map {$allele_counts{nt}{$_}{$short_tag} += $indv_count} @gt_nts;
+		# map {$allele_counts{aa}{$_}{$short_tag} += $indv_count} @gt_aas;
+		$allele_counts{gt}{$gt_nt_txt}{$short_tag} += $indv_count;
+		
+		#---------------------------------------
+		# Build & store genotype data
+		#---------------------------------------	
+		my %genotype = (flag  => $flag,
+				indvs => \@indvs,
+				gt_nt => \@gt_nts,
+				gt_aa => \@gt_aas,
+		    );
+		push @genotypes, \%genotype;
+	    }
+	    #---------------------------------------
+	    # ^^^ END GENOTYPE LOOP ^^^
+	    #---------------------------------------
+	    
+	    # Remove REF from allele list
+	    # delete $allele_counts{nt}{$ref_nt} if $ref_nt;
+	    # delete $allele_counts{aa}{$ref_aa} if $ref_aa;
+	    
+	    # Check for biallelic
+	    # throw_msg('biallelic_nt_alt', $line) if scalar keys %{$allele_counts{nt}} > 1;
+	    # throw_msg('biallelic_nt_alt', $line) if scalar keys %{$allele_counts{nt}} > 1;
+	    
+	    # my ($alt_nt) = keys %{$allele_counts{nt}};
+	    # my ($alt_aa) = keys %{$allele_counts{aa}};
+	    
+	    #---------------------------------------
+	    # Aggregate nt allele data
+	    #---------------------------------------
+	    my %alt_nt_hash;
+	    for my $nt (keys %{$allele_counts{nt}}) {
+		$record{Alleles}{$var_key}{AC}{$nt}{$short_tag} +=
+		    $allele_counts{nt}{$nt}{$short_tag};
+		$record{Alleles}{$var_key}{type}  = $type
+		    if defined $type;
+		$record{Alleles}{$var_key}{score} = $score
+		    if defined $score;
+		if ($nt ne $ref_nt && $nt ne '^') {
+		    $alt_nt_hash{$nt}++;
+		}
+	    }
+
+	    #---------------------------------------
+	    # Find the ALT nt
+	    #---------------------------------------
+	    my $alt_nt;
+	    if (scalar keys %alt_nt_hash > 1 ) {
+		my $alt_nts = join ',', keys  %alt_nt_hash;
+		warn_msg('multi_allelic_variant', "($alt_nts) $line");
+	    }
+	    else {
+		($alt_nt) = keys %alt_nt_hash;
+	    }
+
+	    # #---------------------------------------
+	    # # Aggregate aa allele data
+	    # #---------------------------------------
+	    # my %alt_aa_hash;
+	    # for my $aa (keys %{$allele_counts{aa}}) {
+	    # 	$record{Alleles}{$var_key}{AAC}{$aa}{$short_tag} +=
+	    # 	    $allele_counts{aa}{$aa}{$short_tag};
+	    # 	if ($aa ne $ref_aa && $aa ne '^' && $aa ne '-') {
+	    # 	    $alt_aa_hash{$aa}++;
+	    # 	}
+	    # }
+	    # 
+	    # #---------------------------------------
+	    # # Find the ALT aa
+	    # #---------------------------------------
+	    # my $alt_aa;
+	    # if (scalar keys %alt_aa_hash > 1 ) {
+	    # 	my $alt_aas = join ',', keys  %alt_aa_hash;
+	    # 	warn_msg('multi_allelic_variant', "($alt_aas) $line");
+	    # 	print '';
+	    # }
+	    # else {
+	    # 	($alt_aa) = keys %alt_aa_hash;
+	    # }
+	
+	    #---------------------------------------
+	    # Aggregate gt allele data
+	    #---------------------------------------
+	    for my $gt (keys %{$allele_counts{gt}}) {
+		$record{Alleles}{$var_key}{GT}{$gt}{$short_tag} +=
+		    $allele_counts{gt}{$gt}{$short_tag};
+	    }
+
+	    #---------------------------------------
+	    # Build & store variant data
+	    #---------------------------------------
+	    my $var_data = {start     => $start,
+			    score     => $score,
+			    ref_nt    => $ref_nt,
+			    ref_aa    => $ref_aa,
+			    alt_nt    => $alt_nt,
+			    # alt_aa    => $alt_aa,
+			    genotypes => \@genotypes
+	    };
+	    $var_data->{lod_score} = $lod_score if defined $lod_score;
+	    $var_data->{type}   = $type   if $type;
+	    $var_data->{length} = $length if $length;
+	    
+	    push @{$record{$tag}}, $var_data;
+	    print '';
 	}
-      }
-      elsif ($line =~ /^[BP]R?:\s+/) {
-	($tag, $locus, $ref_seqs, @genotype_data) = @fields;
-      }
-      else {
-	throw_msg('invalid_vaast_record', $line);
-      }
+	#---------------------------------------
+	# ^^^ END VARIANT LINE BLOCK ^^^
+	#---------------------------------------
 
-      $tag =~ s/:$//;
-      my ($type, $start, $seqid, $length);
-      if ($tag =~ '^(T|P|B)$') {
-	  ($type, $seqid, $start, $length) = split /\-/, $locus;
-	  $type = exists $type_map{$type} ? $type_map{$type} : $type;
-      }
-      else {
-	  ($start, $seqid) = split /\@/, $locus;
-	  $type = 'SNV';
-      }
+	#---------------------------------------
+	# Parse Record Header
+	#---------------------------------------
+	# >NM_005961	MUC6
+	elsif ($line =~ /^>/) {
+	    my ($feature_id, $gene) = split /\s+/, $line;
+	    $feature_id =~ s/^>//;
+	    $record{feature_id} = $feature_id;
+	    $record{gene} = $gene;
+	    # chr11	-	1013456;1013633;-;chr11	1013899;1014001;-;chr11	...
+	    $line = shift @{$record_lines};
+	    my ($chrom, $strand, @cds_text) = split /\s+/, $line;
+	    my @cds;
+	    for my $cds (@cds_text) {
+		my ($start, $end, $strand, $chrom) = split /;/, $cds;
+		$record{start} ||= $start;
+		$record{end}   ||= $end;
+		$record{start} = $start < $record{start} ? $start : $record{start};
+		$record{end}   = $end   > $record{end}   ? $end   : $record{end};
+		push @cds, [$start, $end];
+	    }
+	    $record{chrom} = $chrom;
+	    $record{strand} = $strand;
+	    $record{cds} = \@cds;
+	}
+	#---------------------------------------
+	# Parse Rank
+	#---------------------------------------
+	# RANK:0
+	elsif ($line =~ /^RANK:/) {
+	    my ($tag, $value) = split /\s*:\s*/, $line;
+	    if (! defined $value) {
+		warn_msg('missing_value', $line);
+	    }
+	    if ($value !~ /^\d+$/) {
+		warn_msg('invalid_value', $line);
+	    }
+	    $record{rank} = $value;
+	}
+	#---------------------------------------
+	# Parse Score
+	#---------------------------------------
+	# SCORE:168.82330347
+	elsif ($line =~ /^SCORE:/) {
+	    my ($tag, $value) = split /\s*:\s*/, $line;
+	    if (! defined $value) {
+		warn_msg('missing_value', $line);
+		$value = '';
+	    }
+	    if ($value !~ /^\d+(\.\d+)?$/) {
+		warn_msg('invalid_value', $line);
+	    }
+	    $record{score} = $value;
+	}
+	#---------------------------------------
+	# Parse UPF
+	#---------------------------------------
+	# UPF:0
+	elsif ($line =~ /^UPF:/) {
+	    my ($tag, $value) = split /\s*:\s*/, $line;
+	    if (! defined $value) {
+		warn_msg('missing_value', $line);
+		$value = '';
+	    }
+	    if ($value !~ /^\d+$/) {
+		warn_msg('invalid_value', $line);
+	    }
+	    $record{upf} = $value;
+	}
+	#---------------------------------------
+	# Parse genome_permutation_p
+	#---------------------------------------
+	# genome_permutation_p:2.65314941903305e-18
+	elsif ($line =~ /^genome_permutation_p:/) {
+	    my ($tag, $value) = split /\s*:\s*/, $line;
+	    if (! defined $value) {
+		warn_msg('missing_value', $line);
+		$value = '';
+	    }
+	    if ($value !~ /[0-9\.e\-]+/) {
+		warn_msg('invalid_value', $line);
+	    }
+	    $record{p_value} = $value;
+	}
+	#---------------------------------------
+	# Parse genome_permutation_0.95_ci
+	#---------------------------------------
+	# genome_permutation_0.95_ci:2.65314941903305e-18,2.25166330953082e-06
+	elsif ($line =~ /^genome_permutation_0\.95_ci:/) {
+	    my ($tag, $value) = split /\s*:\s*/, $line;
+	    if (! defined $value) {
+		warn_msg('missing_value', $line);
+		$value = '';
+	    }
+	    if ($value !~ /[0-9\.e\-]+,[0-9\.e\-]+/) {
+		warn_msg('invalid_value', $line);
+	    }
+	    my @values = split /,/, $value;
+	    #@values ||= ('', '');
+	    $record{confidence_interval} = \@values;
+	}
+	#---------------------------------------
+	# Parse Running_time
+	#---------------------------------------
+	# Running_time:14
+	elsif ($line =~ /^Running_time:/) {
+	    my ($tag, $value) = split /\s*:\s*/, $line;
+	    if (! defined $value) {
+		warn_msg('missing_value', $line);
+		$value = '';
+	    }
+	    if ($value !~ /^\d+$/) {
+		warn_msg('invalid_value', $line);
+	    }
+	    $record{running_time} = $value;
+	}
+	#---------------------------------------
+	# Parse num_permutations
+	#---------------------------------------
+	# num_permutations:1638301
+	elsif ($line =~ /^num_permutations:/) {
+	    my ($tag, $value) = split /\s*:\s*/, $line;
+	    if (! defined $value) {
+		warn_msg('missing_value', $line);
+		$value = '';
+	    }
+	    if ($value !~ /^\d+$/) {
+		warn_msg('invalid_value', $line);
+	    }
+	    $record{num_permutations} = $value;
+	}
+	#---------------------------------------
+	# Parse total_success
+	#---------------------------------------
+	# total_success:1
+	elsif ($line =~ /^total_success:/) {
+	    my ($tag, $value) = split /\s*:\s*/, $line;
+	    if (! defined $value) {
+		warn_msg('missing_value', $line);
+		$value = '';
+	    }
+	    if ($value !~ /^\d+$/) {
+		warn_msg('invalid_value', $line);
+	    }
+	    $record{total_success} = $value;
+	}
+	#---------------------------------------
+	# Parse LOD_SCORE
+	#---------------------------------------
+	# LOD_SCORE:0.7269,0.0526315789473684
+	elsif ($line =~ /^LOD_SCORE:/) {
+	    my ($tag, $value) = split /\s*:\s*/, $line;
+	    if (! defined $value) {
+		warn_msg('missing_value', $line);
+		$value = '';
+	    }
+	    if ($value !~ /^\d+/) {
+		warn_msg('invalid_value', $line);
+	    }
+	    my @values = split /,/, $value;
+	    $record{lod_score} = \@values;
+	}
+	#---------------------------------------
+	# Handle non-standard lines
+	#---------------------------------------
+	# Warn and skip on any line not recognized
+	else {
+	    warn_msg('invalid_data_line', $line);
+	}
+    }
+    #---------------------------------------
+    # ^^^ END LINE LOOP ^^^
+    #---------------------------------------
 
-      my ($reference_seq, $reference_aa) = split /\|/, $ref_seqs;
-      # $reference_aa ||= '';
-      my %genotypes;
-      for my $genotype_datum (@genotype_data) {
-	my @fields = split /\|/, $genotype_datum;
-	my $flag = shift @fields if $tag =~ /^T[RU]/;
-	$flag ||= '';
-	my ($range, $var_seq_txt, $var_aa_txt) = @fields;
-	$var_aa_txt ||= '';
-	my @var_seqs = split /:/, $var_seq_txt;
-	my @var_aas = split /:/, $var_aa_txt;
-	my %genotype = (flag        => $flag,
-			range       => $range,
-			variant_seq => \@var_seqs,
-			variant_aa  => \@var_aas,
-			);
-	$genotypes{$var_seq_txt} = \%genotype;
-      }
-      my $var_data = {start         => $start,
-		      score         => $score,
-		      reference_seq => $reference_seq,
-		      reference_aa  => $reference_aa,
-		      genotypes     => \%genotypes
-		     };
-      $var_data->{lod_score} = $lod_score if defined $lod_score;
-      $var_data->{type}   = $type   if $type;
-      $var_data->{length} = $length if $length;
-
-      push @{$record{$tag}}, $var_data
+    #---------------------------------------
+    # Finalize allele count data 
+    #---------------------------------------
+    for my $var_key (keys %{$record{Alleles}}) {
+	my $var = $record{Alleles}{$var_key};
+	$var->{score} ||= 0;
+	for my $nt_key (keys %{$var->{AC}}) {
+	    my $nt = $var->{AC}{$nt_key};
+	    $nt->{T} ||= 0;
+	    $nt->{B} ||= 0;
+	}
+	for my $gt_key (keys %{$var->{GT}}) {
+	    my $gt = $var->{GT}{$gt_key};
+	    $gt->{T} ||= 0;
+	    $gt->{B} ||= 0;
+	}
     }
-    # >NM_005961	MUC6
-    elsif ($line =~ /^>/) {
-      my ($feature_id, $gene) = split /\s+/, $line;
-      $feature_id =~ s/^>//;
-      $record{feature_id} = $feature_id;
-      $record{gene} = $gene;
-      # chr11	-	1013456;1013633;-;chr11	1013899;1014001;-;chr11	...
-      $line = shift @{$record_lines};
-      my ($seqid, $strand, @cds_text) = split /\s+/, $line;
-      my @cds;
-      for my $cds (@cds_text) {
-	my ($start, $end, $strand, $seqid) = split /;/, $cds;
-	$record{start} ||= $start;
-	$record{end}   ||= $end;
-	$record{start} = $start < $record{start} ? $start : $record{start};
-	$record{end}   = $end   > $record{end}   ? $end   : $record{end};
-	push @cds, [$start, $end];
-      }
-      $record{seqid} = $seqid;
-      $record{strand} = $strand;
-      $record{cds} = \@cds;
-    }
-    # RANK:0
-    elsif ($line =~ /^RANK:/) {
-      my ($tag, $value) = split /\s*:\s*/, $line;
-      if (! defined $value) {
-	warn_msg('missing_value', $line);
-      }
-      if ($value !~ /^\d+$/) {
-	warn_msg('invalid_value', $line);
-      }
-      $record{rank} = $value;
-    }
-    # SCORE:168.82330347
-    elsif ($line =~ /^SCORE:/) {
-      my ($tag, $value) = split /\s*:\s*/, $line;
-      if (! defined $value) {
-	warn_msg('missing_value', $line);
-	$value = '';
-      }
-      if ($value !~ /^\d+(\.\d+)?$/) {
-	warn_msg('invalid_value', $line);
-      }
-      $record{score} = $value;
-    }
-    # UPF:0
-    elsif ($line =~ /^UPF:/) {
-      my ($tag, $value) = split /\s*:\s*/, $line;
-      if (! defined $value) {
-	warn_msg('missing_value', $line);
-	$value = '';
-      }
-      if ($value !~ /^\d+$/) {
-	warn_msg('invalid_value', $line);
-      }
-      $record{upf} = $value;
-    }
-    # genome_permutation_p:2.65314941903305e-18
-    elsif ($line =~ /^genome_permutation_p:/) {
-      my ($tag, $value) = split /\s*:\s*/, $line;
-      if (! defined $value) {
-	warn_msg('missing_value', $line);
-	$value = '';
-      }
-      if ($value !~ /[0-9\.e\-]+/) {
-	warn_msg('invalid_value', $line);
-      }
-      $record{p_value} = $value;
-    }
-    # genome_permutation_0.95_ci:2.65314941903305e-18,2.25166330953082e-06
-    elsif ($line =~ /^genome_permutation_0\.95_ci:/) {
-      my ($tag, $value) = split /\s*:\s*/, $line;
-      if (! defined $value) {
-	warn_msg('missing_value', $line);
-	$value = '';
-      }
-      if ($value !~ /[0-9\.e\-]+,[0-9\.e\-]+/) {
-	warn_msg('invalid_value', $line);
-      }
-      my @values = split /,/, $value;
-      #@values ||= ('', '');
-      $record{confidence_interval} = \@values;
-    }
-    # Running_time:14
-    elsif ($line =~ /^Running_time:/) {
-      my ($tag, $value) = split /\s*:\s*/, $line;
-      if (! defined $value) {
-	warn_msg('missing_value', $line);
-	$value = '';
-      }
-      if ($value !~ /^\d+$/) {
-	warn_msg('invalid_value', $line);
-      }
-      $record{running_time} = $value;
-    }
-    # num_permutations:1638301
-    elsif ($line =~ /^num_permutations:/) {
-      my ($tag, $value) = split /\s*:\s*/, $line;
-      if (! defined $value) {
-	warn_msg('missing_value', $line);
-	$value = '';
-      }
-      if ($value !~ /^\d+$/) {
-	warn_msg('invalid_value', $line);
-      }
-      $record{num_permutations} = $value;
-    }
-    # total_success:1
-    elsif ($line =~ /^total_success:/) {
-      my ($tag, $value) = split /\s*:\s*/, $line;
-      if (! defined $value) {
-	warn_msg('missing_value', $line);
-	$value = '';
-      }
-      if ($value !~ /^\d+$/) {
-	warn_msg('invalid_value', $line);
-      }
-      $record{total_success} = $value;
-    }
-    # LOD_SCORE:0.7269,0.0526315789473684
-    elsif ($line =~ /^LOD_SCORE:/) {
-      my ($tag, $value) = split /\s*:\s*/, $line;
-      if (! defined $value) {
-	warn_msg('missing_value', $line);
-	$value = '';
-      }
-      if ($value !~ /^\d+/) {
-	warn_msg('invalid_value', $line);
-      }
-      my @values = split /,/, $value;
-      $record{lod_score} = \@values;
-    }
-    # Warn and skip on any line not recognized
-    else {
-      warn_msg('invalid_data_line', $line);
-    }
-  }
-  return wantarray ? %record : \%record;
+    
+    return wantarray ? %record : \%record;
 }
 
 #-----------------------------------------------------------------------------

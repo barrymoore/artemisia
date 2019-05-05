@@ -160,7 +160,7 @@ sub _initialize_args {
 
 =cut
 
-# =head2 attribute
+#  =head2 attribute
 # 
 #   Title   : attribute
 #   Usage   : $attribute = $self->attribute($attribute_value);
@@ -168,7 +168,7 @@ sub _initialize_args {
 #   Returns : An attribute value
 #   Args    : An attribute value
 # 
-# =cut
+#  =cut
 # 
 #  sub attribute {
 #    my ($self, $attribute_value) = @_;

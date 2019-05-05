@@ -305,32 +305,15 @@ sub file {
 	
 	if (exists $self->{file} && defined $self->{file}) {
 	    warn_msg('file_attribute_is_being_reset', $file);
-	}
-	
+	}	
 	$self->{file} = $file;
-	
-	# Get file handle
-	my $FH;
-	if ($file =~ /\.b?gz/) {
-	    open($FH, '-|', "gunzip -c $file") or
-		throw_msg('cant_open_gunzip_pipe_for_reading', $file);
-	}
-	else {
-	    open($FH, '<', $file) or
-		throw_msg('cant_open_file_for_reading', $file);
-	}
-	
-	# Set filehandle
-	if (exists $self->{fh} && defined $self->{fh}) {
-	    warn_msg('fh_attribute_is_being_reset', $FH);
-	}
-	$self->fh($FH);
+	# Clear any existing filehandle
+	delete $self->{fh};
     }
     
     if (! exists $self->{file} || ! defined $self->{file}) {
 	warn_msg('file_attribute_undefined');
     }
-    
     return $self->{file};
 }
 
@@ -351,22 +334,66 @@ sub fh {
   my ($self, $FH) = @_;
 
   if (defined $FH) {
-    if (exists $self->{fh} && defined $self->{fh}) {
-      warn_msg('fh_attribute_is_being_reset', $FH);
-    }
-    $self->{fh} = $FH;
+      if (exists $self->{fh} && defined $self->{fh}) {
+	  warn_msg('fh_attribute_is_being_reset', $FH);
+      }
+      $self->{fh} = $FH;
   }
-
-  if (! exists $self->{fh} || ! defined $self->{fh}) {
-    warn_msg('fh_attribute_undefined');
+  elsif (! exists $self->{fh}) {
+      my $file = $self->file;
+      my $FH;
+      if (my $tabix = $self->tabix) {
+	  open($FH, '-|', "tabix $file $tabix") or
+	      throw_msg('cant_open_tabix_pipe_for_reading', $file);
+      }
+      elsif ($file =~ /\.b?gz/) {
+	  open($FH, '-|', "gunzip -c $file") or
+	      throw_msg('cant_open_gunzip_pipe_for_reading', $file);
+      }
+      else {
+	  open($FH, '<', $file) or
+	      throw_msg('cant_open_file_for_reading', $file);
+      }
+      
+      # Set filehandle
+      if (exists $self->{fh} && defined $self->{fh}) {
+	  warn_msg('fh_attribute_is_being_reset', $FH);
+      }
+      $self->fh($FH);
+      
+      if (! exists $self->{fh} || ! defined $self->{fh}) {
+	  warn_msg('fh_attribute_undefined');
+      }
   }
-
   return $self->{fh};
 }
 
 #-----------------------------------------------------------------------------
 
-# =head2 attribute
+=head2 tabix
+
+ Title   : tabix
+ Usage   : $tabix = $self->tabix($tabix_filter);
+ Function: This attribute is an abstract method to return undef for classes
+           that do not impliment a tabix attribute.
+ Returns : undef
+ Args    : N/A
+
+=cut
+
+  sub tabix {
+  my ($self, $tabix_value) = @_;
+
+  if ($tabix_value) {
+      throw('tabix_attribute_not_supported', 'tabix is not supported');
+  }
+
+  return undef
+}
+
+#-----------------------------------------------------------------------------
+
+#  =head2 attribute
 # 
 #   Title   : attribute
 #   Usage   : $attribute = $self->attribute($attribute_value);
@@ -374,7 +401,7 @@ sub fh {
 #   Returns : An attribute value
 #   Args    : An attribute value
 # 
-# =cut
+#  =cut
 # 
 #  sub attribute {
 #    my ($self, $attribute_value) = @_;
@@ -409,7 +436,7 @@ sub fh {
 
 sub readline {
     my $self = shift @_;
-    my $FH = $self->{fh};
+    my $FH = $self->fh;
     return ($self->_shift_stack || <$FH>);
 }
 
