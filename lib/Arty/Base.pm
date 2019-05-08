@@ -124,7 +124,7 @@ sub new {
  Title   : _prepare_args
  Usage   : $args = $self->_prepare_args(@_);
  Function: Take a list of key value pairs that may be structured as an
-           array, a hash or and array or hash reference and return
+	   array, a hash or and array or hash reference and return
 	   them as a hash or hash reference depending on calling
 	   context.
  Returns : Hash or hash reference.
@@ -171,7 +171,7 @@ sub _prepare_args {
  Title   : _initialize_args
  Usage   : $self->_initialize_args($args);
  Function: Initialize the arguments passed to the constructor.  In particular
-           set all attributes passed.
+	   set all attributes passed.
  Returns : N/A
  Args    : A hash or array reference of arguments.
 
@@ -197,9 +197,9 @@ sub _initialize_args {
  Title   : _push_stack
  Usage   : $self->_push_stack($record_txt);
  Function: Push a string of text onto the _readline_stack. This is
-           used for adding a line read from a file handle back onto a
-           stack that will be read before the next call to the
-           filehandle.
+	   used for adding a line read from a file handle back onto a
+	   stack that will be read before the next call to the
+	   filehandle.
  Returns : N/A
  Args    : A scalar
 
@@ -247,9 +247,9 @@ list (or referenece) of key value pairs.
  Function: Set the level of verbosity written to STDERR by the code.
  Returns : None
  Args    : Arguments can be either the words debug, info, unique, warn,
-           fatal or their numerical equivalents as given below.
+	   fatal or their numerical equivalents as given below.
 
-           debug  | 1: Print all FATAL, WARN, INFO, and DEBUG messages.  Produces
+	   debug  | 1: Print all FATAL, WARN, INFO, and DEBUG messages.  Produces
 		       a lot of output.
 	   info   | 2: Print all FATAL, WARN, and INFO messages. This is the
 		       default.
@@ -302,15 +302,15 @@ sub file {
 	elsif (! -r $file) {
 	    throw_msg('file_not_readable', $file);
 	}
-	
+
 	if (exists $self->{file} && defined $self->{file}) {
 	    warn_msg('file_attribute_is_being_reset', $file);
-	}	
+	}
 	$self->{file} = $file;
 	# Clear any existing filehandle
 	delete $self->{fh};
     }
-    
+
     if (! exists $self->{file} || ! defined $self->{file}) {
 	warn_msg('file_attribute_undefined');
     }
@@ -354,13 +354,13 @@ sub fh {
 	  open($FH, '<', $file) or
 	      throw_msg('cant_open_file_for_reading', $file);
       }
-      
+
       # Set filehandle
       if (exists $self->{fh} && defined $self->{fh}) {
 	  warn_msg('fh_attribute_is_being_reset', $FH);
       }
       $self->fh($FH);
-      
+
       if (! exists $self->{fh} || ! defined $self->{fh}) {
 	  warn_msg('fh_attribute_undefined');
       }
@@ -375,7 +375,7 @@ sub fh {
  Title   : tabix
  Usage   : $tabix = $self->tabix($tabix_filter);
  Function: This attribute is an abstract method to return undef for classes
-           that do not impliment a tabix attribute.
+	   that do not impliment a tabix attribute.
  Returns : undef
  Args    : N/A
 
@@ -394,22 +394,22 @@ sub fh {
 #-----------------------------------------------------------------------------
 
 #  =head2 attribute
-# 
+#
 #   Title   : attribute
 #   Usage   : $attribute = $self->attribute($attribute_value);
 #   Function: Get/set attribute
 #   Returns : An attribute value
 #   Args    : An attribute value
-# 
+#
 #  =cut
-# 
+#
 #  sub attribute {
 #    my ($self, $attribute_value) = @_;
-# 
+#
 #    if ($attribute) {
 #      $self->{attribute} = $attribute;
 #    }
-# 
+#
 #    return $self->{attribute};
 #  }
 
@@ -428,7 +428,7 @@ sub fh {
  Title   : readline
  Usage   : my $line = $self->readline;
  Function: Read a line from the file handle, checking the
-           @{$self->{_readline_stack}} first.
+	   @{$self->{_readline_stack}} first.
  Returns : A line from the file or undef if the EOF is reached.
  Args    : N/A
 
@@ -447,7 +447,7 @@ sub readline {
  Title   : set_attributes
  Usage   : $base->set_attributes($args, @valid_attributes);
  Function: Take a hash reference of arguments and a list (or reference) of
-           valid attribute names and call the methods to set those
+	   valid attribute names and call the methods to set those
 	   attribute values.
  Returns : None
  Args    : A hash reference of arguments and an array or array reference of

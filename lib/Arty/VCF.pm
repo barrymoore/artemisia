@@ -153,7 +153,7 @@ sub _initialize_args {
  Title   : tabix
  Usage   : $tabix = $self->tabix(chr1:1234567-7654321);
  Function: Attribute to Get/Set a tabix range value.  If this attribute is set
-           the VCF file will be opened with a tabix pipe using the provided range.
+	   the VCF file will be opened with a tabix pipe using the provided range.
  Returns : The tabix range value
  Args    : A tabix range value
 
@@ -297,14 +297,14 @@ sub parse_format {
 
 sub parse_gt {
     my ($self, $format, $gts) = @_;
-    
+
     $gts ||= {};
-    
+
     for my $gt_ref (@{$gts}) {
 	chomp $gt_ref;
 	my @values = split /:/, $gt_ref;
 	map {$_ = [split /,/, $_]} @values;
-	
+
 	my %gt_data;
 	@gt_data{@{$format}} = @values;
 	$gt_ref = \%gt_data;
