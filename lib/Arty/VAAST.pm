@@ -178,7 +178,91 @@ sub scored {
   return $self->{scored};
 }
 
-#-----------------------------------------------------------------------------
+# #-----------------------------------------------------------------------------
+# 
+#  sub _initialize_args {
+#    my ($self, @args) = @_;
+# 
+# @@ -137,15 +137,28 @@ sub _initialize_args {
+# 
+#     LINE:
+#       while (my $line = $self->readline) {
+# 	  - return undef if ! defined $line;
+# 	  - if ($line =~ /^\#/) {
+# 	      -     chomp $line;
+# 	      -     push @{$self->{header}}, $line;
+# 	      - }
+# 	  - else {
+# 	      -     $self->_push_stack($line);
+# 	      -     last LINE;
+# 	      - }
+# +         return undef if ! defined $line;
+# +         if ($line =~ /^\#/) {
+# +             chomp $line;
+# +             push @{$self->{header}}, $line;
+# +             if ($line =~ /##\s+COMMAND\s+VAAST/) {
+# +                     if ($line =~ /\s+\-m\s+pvaast/) {
+# +                             $self->mode('pvaast');
+# +                     }
+# +                     elsif ($line =~ /\s+\-m\s+lrt/) {
+# +                             $self->mode('lrt');
+# +                     }
+# +                     else {
+# +                             info_msg('vaast_mode_unknown',
+# +                                      "Unable to determine VAAST " .
+# +                                      "mode from $line\n");
+# +                     }
+# +             }
+# +     }
+# +         else {
+# +             $self->_push_stack($line);
+# +             last LINE;
+# +         }
+#       }
+#  }
+# 
+# @@ -156,7 +169,7 @@ sub _initialize_args {
+#  =head1 ATTRIBUTES
+# 
+#  =cut
+# -
+# +
+#  =head2 scored
+# 
+#   Title   : scored
+# @@ -180,6 +193,34 @@ sub scored {
+# 
+#  #-----------------------------------------------------------------------------
+# 
+# +=head2 mode
+# +
+# +  Title   : mode
+# +  Usage   : $mode = $self->mode($mode_value);
+# +  Function: Get/set the value of the --mode option used to produce the given
+# +            VAAST analysis.
+# +  Returns : The mode value
+# +  Args    : A mode value.  Valid values are 'pvaast' and 'lrt'.
+# +
+# +=cut
+# +
+# +sub mode {
+# +        my ($self, $mode) = @_;
+# +
+# +        if ($mode) {
+# +                if ($mode ne 'pvaast' && $mode ne 'lrt') {
+# +                        throw_msg('invalid_vaast_mode', "VAAST mode $mode " .
+# +                                  "not supported.  Check spelling then " .
+# +                                  "request support.");
+# +                }
+# +                $self->{mode} = $mode;
+# +        }
+# +
+# +        return $self->{mode};
+# +}
+# +
+# +#-----------------------------------------------------------------------------
+# +
+
 
 # =head2 attribute
 #

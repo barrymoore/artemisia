@@ -22,13 +22,14 @@ my $usage = "
 Synopsis:
 
 vaast_report_generator.pl      \
+    --title     'Project Name' \
     --vcf       samples.vcf.gz \
     --gnomad    gnomad.vcf.gz  \
     --base_name html_files_dir \
     --id_map    id_map.txt     \
     --bam_dir /path/to/bams/   \
     --snap_dir /path/to/png/   \
-    output.vaast
+    output.vaast               \
     phevor.txt
 
 Description:
@@ -45,6 +46,10 @@ Positional Arguments:
    HPO terms.
 
 Options:
+
+  --title, -p
+
+    A text string to be used as page titles etc.
 
   --vcf, -v
 
@@ -87,6 +92,7 @@ my $CL = join ' ', $0, @ARGV;
 my ($help, %data);
 
 my $opt_success = GetOptions('help'          => \$help,
+			     'title|p=s'     => \$data{title},
 			     'vcf|v=s'       => \$data{vcf_file},
 			     'gnomad|g=s'    => \$data{gnomad_file},
 			     'base_name|b=s' => \$data{base_name},
@@ -96,6 +102,8 @@ my $opt_success = GetOptions('help'          => \$help,
     );
 
 die $usage if $help || ! $opt_success;
+
+$data{title} ||= 'VAAST Phevor Report';
 
 @data{qw(vaast_file phevor_file)} = @ARGV;
 
@@ -131,20 +139,13 @@ make_path($data{base_name});
 
 process_data(\%data);
 
-my $table = Cirque::DataTable->new(data       => $data{row_data},
-				   columns    => $data{columns},
-				   full_page  => 1,
-				   order      => "[[1, 'asc'], [10, 'dsc']]",
-				   pageLength => 100,
-				   );
-
 my $filename = $data{base_name} . '.html';
 
 open(my $OUT, '>', $filename)
     or die "FATAL : cant_open_file_for_writing : $filename\n";
 
 
-print $OUT $table->build_table;
+print $OUT build_table(\%data);
 print $OUT "\n";
 close $OUT;
 
@@ -156,9 +157,6 @@ sub build_table {
 
   my $data = shift @_;
 
-  my $order = $data->{order};
-  my $pageLength = $data->{pageLength};
-
   my $html;
   #----------------------------------------
   # HTML page header
@@ -166,44 +164,58 @@ sub build_table {
   $html  = "<!DOCTYPE html>\n";
   $html .= "<html>\n";
   $html .= "  <head>\n";
-  $html .= "    <title>Page Title</title>\n";
+  $html .= "    <title>$data->{title}</title>\n";
   $html .= "    <link rel=\"stylesheet\" type=\"text/css\" href=\"https://cdn.datatables.net/1.10.19/css/jquery.dataTables.min.css\">\n";
-  $html .= "    <script src=\"https://code.jquery.com/jquery-3.3.1.js\"></script>\n";
+  $html .= "    <script src=\"https://code.jquery.com/jquery-3.4.1.js\"></script>\n";
+  $html .= "    <script src=\"https://code.jquery.com/ui/1.12.1/jquery-ui.js\"></script>\n";
   $html .= "    <script src=\"https://cdn.datatables.net/1.10.19/js/jquery.dataTables.min.js\"></script>\n";
   $html .= "    <script>\n";
-  $html .= "      $(document).ready(function() {\n";
-  $html .= "        $(\'#datatable\').DataTable({\n";
-  $html .= "          \"order\" : $order,\n";
-  $html .= "          \"pageLength\" : $pageLength,\n";
+  $html .= "  	  $(function() {\n";
+  $html .= "  	    $(document).tooltip();\n";
+  $html .= "  	  });\n";
+  $html .= "  	</script>\n";
+  $html .= "  	<style>\n";
+  $html .= "  	label {\n";
+  $html .= "  	  display: inline-block;\n";
+  $html .= "  	  width: 5em;\n";
+  $html .= "  	}\n";
+  $html .= "  	</style>\n";
+  $html .= "    <script>\n";
+  $html .= "      \$(document).ready(function() {\n";
+  $html .= "        \$('#datatable').DataTable({\n";
+  $html .= "          \"order\" : [[1, 'asc'], [10, 'dsc']],\n";
+  $html .= "          \"pageLength\" : 100,\n";
   $html .= "          });\n";
   $html .= "      });\n";
   $html .= "    </script>\n";
   $html .= "  </head>\n";
   $html .= "  <body>\n";
   $html .= "\n";
+  $html .= "    <h1 style=\"text-align: center;\">$data->{title}</h1>\n";
+  $html .= "    <h2 style=\"text-align: center;\">VAAST/Phevor Analysis Report</h2>\n";
   $html .= "\n";
   #----------------------------------------
   # Start table
   #----------------------------------------
-  $html .= "<table id=\"datatable\" class=\"display\" style=\"width:100%\">\n";
+  $html .= "    <table id=\"datatable\" class=\"display\" style=\"width:90%\">\n";
   $html .= "\n";
   #----------------------------------------
   # Add header row
   #----------------------------------------
-  $html .= "  <thead>\n";
-  $html .= "  <tr>\n";
-  for my $column_head ($data->{columns}) {
-    $html .= "    <th>$column_head</th>\n";
+  $html .= "      <thead>\n";
+  $html .= "        <tr>\n";
+  for my $column_head (@{$data->{columns}}) {
+    $html .= "      <th>$column_head</th>\n";
   }
-  $html .= "  </tr>\n";
-  $html .= "  </thead>\n";
+  $html .= "        </tr>\n";
+  $html .= "      </thead>\n";
 
   #----------------------------------------
   # Add data rows
   #----------------------------------------
-  $html .= "  <tbody>\n";
+  $html .= "      <tbody>\n";
   for my $row (@{$data->{row_data}}) {
-      $html .= "  <tr>\n";
+      $html .= "      <tr>\n";
       
       #----------------------------------------
       # Add each column
@@ -238,9 +250,9 @@ sub build_table {
 	  else {
 	      $td_tag = '<td>';
 	  }
-	  $html .= "    ${td_tag}${cell_text}</td>\n";
+	  $html .= "        ${td_tag}${cell_text}</td>\n";
       }
-      $html .= "  </tr>\n"
+      $html .= "        </tr>\n"
   }
 
   #----------------------------------------
@@ -283,10 +295,9 @@ sub process_data {
     # Prep columns
     #----------------------------------------
 
-    $data{columns} = ['Gene', 'Phevor Rank', 'Phevor Score', 'Phevor Prior',
-		      'VAAST Rank', 'VAAST Score', 'VAAST Pval',
-		      'Gnomad Cmlt AF', 'Variant Location', 'Variant Type',
-		      'Variant CLRT Score', 'NT GT', 'AA GT', 'Het', 'Hom', 'NC'];
+    $data{columns} = ['Gene', 'Phevor Rank', 'Phevor Score',
+		      'Phevor Prior', 'VAAST Rank', 'VAAST Score',
+		      'VAAST Pval', 'Affected Count', 'No-call Count'];
 
     #----------------------------------------
     # Loop Phevor data
@@ -492,68 +503,84 @@ sub process_data {
 	    $data->{crnt_var}{hom_gt_txt} ||= '.';
 	    $data->{crnt_var}{nc_gt_txt}  ||= '.';
 
-	    #----------------------------------------
-	    # Add HTML formatting (var annotations)
-	    #----------------------------------------
-	    
-	    #----------------------------------------
-	    # Gnomad_Cmlt_AF
-	    #----------------------------------------
-	    if ($data->{crnt_var}{gnomad_cmlt_af} <= 0.0001) {
-		$data->{crnt_var}{gnomad_cmlt_af_fmt} = [$data->{crnt_var}{gnomad_cmlt_af}, {bgcolor => 'LightGreen'}];
-	    }
-	    elsif ($data->{crnt_var}{gnomad_cmlt_af} <= 0.01) {
-		$data->{crnt_var}{gnomad_cmlt_af_fmt} = [$data->{crnt_var}{gnomad_cmlt_af}, {bgcolor => 'LightYellow'}];
-	    }
-	    else {
-		$data->{crnt_var}{gnomad_cmlt_af_fmt} = [$data->{crnt_var}{gnomad_cmlt_af}, {bgcolor => 'LightCoral'}];
-	    }
-	
-	    #----------------------------------------
-	    # Variant Location
-	    #----------------------------------------
-	    $data->{crnt_var}{locus} = join ':', $data->{crnt_gene}{vaast_record}{chrom}, $data->{crnt_var}{start}; 
+	    # #----------------------------------------
+	    # # Add HTML formatting (var annotations)
+	    # #----------------------------------------
+	    # 
+	    # #----------------------------------------
+	    # # Gnomad_Cmlt_AF
+	    # #----------------------------------------
+	    # if ($data->{crnt_var}{gnomad_cmlt_af} <= 0.0001) {
+	    # 	$data->{crnt_var}{gnomad_cmlt_af_fmt} = [$data->{crnt_var}{gnomad_cmlt_af}, {bgcolor => 'LightGreen'}];
+	    # }
+	    # elsif ($data->{crnt_var}{gnomad_cmlt_af} <= 0.01) {
+	    # 	$data->{crnt_var}{gnomad_cmlt_af_fmt} = [$data->{crnt_var}{gnomad_cmlt_af}, {bgcolor => 'LightYellow'}];
+	    # }
+	    # else {
+	    # 	$data->{crnt_var}{gnomad_cmlt_af_fmt} = [$data->{crnt_var}{gnomad_cmlt_af}, {bgcolor => 'LightCoral'}];
+	    # }
+	    # 
+	    # #----------------------------------------
+	    # # Variant Location
+	    # #----------------------------------------
+	    # $data->{crnt_var}{locus} = join ':', $data->{crnt_gene}{vaast_record}{chrom}, $data->{crnt_var}{start}; 
+	    # 
+	    # #----------------------------------------
+	    # # Var_Type
+	    # #----------------------------------------
+	    # if ($data->{crnt_var}{type} eq 'SNV') {
+	    # 	$data->{crnt_var}{var_type_fmt} = [$data->{crnt_var}{type}, {bgcolor => 'LightGreen'}];
+	    # }
+	    # else {
+	    # 	$data->{crnt_var}{var_type_fmt} = [$data->{crnt_var}{type}, {bgcolor => 'LightYellow'}];
+	    # }
+	    # 
+	    # #----------------------------------------
+	    # # Var_Score
+	    # #----------------------------------------
+	    # if ($data->{crnt_var}{score} >= 8) {
+	    # 	$data->{crnt_var}{var_score_fmt} = [$data->{crnt_var}{score}, {bgcolor => 'LightGreen'}];
+	    # }
+	    # elsif ($data->{crnt_var}{score} >= 2) {
+	    # 	$data->{crnt_var}{var_score_fmt} = [$data->{crnt_var}{score}, {bgcolor => 'LightYellow'}];
+	    # }
+	    # else {
+	    # 	$data->{crnt_var}{var_score_fmt} = [$data->{crnt_var}{score}, {bgcolor => 'LightCoral'}];
+	    # }
+	    # 
+	    # #----------------------------------------
+	    # # NT Change
+	    # #----------------------------------------
+	    # # $data->{crnt_var}{nt_change};
+	    # 
+	    # #----------------------------------------
+	    # # AA Change
+	    # #----------------------------------------
+	    # 
+	    # #----------------------------------------
+	    # # NC_GT_TXT
+	    # #----------------------------------------
+	    # if ($data->{crnt_var}{nc_gt_txt} eq '.') {
+	    # 	$data->{crnt_var}{nc_gt_txt_fmt} = [$data->{crnt_var}{nc_gt_txt}, {bgcolor => 'LightGreen'}];
+	    # }
+	    # else {
+	    # 	$data->{crnt_var}{nc_gt_txt_fmt} = [$data->{crnt_var}{nc_gt_txt}, {bgcolor => 'LightCoral'}];
+	    # }
 
 	    #----------------------------------------
-	    # Var_Type
+	    # Create Affected Count
 	    #----------------------------------------
-	    if ($data->{crnt_var}{type} eq 'SNV') {
-		$data->{crnt_var}{var_type_fmt} = [$data->{crnt_var}{type}, {bgcolor => 'LightGreen'}];
-	    }
-	    else {
-		$data->{crnt_var}{var_type_fmt} = [$data->{crnt_var}{type}, {bgcolor => 'LightYellow'}];
-	    }
-	    
-	    #----------------------------------------
-	    # Var_Score
-	    #----------------------------------------
-	    if ($data->{crnt_var}{score} >= 8) {
-		$data->{crnt_var}{var_score_fmt} = [$data->{crnt_var}{score}, {bgcolor => 'LightGreen'}];
-	    }
-	    elsif ($data->{crnt_var}{score} >= 2) {
-		$data->{crnt_var}{var_score_fmt} = [$data->{crnt_var}{score}, {bgcolor => 'LightYellow'}];
-	    }
-	    else {
-		$data->{crnt_var}{var_score_fmt} = [$data->{crnt_var}{score}, {bgcolor => 'LightCoral'}];
-	    }
-	    
-	    #----------------------------------------
-	    # NT Change
-	    #----------------------------------------
-	    # $data->{crnt_var}{nt_change};
-	    
-	    #----------------------------------------
-	    # AA Change
-	    #----------------------------------------
-	    
-	    #----------------------------------------
-	    # NC_GT_TXT
-	    #----------------------------------------
-	    if ($data->{crnt_var}{nc_gt_txt} eq '.') {
-		$data->{crnt_var}{nc_gt_txt_fmt} = [$data->{crnt_var}{nc_gt_txt}, {bgcolor => 'LightGreen'}];
-	    }
-	    else {
-		$data->{crnt_var}{nc_gt_txt_fmt} = [$data->{crnt_var}{nc_gt_txt}, {bgcolor => 'LightCoral'}];
+
+	    $data->{crnt_gene}{affected_count} = 0;
+	    $data->{crnt_gene}{nc_count} = 0;
+	  GT:
+	    for my $gt (keys %{$data->{crnt_var}{gc}}) {
+		if ($gt eq '^:^') {
+		    $data->{crnt_gene}{nc_count}++;
+		}
+		else {
+		    $data->{crnt_gene}{affected_count}++;
+		}
 	    }
 	    
 	    #----------------------------------------
@@ -562,29 +589,22 @@ sub process_data {
 	    
 	    create_variant_page($data);
 
-	    #----------------------------------------
-	    # Save data for each variant
-	    #----------------------------------------
-
-	    push @{$data->{row_data}}, [$data->{crnt_gene}{phevor_gene_fmt},
-					$data->{crnt_gene}{phevor_rank_fmt},
-					$data->{crnt_gene}{phevor_score_fmt},
-					$data->{crnt_gene}{phevor_prior_fmt},
-					$data->{crnt_gene}{vaast_rank_fmt},
-					$data->{crnt_gene}{vaast_score_fmt},
-					$data->{crnt_gene}{vaast_pval_fmt},
-					$data->{crnt_var}{gnomad_cmlt_af_fmt},
-					$data->{crnt_var}{locus},
-					$data->{crnt_var}{var_type_fmt},
-					$data->{crnt_var}{var_score_fmt},
-					$data->{crnt_var}{nt_gt_txt},
-					$data->{crnt_var}{aa_gt_txt},
-					$data->{crnt_var}{het_gt_txt},
-					$data->{crnt_var}{hom_gt_txt},
-					$data->{crnt_var}{nc_gt_txt}];
-	    print '';
-
 	}
+
+	#----------------------------------------
+	# Save data for each variant
+	#----------------------------------------
+	
+	push @{$data->{row_data}}, [$data->{crnt_gene}{phevor_gene_fmt},
+				    $data->{crnt_gene}{phevor_rank_fmt},
+				    $data->{crnt_gene}{phevor_score_fmt},
+				    $data->{crnt_gene}{phevor_prior_fmt},
+				    $data->{crnt_gene}{vaast_rank_fmt},
+				    $data->{crnt_gene}{vaast_score_fmt},
+				    $data->{crnt_gene}{vaast_pval_fmt},
+				    $data->{crnt_gene}{affected_count},
+				    $data->{crnt_gene}{nc_count}];
+	print '';
     }
     return;
 }
@@ -680,6 +700,8 @@ sub create_gene_page {
     #----------------------------------------
     # Gene Page - Variant Detail Table Head
     #----------------------------------------
+    # 'Gnomad Cmlt AF', 'Variant Location', 'Variant Type',
+    # 'Variant CLRT Score', 'NT GT', 'AA GT', 'Het', 'Hom', 'NC'
     $html .= "    <table id=\"vartable\" class=\"display\" style=\"width:90%\">\n";
     $html .= "      <thead>\n";
     $html .= "        <tr>\n";
