@@ -399,7 +399,6 @@ sub parse_vaast_record {
 	    # BR: 1013992@chr11	C|S 898|C:T|S:N
 	    elsif ($line =~ /^[BP]R?:\s+/) {
 		($tag, $locus, $ref_seqs, @genotype_data) = @fields;
-		$score = '-1';
 	    }
 	    #---------------------------------------
 	    # Handle Nonstandard Variants
@@ -519,8 +518,8 @@ sub parse_vaast_record {
 		    $allele_counts{nt}{$nt}{$short_tag};
 		$record{vars}{$var_key}{type}  = $type
 		    if defined $type;
-		$record{vars}{$var_key}{score} = $score
-		    if defined $score;
+		$record{vars}{$var_key}{score} = defined $score ?
+		    $score : $record{vars}{$var_key}{score};
 		if ($nt ne $ref_nt && $nt ne '^') {
 		    $alt_nt_hash{$nt}++;
 		}
@@ -595,7 +594,7 @@ sub parse_vaast_record {
 	    #---------------------------------------
 	    $record{vars}{$var_key}{start}  = $start
 		unless exists $record{vars}{$var_key}{start};
-	    $record{vars}{$var_key}{score}  = $score
+	    $record{vars}{$var_key}{score} = ($score || 0)
 		unless exists $record{vars}{$var_key}{score};
 	    $record{vars}{$var_key}{ref_nt} = $ref_nt
 		unless exists $record{vars}{$var_key}{ref_nt};
@@ -796,6 +795,7 @@ sub parse_vaast_record {
 	else {
 	    warn_msg('invalid_data_line', $line);
 	}
+	print '';
     }
     #---------------------------------------
     # ^^^ END LINE LOOP ^^^

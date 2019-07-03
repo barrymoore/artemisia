@@ -166,28 +166,31 @@ sub build_table {
   $html .= "  <head>\n";
   $html .= "    <title>$data->{title}</title>\n";
   $html .= "    <link rel=\"stylesheet\" type=\"text/css\" href=\"https://cdn.datatables.net/1.10.19/css/jquery.dataTables.min.css\">\n";
+  $html .= "\n";
   $html .= "    <script src=\"https://code.jquery.com/jquery-3.4.1.js\"></script>\n";
   $html .= "    <script src=\"https://code.jquery.com/ui/1.12.1/jquery-ui.js\"></script>\n";
   $html .= "    <script src=\"https://cdn.datatables.net/1.10.19/js/jquery.dataTables.min.js\"></script>\n";
+# $html .= "    <script>\n";
+# $html .= "  	  \$(function() {\n";
+# $html .= "  	    \$(document).tooltip();\n";
+# $html .= "  	  });\n";
+# $html .= "  	</script>\n";
+  $html .= "\n";
   $html .= "    <script>\n";
-  $html .= "  	  $(function() {\n";
-  $html .= "  	    $(document).tooltip();\n";
-  $html .= "  	  });\n";
-  $html .= "  	</script>\n";
+  $html .= "      \$(document).ready(function() {\n";
+  $html .= "        \$('#datatable').DataTable({\n";
+  $html .= "          order : [[2, 'dsc'], [4, 'asc']],\n";
+  $html .= "          pageLength : 100,\n";
+  $html .= "          });\n";
+  $html .= "      });\n";
+  $html .= "    </script>\n";
+  $html .= "\n";
   $html .= "  	<style>\n";
   $html .= "  	label {\n";
   $html .= "  	  display: inline-block;\n";
   $html .= "  	  width: 5em;\n";
   $html .= "  	}\n";
   $html .= "  	</style>\n";
-  $html .= "    <script>\n";
-  $html .= "      \$(document).ready(function() {\n";
-  $html .= "        \$('#datatable').DataTable({\n";
-  $html .= "          \"order\" : [[1, 'asc'], [10, 'dsc']],\n";
-  $html .= "          \"pageLength\" : 100,\n";
-  $html .= "          });\n";
-  $html .= "      });\n";
-  $html .= "    </script>\n";
   $html .= "  </head>\n";
   $html .= "  <body>\n";
   $html .= "\n";
@@ -232,6 +235,8 @@ sub build_table {
 	  else {
 	      $cell_text = $cell_data;
 	  }
+	  $cell_text = ! defined $cell_text ? '' : $cell_text;
+	  $cell_format = ! defined $cell_format ? '' : $cell_format;
 	  
 	  #----------------------------------------
 	  # Prep cell format
@@ -289,13 +294,13 @@ sub process_data {
 	    unless exists $vaast_map{$gene};
     }
 
-    $data{vaast_map} = \%vaast_map;
+    $data->{vaast_map} = \%vaast_map;
     
     #----------------------------------------
     # Prep columns
     #----------------------------------------
 
-    $data{columns} = ['Gene', 'Phevor Rank', 'Phevor Score',
+    $data->{columns} = ['Gene', 'Phevor Rank', 'Phevor Score',
 		      'Phevor Prior', 'VAAST Rank', 'VAAST Score',
 		      'VAAST Pval', 'Affected Count', 'No-call Count'];
 
@@ -314,7 +319,7 @@ sub process_data {
 	#----------------------------------------
 	my ($phevor_rank, $phevor_gene, $phevor_score, $phevor_prior) =
 	    @{$phevor_record}{qw(rank gene score prior orig_p)};
-	$data{crnt_gene}{phevor_rank} = $phevor_rank + 1;
+	$data->{crnt_gene}{phevor_rank} = $phevor_rank + 1;
 
 	#----------------------------------------
 	# Skip boring data
@@ -328,7 +333,7 @@ sub process_data {
 	my $vaast_record = $vaast_map{$phevor_gene};
 	my ($vaast_rank, $vaast_gene, $vaast_feature, $vaast_score, $vaast_pval) = 
 	    @{$vaast_record}{qw(rank gene feature_id score p_value)};
-	$data{crnt_gene}{vaast_rank} = $vaast_rank + 1;;
+	$data->{crnt_gene}{vaast_rank} = $vaast_rank + 1;;
 	
 	#----------------------------------------
 	# Format floating points
@@ -342,7 +347,7 @@ sub process_data {
 
 	# Phevor_Gene
 	#--------------------
-    	$data{crnt_gene}{phevor_gene_fmt} = "<a href=$data->{rel_base}/${phevor_gene}.html>$phevor_gene</a>";
+    	$data->{crnt_gene}{phevor_gene_fmt} = "<a href=$data->{rel_base}/${phevor_gene}.html>$phevor_gene</a>";
 
 	# Phevor_Rank
 	#--------------------
@@ -417,179 +422,18 @@ sub process_data {
 	}
 	    
 	# Store current Phevor and VAAST records
-	$data{crnt_gene}{phevor_record} = $phevor_record;
-	$data{crnt_gene}{vaast_record}  = $vaast_record;
+	$data->{crnt_gene}{phevor_record} = $phevor_record;
+	$data->{crnt_gene}{vaast_record}  = $vaast_record;
+
+	#----------------------------------------
+	# Preprocess all variant for current gene
+	#----------------------------------------
+	process_variant_data($data);
 
 	#----------------------------------------
 	# Create gene page
 	#----------------------------------------
 	create_gene_page($data);
-
-	#----------------------------------------
-	# Calculate allele counts
-	# Sort variants by score
-	#----------------------------------------
-      VAR:
-	for my $var_key (sort {($vaast_record->{vars}{$b}{score}
-				<=> 
-				$vaast_record->{vars}{$a}{score})}
-			 keys %{$vaast_record->{vars}}) {
-
-	    #----------------------------------------
-	    # Set current variant data
-	    #----------------------------------------
-	    $data->{crnt_var} = $vaast_record->{vars}{$var_key};
-
-	    #----------------------------------------
-	    # Skip variants with 0 score in main table
-	    #----------------------------------------
-	    next VAR unless $data->{crnt_var}{score} > 0;
-
- 	    $data->{crnt_var}{var_key} = $var_key;
-	    my ($chrom, $start, $ref) = split /:/, $data->{crnt_var}{var_key};
-	    my $gnomad_vcf = Arty::VCF->new(file  => $data{gnomad_file},
-					    tabix => "$chrom:${start}-${start}");
-	    while (my $gnmd_record = $gnomad_vcf->next_record) {
-		$data->{crnt_var}{gnomad_cmlt_af} += $gnmd_record->{info}{AF}[0];
-	    }
-
-	    $data->{crnt_var}{gnomad_cmlt_af} ||= 0;
-	    
-	    #----------------------------------------
-	    # Format floating points
-	    #----------------------------------------
-	    $data->{crnt_var}{gnomad_cmlt_af} =  sprintf '%.2g', $data->{crnt_var}{gnomad_cmlt_af};
-	    
-	    #---------------------------------------
-	    # Loop genotype data
-	    #----------------------------------------
-	    $data->{crnt_var}{gt_data} = {NC  => [],
-					  HOM => [],
-					  HET => []};
-
-	    for my $gt_key (sort keys %{$data->{crnt_var}{gc}}) {
-
-		#---------------------------------------
-		# Get genotype count data
-		#----------------------------------------
-		my $gt = $data->{crnt_var}{gc}{$gt_key};
-		my $b_count = $gt->{B};
-		my $t_count = $gt->{T};
-
-		#----------------------------------------
-		# Collect B & T count of each genotype
-		# by class (NC, HOM, HET)
-		#----------------------------------------
-		my ($A, $B) = split ':', $gt_key;
-		my $gt_txt = join ',', $gt_key, $b_count, $t_count;
-		if (grep {$_ eq '^'} ($A, $B)) {
-		    push @{$data->{crnt_var}{gt_data}{NC}}, $gt_txt;
-		}
-		elsif ($A eq $B) {
-		    push @{$data->{crnt_var}{gt_data}{HOM}}, $gt_txt;
-		}
-		else {
-		    push @{$data->{crnt_var}{gt_data}{HET}}, $gt_txt;		    
-		}
-	    }
-
-	    #----------------------------------------
-	    # Prep genotype data
-	    #----------------------------------------
-	    $data->{crnt_var}{het_gt_txt} = join '|', @{$data->{crnt_var}{gt_data}{HET}};
-	    $data->{crnt_var}{hom_gt_txt} = join '|', @{$data->{crnt_var}{gt_data}{HOM}};
-	    $data->{crnt_var}{nc_gt_txt}  = join '|', @{$data->{crnt_var}{gt_data}{NC}};
-	    $data->{crnt_var}{het_gt_txt} ||= '.';
-	    $data->{crnt_var}{hom_gt_txt} ||= '.';
-	    $data->{crnt_var}{nc_gt_txt}  ||= '.';
-
-	    # #----------------------------------------
-	    # # Add HTML formatting (var annotations)
-	    # #----------------------------------------
-	    # 
-	    # #----------------------------------------
-	    # # Gnomad_Cmlt_AF
-	    # #----------------------------------------
-	    # if ($data->{crnt_var}{gnomad_cmlt_af} <= 0.0001) {
-	    # 	$data->{crnt_var}{gnomad_cmlt_af_fmt} = [$data->{crnt_var}{gnomad_cmlt_af}, {bgcolor => 'LightGreen'}];
-	    # }
-	    # elsif ($data->{crnt_var}{gnomad_cmlt_af} <= 0.01) {
-	    # 	$data->{crnt_var}{gnomad_cmlt_af_fmt} = [$data->{crnt_var}{gnomad_cmlt_af}, {bgcolor => 'LightYellow'}];
-	    # }
-	    # else {
-	    # 	$data->{crnt_var}{gnomad_cmlt_af_fmt} = [$data->{crnt_var}{gnomad_cmlt_af}, {bgcolor => 'LightCoral'}];
-	    # }
-	    # 
-	    # #----------------------------------------
-	    # # Variant Location
-	    # #----------------------------------------
-	    # $data->{crnt_var}{locus} = join ':', $data->{crnt_gene}{vaast_record}{chrom}, $data->{crnt_var}{start}; 
-	    # 
-	    # #----------------------------------------
-	    # # Var_Type
-	    # #----------------------------------------
-	    # if ($data->{crnt_var}{type} eq 'SNV') {
-	    # 	$data->{crnt_var}{var_type_fmt} = [$data->{crnt_var}{type}, {bgcolor => 'LightGreen'}];
-	    # }
-	    # else {
-	    # 	$data->{crnt_var}{var_type_fmt} = [$data->{crnt_var}{type}, {bgcolor => 'LightYellow'}];
-	    # }
-	    # 
-	    # #----------------------------------------
-	    # # Var_Score
-	    # #----------------------------------------
-	    # if ($data->{crnt_var}{score} >= 8) {
-	    # 	$data->{crnt_var}{var_score_fmt} = [$data->{crnt_var}{score}, {bgcolor => 'LightGreen'}];
-	    # }
-	    # elsif ($data->{crnt_var}{score} >= 2) {
-	    # 	$data->{crnt_var}{var_score_fmt} = [$data->{crnt_var}{score}, {bgcolor => 'LightYellow'}];
-	    # }
-	    # else {
-	    # 	$data->{crnt_var}{var_score_fmt} = [$data->{crnt_var}{score}, {bgcolor => 'LightCoral'}];
-	    # }
-	    # 
-	    # #----------------------------------------
-	    # # NT Change
-	    # #----------------------------------------
-	    # # $data->{crnt_var}{nt_change};
-	    # 
-	    # #----------------------------------------
-	    # # AA Change
-	    # #----------------------------------------
-	    # 
-	    # #----------------------------------------
-	    # # NC_GT_TXT
-	    # #----------------------------------------
-	    # if ($data->{crnt_var}{nc_gt_txt} eq '.') {
-	    # 	$data->{crnt_var}{nc_gt_txt_fmt} = [$data->{crnt_var}{nc_gt_txt}, {bgcolor => 'LightGreen'}];
-	    # }
-	    # else {
-	    # 	$data->{crnt_var}{nc_gt_txt_fmt} = [$data->{crnt_var}{nc_gt_txt}, {bgcolor => 'LightCoral'}];
-	    # }
-
-	    #----------------------------------------
-	    # Create Affected Count
-	    #----------------------------------------
-
-	    $data->{crnt_gene}{affected_count} = 0;
-	    $data->{crnt_gene}{nc_count} = 0;
-	  GT:
-	    for my $gt (keys %{$data->{crnt_var}{gc}}) {
-		if ($gt eq '^:^') {
-		    $data->{crnt_gene}{nc_count}++;
-		}
-		else {
-		    $data->{crnt_gene}{affected_count}++;
-		}
-	    }
-	    
-	    #----------------------------------------
-	    # Create Variant Page & Write IGV Data
-	    #----------------------------------------
-	    
-	    create_variant_page($data);
-
-	}
 
 	#----------------------------------------
 	# Save data for each variant
@@ -611,6 +455,161 @@ sub process_data {
 
 #--------------------------------------------------------------------------------
 
+sub process_variant_data {
+    my ($data) = shift @_;
+
+    #----------------------------------------
+    # Get gene data
+    #----------------------------------------
+    my $crnt_gene = $data->{crnt_gene};
+    
+    #----------------------------------------
+    # Get Phevor data
+    #----------------------------------------
+    my $phevor_record = $crnt_gene->{phevor_record};
+    my $phevor_gene = $phevor_record->{gene};
+
+    #----------------------------------------
+    # Get VAAST data
+    #----------------------------------------
+    my $vaast_record = $crnt_gene->{vaast_record};
+    my ($chrom, $vaast_rank, $vaast_gene, $vaast_feature, $vaast_score, $vaast_pval) = 
+    	@{$vaast_record}{qw(chrom rank gene feature_id score p_value)};
+
+  VAR:
+    for my $var_key (sort {($vaast_record->{vars}{$b}{score}
+			    <=> 
+			    $vaast_record->{vars}{$a}{score})}
+		     keys %{$vaast_record->{vars}}) {
+	
+	#----------------------------------------
+	# Get current variant data
+	#----------------------------------------
+	my $var = $vaast_record->{vars}{$var_key};
+	
+	#----------------------------------------
+	# Get data from current variant
+	#----------------------------------------
+	my ($chrom, $start) = split /:/, $var_key;
+	my ($type, $ref_nt, $ref_aa, $alt_nt, $score)
+	    = @{$var}{qw(type ref_nt ref_aa alt_nt score)};
+
+	#----------------------------------------
+	# Skip variants with 0 score
+	#----------------------------------------
+	next VAR if $score <= 0;
+	
+	#----------------------------------------
+	# Build a formatted variant key.
+	#----------------------------------------
+	$var->{var_key} = join(':', $chrom, $start, $ref_nt);
+	$var->{var_key_fmt} = $var->{var_key};
+	$var->{var_key_fmt} =~ s/\-/ins/;
+	$var->{var_key_fmt} =~ s/:/-/g;
+	$var->{locus} = "${chrom}:${start}";
+	
+	#----------------------------------------
+	# Create NT & AA genotype text strings
+	#----------------------------------------
+	my $gts = $var->{gts};
+	for my $gt_key (keys %{$gts}) {
+	    my $gt = $gts->{$gt_key};
+	    my @ord_nts = grep {$_ eq $ref_nt} @{$gt->{gt_nt}};
+	    push @ord_nts, sort grep {$_ ne $ref_nt} @{$gt->{gt_nt}};
+	    my $nt_gt = join '|', @ord_nts;
+	    push @{$vaast_record->{vars}{$var_key}{nt_gts}}, $nt_gt;
+	    
+	    my @ord_aas = grep {$_ eq $ref_aa} @{$gt->{gt_aa}};
+	    push @ord_aas, sort grep {$_ ne $ref_aa} @{$gt->{gt_aa}};
+	    my $aa_gt = join '|', @ord_aas;
+	    push @{$vaast_record->{vars}{$var_key}{aa_gts}}, $aa_gt;
+	}
+	$vaast_record->{vars}{$var_key}{nt_gt_txt} =
+	    join ', ', grep {$_ ne '^|^'} @{$vaast_record->{vars}{$var_key}{nt_gts}};
+	$vaast_record->{vars}{$var_key}{aa_gt_txt} =
+	    join ', ', grep {$_ ne '^|^'} @{$vaast_record->{vars}{$var_key}{aa_gts}};
+
+	#----------------------------------------
+	# Get Gnomad AF for variant
+	#----------------------------------------
+	my $gnomad_vcf = Arty::VCF->new(file  => $data->{gnomad_file},
+					tabix => "$chrom:${start}-${start}");
+	while (my $gnmd_record = $gnomad_vcf->next_record) {
+	    $var->{gnomad_cmlt_af} += $gnmd_record->{info}{AF}[0];
+	}
+	
+	$var->{gnomad_cmlt_af} ||= 0;
+	
+	#----------------------------------------
+	# Format floating points
+	#----------------------------------------
+	$var->{gnomad_cmlt_af} =  sprintf '%.2g', $var->{gnomad_cmlt_af};
+	
+	#---------------------------------------
+	# Loop genotype data
+	#----------------------------------------
+	$var->{gt_data} = {NC  => [],
+			   HOM => [],
+			   HET => []};
+	
+	for my $gt_key (sort keys %{$var->{gc}}) {
+	    
+	    #---------------------------------------
+	    # Get genotype count data
+	    #----------------------------------------
+	    my $gt = $var->{gc}{$gt_key};
+	    my $b_count = $gt->{B};
+	    my $t_count = $gt->{T};
+	    
+	    #----------------------------------------
+	    # Collect B & T count of each genotype
+	    # by class (NC, HOM, HET)
+	    #----------------------------------------
+	    my ($A, $B) = split ':', $gt_key;
+	    my $gt_txt = join ',', $gt_key, $b_count, $t_count;
+	    if (grep {$_ eq '^'} ($A, $B)) {
+		push @{$var->{gt_data}{NC}}, $gt_txt;
+	    }
+	    elsif ($A eq $B) {
+		push @{$var->{gt_data}{HOM}}, $gt_txt;
+	    }
+	    else {
+		push @{$var->{gt_data}{HET}}, $gt_txt;		    
+	    }
+	}
+	
+	#----------------------------------------
+	# Prep genotype data
+	#----------------------------------------
+	$var->{het_gt_txt} = join '|', @{$var->{gt_data}{HET}};
+	$var->{hom_gt_txt} = join '|', @{$var->{gt_data}{HOM}};
+	$var->{nc_gt_txt}  = join '|', @{$var->{gt_data}{NC}};
+	$var->{het_gt_txt} ||= '.';
+	$var->{hom_gt_txt} ||= '.';
+	$var->{nc_gt_txt}  ||= '.';
+	
+	#----------------------------------------
+	# Create Affected Count
+	#----------------------------------------
+	
+      GT:
+	for my $gt (keys %{$var->{gc}}) {
+	    my $count = exists $var->{gc}{$gt}{T}
+	    ? $var->{gc}{$gt}{T} : 0;
+	    if ($gt eq '^:^') {
+		$data->{crnt_gene}{nc_count} += $count;
+	    }
+	    else {
+		$data->{crnt_gene}{affected_count} += $count;
+	    }
+	}
+	print '';
+    }
+    print '';
+}
+    
+#--------------------------------------------------------------------------------
+
 sub create_gene_page {
     my ($data) = shift @_;
 
@@ -621,6 +620,9 @@ sub create_gene_page {
     my $vaast_record = $data->{crnt_gene}{vaast_record};
     my ($chrom, $vaast_rank, $vaast_gene, $vaast_feature, $vaast_score, $vaast_pval) = 
 	@{$vaast_record}{qw(chrom rank gene feature_id score p_value)};
+
+    $phevor_score = sprintf '%.3g', $phevor_score;
+    map {$_ =  sprintf '%.2g', $_} ($phevor_prior, $vaast_pval);
 
     my $html;
     #----------------------------------------
@@ -648,6 +650,7 @@ sub create_gene_page {
     $html .= "   </head>\n";
     $html .= "  <body>\n";
     $html .= "\n";
+    $html .= "    <h1 style=\"text-align: center;\">$data->{title} - $phevor_gene</h1>\n";
     #----------------------------------------
     # Gene Page - Gene Summary Table
     #----------------------------------------
@@ -660,31 +663,31 @@ sub create_gene_page {
     $html .= "      </thead>\n";
     $html .= "      <tbody>\n";
     $html .= "        <tr>\n";
-    $html .= "          <td>gene</th>\n";
+    $html .= "          <th style='text-align: right'>Gene</th>\n";
     $html .= "          <td><a href=\"https://www.genecards.org/cgi-bin/carddisp.pl?gene=$phevor_gene\">$phevor_gene</a></td>\n";
     $html .= "        </tr>\n";
     $html .= "        <tr>\n";
-    $html .= "          <td>phevor_rank</th>\n";
+    $html .= "          <th style='text-align: right'>Phevor Rank</th>\n";
     $html .= "          <td>$phevor_rank</td>\n";
     $html .= "        </tr>\n";
     $html .= "        <tr>\n";
-    $html .= "          <td>phevor_score</th>\n";
+    $html .= "          <th style='text-align: right'>Phevor Score</th>\n";
     $html .= "          <td>$phevor_score</td>\n";
     $html .= "        </tr>\n";
     $html .= "        <tr>\n";
-    $html .= "          <td>phevor_prior</th>\n";
+    $html .= "          <th style='text-align: right'>Phevor Prior</th>\n";
     $html .= "          <td>$phevor_prior</td>\n";
     $html .= "        </tr>\n";
     $html .= "        <tr>\n";
-    $html .= "          <td>vaast_rank</th>\n";
+    $html .= "          <th style='text-align: right'>VAAST Rank</th>\n";
     $html .= "          <td>$vaast_rank</td>\n";
     $html .= "        </tr>\n";
     $html .= "        <tr>\n";
-    $html .= "          <td>vaast_score</th>\n";
+    $html .= "          <th style='text-align: right'>VAAST Score</th>\n";
     $html .= "          <td>$vaast_score</td>\n";
     $html .= "        </tr>\n";
     $html .= "        <tr>\n";
-    $html .= "          <td>vaast_pval</th>\n";
+    $html .= "          <th style='text-align: right'>VAAST P-value</th>\n";
     $html .= "          <td>$vaast_pval</td>\n";
     $html .= "        </tr>\n";
     $html .= "      </tbody>\n";
@@ -705,70 +708,100 @@ sub create_gene_page {
     $html .= "    <table id=\"vartable\" class=\"display\" style=\"width:90%\">\n";
     $html .= "      <thead>\n";
     $html .= "        <tr>\n";
-    $html .= "	  <td>var_key</th>\n";
-    $html .= "	  <td>locus</th>\n";
-    $html .= "	  <td>type</th>\n";
-    $html .= "	  <td>score</th>\n";
-    $html .= "	  <td>ref_nt</th>\n";
-    $html .= "	  <td>nt_gt</th>\n";
-    $html .= "	  <td>ref_aa</th>\n";
-    $html .= "	  <td>aa_gt</th>\n";
+    $html .= "	  <th>Variant Key</th>\n";
+    $html .= "	  <th>Locus</th>\n";
+    $html .= "	  <th>Type</th>\n";
+    $html .= "	  <th>Variant CLRT Score</th>\n";
+    $html .= "	  <th>REF NT</th>\n";
+    $html .= "	  <th>NT Genotype</th>\n";
+    $html .= "	  <th>REF AA</th>\n";
+    $html .= "	  <th>AA Genotype</th>\n";
+    $html .= "	  <th>HET Genotype Count</th>\n";
+    $html .= "	  <th>HOM Genotype Count</th>\n";
+    $html .= "	  <th>No-call Genotype Count</th>\n";
     $html .= "        </tr>\n";
     $html .= "      </thead>\n";
     $html .= "      <tbody>\n";
-    
+
   VAR:
     for my $var_key (keys %{$vaast_record->{vars}}) {
 
+	#----------------------------------------
+	# Set current variant data
+	#----------------------------------------
 	my $var = $vaast_record->{vars}{$var_key};
 	
-	my ($start, $type, $ref_nt, $ref_aa, $alt_nt, $score)
-	    = @{$var}{qw(start type ref_nt ref_aa alt_nt score)};
+	#----------------------------------------
+	# Skip variants with 0 score in main
+	# table
+	#----------------------------------------
+	next VAR if $var->{score} <= 0;
 
-	next VAR if $score <= 0;
+	#----------------------------------------
+	# Grab variant data
+	#----------------------------------------
+	my $var_href = "<a href=${phevor_gene}/$var->{var_key_fmt}.html>$var_key</a>";
+	my $start = $var->{start};
+	my $locus = $var->{locus};
 	
-	my $var_key = join(':', $chrom, $start, $ref_nt);
-	my $var_key_fmt = $var_key;
-	$var_key_fmt =~ s/\-/ins/;
-	$var_key_fmt =~ s/:/-/g;
-	$var_key_fmt = "<a href=${phevor_gene}/$var_key_fmt.html>$var_key</a>";
-	
-	# Create nt & aa genotype text strings
-	my $gts = $var->{gts};
-	for my $gt_key (keys %{$gts}) {
-	    my $gt = $gts->{$gt_key};
-	    my @ord_nts = grep {$_ eq $ref_nt} @{$gt->{gt_nt}};
-	    push @ord_nts, sort grep {$_ ne $ref_nt} @{$gt->{gt_nt}};
-	    my $nt_gt = join '|', @ord_nts;
-	    push @{$vaast_record->{vars}{$var_key}{nt_gts}}, $nt_gt;
-	    
-	    my @ord_aas = grep {$_ eq $ref_aa} @{$gt->{gt_aa}};
-	    push @ord_aas, sort grep {$_ ne $ref_aa} @{$gt->{gt_aa}};
-	    my $aa_gt = join '|', @ord_aas;
-	    push @{$vaast_record->{vars}{$var_key}{aa_gts}}, $aa_gt;
+	#----------------------------------------
+	# Format HET/HOM/NC GT data
+	#----------------------------------------
+	my @het_data = split /,/, $var->{het_gt_txt};
+	map{$het_data[$_] ||= 0} (0..2);
+	my $het_gt_txt;
+	if ($het_data[0] eq '.') {
+	    $het_gt_txt = $het_data[0];
 	}
-	$vaast_record->{vars}{$var_key}{nt_gt_txt} =
-	    join ', ', grep {$_ ne '^|^'} @{$vaast_record->{vars}{$var_key}{nt_gts}};
-	$vaast_record->{vars}{$var_key}{aa_gt_txt} =
-	    join ', ', grep {$_ ne '^|^'} @{$vaast_record->{vars}{$var_key}{aa_gts}};
+	else {
+	    $het_gt_txt = "B=$het_data[1] T=$het_data[2]";
+	}
 
-	$data->{crnt_var}{nt_gt_txt} = $vaast_record->{vars}{$var_key}{nt_gt_txt};
-	$data->{crnt_var}{aa_gt_txt} = $vaast_record->{vars}{$var_key}{aa_gt_txt};
-
+	my @hom_data = split /,/, $var->{hom_gt_txt};
+	map{$hom_data[$_] ||= 0} (0..2);
+	my $hom_gt_txt;
+	if ($hom_data[0] eq '.') {
+	    $hom_gt_txt = $hom_data[0];
+	}
+	else {
+	    $hom_gt_txt = "B=$hom_data[1] T=$hom_data[2]";
+	}
+	
+	my @nc_data = split /,/, $var->{nc_gt_txt};
+	map{$nc_data[$_] ||= 0} (0..2);
+	my $nc_gt_txt;
+	if ($nc_data[0] eq '.') {
+	    $nc_gt_txt = $nc_data[0];
+	}
+	else {
+	    $nc_gt_txt = "B=$nc_data[1] T=$nc_data[2]";
+	}
+	
 	#----------------------------------------
 	# Gene Page - Variant Detail Table Rows
 	#----------------------------------------
 	$html .= "    <tr>\n";
-	$html .= "      <td>$var_key_fmt</th>\n";
-	$html .= "      <td><a href=\\\"http://genome.ucsc.edu/cgi-bin/hgTracks?db=hg19&position=${chrom}%3A${start}-${start}\\\" target=\\\"_blank\\\">$chrom:$start</a></th>\n";
-	$html .= "      <td>$type</th>\n";
-	$html .= "      <td>$score</th>\n";
-	$html .= "      <td>$ref_nt</th>\n";
-	$html .= "      <td>$vaast_record->{vars}{$var_key}{nt_gt_txt}</th>\n";
-	$html .= "      <td>$ref_aa</th>\n";
-	$html .= "      <td>$vaast_record->{vars}{$var_key}{aa_gt_txt}</th>\n";
+	$html .= "      <td>$var_href</td>\n";
+	$html .= ("      <td><a href=\"http://genome.ucsc.edu/cgi-bin/hgTracks?" .
+		  "db=hg19&position=${chrom}%3A${start}-${start}\" " .
+		  "target=\"_blank\">${locus}</a></td>\n");
+	$html .= "      <td>$var->{type}</td>\n";
+	$html .= "      <td>$var->{score}</td>\n";
+	$html .= "      <td>$var->{ref_nt}</td>\n";
+	$html .= "      <td>$var->{nt_gt_txt}</td>\n";
+	$html .= "      <td>$var->{ref_aa}</td>\n";
+	$html .= "      <td>$var->{aa_gt_txt}</td>\n";
+	$html .= "      <td>$het_gt_txt</td>\n";
+	$html .= "      <td>$hom_gt_txt</td>\n";
+	$html .= "      <td>$nc_gt_txt</td>\n";
 	$html .= "    </tr>\n";
 	
+	#----------------------------------------
+	# Create Variant Page & Write IGV Data
+	#----------------------------------------
+	    
+	$data->{crnt_var} = $var;
+	create_variant_page($data);
     }
     
     #----------------------------------------
@@ -794,55 +827,91 @@ sub create_variant_page {
 
     my $data = shift @_;
 
+    #----------------------------------------
     # Get base level data
+    #----------------------------------------
     my $base_name = $data->{base_name};
 
+    #----------------------------------------
     # Get gene data
+    #----------------------------------------
     my $crnt_gene = $data->{crnt_gene};
     
+    #----------------------------------------
     # Get Phevor data
+    #----------------------------------------
     my $phevor_record = $crnt_gene->{phevor_record};
     my $phevor_gene = $phevor_record->{gene};
 
+    #----------------------------------------
     # Get VAAST data
+    #----------------------------------------
     my $vaast_record = $crnt_gene->{vaast_record};
     my ($chrom, $vaast_rank, $vaast_gene, $vaast_feature, $vaast_score, $vaast_pval) = 
     	@{$vaast_record}{qw(chrom rank gene feature_id score p_value)};
 
+    #----------------------------------------
     # Get variant data
+    #----------------------------------------
     my $var = $data->{crnt_var};
-    my ($var_key, $var_start, $var_type, $var_score, $ref_nt,
+    my ($var_key, $start, $type, $score, $ref_nt,
 	$het_gt_txt, $hom_gt_txt, $nc_gt_txt, $nt_gt_txt, $ref_aa,
 	$aa_gt_txt) = @{$var}{qw(var_key start type score ref_nt
 	het_gt_txt hom_gt_txt nc_gt_txt nt_gt_txt ref_aa aa_gt_txt)};
     $nt_gt_txt =~ s/;/, /g;
     $aa_gt_txt =~ s/;/, /g;
     
+    #----------------------------------------
     # Set up locus/region data
-    my $locus =  "$chrom:$var_start-$var_start";
-    my $roi   =  "$chrom:$var_start-" . ($var_start + 1);
-    my $r_start = $var_start - 150;
-    my $r_end   = $var_start + 150;
-    my $region  = "$chrom:$r_start-$r_end";
-
+    #----------------------------------------
+    my $range_locus =  "$chrom:$start-$start";
+    my $roi       =  "$chrom:$start-" . ($start + 1);
+    my $r_start   = $start - 150;
+    my $r_end     = $start + 150;
+    my $region    = "$chrom:$r_start-$r_end";
+    my $locus     = $var->{locus};
+    
+    #----------------------------------------
     # Make dir paths
-    my $var_path = "$base_name/${phevor_gene}";
-    make_path($var_path);
+    #----------------------------------------
+    my $path = "$base_name/${phevor_gene}";
+    make_path($path);
     my $igv_path = "$base_name/igv_img";
     make_path($igv_path);
 
+    #----------------------------------------
+    # Format HET/HOM/NC GT data
+    #----------------------------------------
     my @het_data = split /,/, $het_gt_txt;
     map{$het_data[$_] ||= 0} (0..2);
-    $het_gt_txt = "$het_data[0] Bckg=$het_data[1] Target=$het_data[2]";
+    if ($het_data[0] eq '.') {
+	$het_gt_txt = $het_data[0];
+    }
+    else {
+	$het_gt_txt = "$het_data[0] B=$het_data[1] T=$het_data[2]";
+    }
 
     my @hom_data = split /,/, $hom_gt_txt;
     map{$hom_data[$_] ||= 0} (0..2);
-    $hom_gt_txt = "$hom_data[0] Bckg=$hom_data[1] Target=$hom_data[2]";
+    if ($hom_data[0] eq '.') {
+	$hom_gt_txt = $hom_data[0];
+    }
+    else {
+	$hom_gt_txt = "$hom_data[0] B=$hom_data[1] T=$hom_data[2]";
+    }
 
     my @nc_data = split /,/, $nc_gt_txt;
     map{$nc_data[$_] ||= 0} (0..2);
-    $nc_gt_txt = "$nc_data[0] Bckg=$nc_data[1] Target=$nc_data[2]";
+    if ($nc_data[0] eq '.') {
+	$nc_gt_txt = $nc_data[0];
+    }
+    else {
+	$nc_gt_txt = "$nc_data[0] B=$nc_data[1] T=$nc_data[2]";
+    }
     
+    #----------------------------------------
+    # Format variant key for use in filename
+    #----------------------------------------
     my $var_key_fmt = $var_key;
     $var_key_fmt =~ s/\-/ins/;
     $var_key_fmt =~ s/:/-/g;
@@ -873,6 +942,7 @@ sub create_variant_page {
     $html .= "   </head>\n";
     $html .= "  <body>\n";
     $html .= "\n";
+    $html .= "    <h1 style=\"text-align: center;\">$data->{title} - $phevor_gene $var_key</h1>\n";
     #----------------------------------------
     # Variant Page - Variant Summary Table
     #----------------------------------------
@@ -885,52 +955,50 @@ sub create_variant_page {
     $html .= "      </thead>\n";
     $html .= "      <tbody>\n";
     $html .= "        <tr>\n";
-    $html .= "          <th>var_key</th>\n";
-    $html .= "	  <td>$var_key</th>";
+    $html .= "          <th style='text-align: right'>Variant Key</th>\n";
+    $html .= "	        <td>${var_key}</th>";
     $html .= "        </tr>\n";
     $html .= "        <tr>\n";
-    $html .= "          <th>score</th>\n";
-    $html .= "	  <td>$var_score</th>";
+    $html .= "          <th style='text-align: right'>Variant CLRT Score</th>\n";
+    $html .= "	        <td>${score}</th>";
     $html .= "        </tr>\n";
     $html .= "        <tr>\n";
-    $html .= "          <th>chrom</th>\n";
-    $html .= "	  <td>$chrom</th>";
+    $html .= "          <th style='text-align: right'>Locus</th>\n";
+    $html .= ("      <td><a href=\"http://genome.ucsc.edu/cgi-bin/hgTracks?" .
+	      "db=hg19&position=${chrom}%3A${start}-${start}\" " .
+	      "target=\"_blank\">${locus}</a></td>\n");
     $html .= "        </tr>\n";
     $html .= "        <tr>\n";
-    $html .= "          <th>start</th>\n";
-    $html .= "	  <td>$var_start</th>";
+    $html .= "          <th style='text-align: right'>Type</th>\n";
+    $html .= "	        <td>${type}</th>";
     $html .= "        </tr>\n";
     $html .= "        <tr>\n";
-    $html .= "          <th>type</th>\n";
-    $html .= "	  <td>$var_type</th>";
+    $html .= "          <th style='text-align: right'>REF NT</th>\n";
+    $html .= "	        <td>${ref_nt}</th>";
     $html .= "        </tr>\n";
     $html .= "        <tr>\n";
-    $html .= "          <th>ref_nt</th>\n";
-    $html .= "	  <td>$ref_nt</th>";
+    $html .= "          <th style='text-align: right'>NT Genotype</th>\n";
+    $html .= "	        <td>${nt_gt_txt}</th>";
     $html .= "        </tr>\n";
     $html .= "        <tr>\n";
-    $html .= "          <th>ref_aa</th>\n";
-    $html .= "	  <td>$ref_aa</th>";
+    $html .= "          <th style='text-align: right'>REF AA</th>\n";
+    $html .= "	        <td>${ref_aa}</th>";
     $html .= "        </tr>\n";
     $html .= "        <tr>\n";
-    $html .= "          <th>nt_gt_txt</th>\n";
-    $html .= "	  <td>$nt_gt_txt</th>";
+    $html .= "          <th style='text-align: right'>AA Genotype</th>\n";
+    $html .= "	        <td>${aa_gt_txt}</th>";
     $html .= "        </tr>\n";
     $html .= "        <tr>\n";
-    $html .= "          <th>aa_gt_txt</th>\n";
-    $html .= "	  <td>$aa_gt_txt</th>";
+    $html .= "          <th style='text-align: right'>HET Genotype Count</th>\n";
+    $html .= "          <td>${het_gt_txt}</td>";
     $html .= "        </tr>\n";
     $html .= "        <tr>\n";
-    $html .= "          <th>het_gt_txt</th>\n";
-    $html .= "          <td>$het_gt_txt</td>";
+    $html .= "          <th style='text-align: right'>HOM Genotype Count</th>\n";
+    $html .= "          <td>${hom_gt_txt}</td>";
     $html .= "        </tr>\n";
     $html .= "        <tr>\n";
-    $html .= "          <th>hom_gt_txt</th>\n";
-    $html .= "          <td>$hom_gt_txt</td>";
-    $html .= "        </tr>\n";
-    $html .= "        <tr>\n";
-    $html .= "          <th>nc_gt_txt</th>\n";
-    $html .= "          <td>$nc_gt_txt</td>";
+    $html .= "          <th style='text-align: right'>No-call Genotype Count</th>\n";
+    $html .= "          <td>${nc_gt_txt}</td>";
     $html .= "        </tr>\n";
     $html .= "      </tbody>\n";
     $html .= "      </table>    \n";
@@ -947,15 +1015,15 @@ sub create_variant_page {
     $html .= "    <table id=\"target_table\" class=\"display\" style=\"width:90%\">\n";
     $html .= "      <thead>\n";
     $html .= "        <tr>\n";
-    $html .= "          <th>flag</th>\n";
-    $html .= "	  <th>indv_idx</th>\n";
-    $html .= "	  <th>sample_id</th>\n";
-    $html .= "          <th>gt_nt</th>\n";
-    $html .= "          <th>gt_aa</th>\n";
-    $html .= "	  <th>GQ</th>\n";
-    $html .= "	  <th>DP</th>\n";
-    $html .= "	  <th>AD</th>\n";
-    $html .= " 	  <th>img</th>" if $data->{bam_dir};
+    $html .= "          <th>Genotype in Background</th>\n";
+    $html .= "	        <th>Individual Index</th>\n";
+    $html .= "	        <th>Sample ID</th>\n";
+    $html .= "          <th>NT GT</th>\n";
+    $html .= "          <th>AA GT</th>\n";
+    $html .= "	  	<th>GQ</th>\n";
+    $html .= "	  	<th>DP</th>\n";
+    $html .= "	  	<th>AD</th>\n";
+    $html .= " 	  	<th>IGV Screenshot</th>" if $data->{bam_dir};
     $html .= "  </tr>\n";
     $html .= "  </thead>\n";
     $html .= "  <tbody>\n";
@@ -973,7 +1041,7 @@ sub create_variant_page {
 
 	my $gt_nt_txt = join ':', @{$gt->{gt_nt}};
 	my $gt_aa_txt = join ':', @{$gt->{gt_aa}};
-	my $flag = $gt->{T}{flag};
+	my $flag = $gt->{T}{flag} eq 'N' ? 'N' : 'Y';
 
 	#----------------------------------------
 	# Prep Sample Data
@@ -990,8 +1058,8 @@ sub create_variant_page {
 	    #----------------------------------------
 	    # Prep VCF FORMAT Data
 	    #----------------------------------------
-	    if ($data{vcf_file}) {
-		my $var_data_txt = `bcftools query -f '[\%GT\\t\%GQ\\t\%DP\\t\%AD\\n]' -s $sample_id -r $locus $data{vcf_file}`;
+	    if ($data->{vcf_file}) {
+		my $var_data_txt = `bcftools query -f '[\%GT\\t\%GQ\\t\%DP\\t\%AD\\n]' -s $sample_id -r $range_locus $data->{vcf_file}`;
 		chomp $var_data_txt;
 		($gt, $gq, $dp, $ad) = split /\t/, $var_data_txt;
 		print '';
@@ -1001,7 +1069,7 @@ sub create_variant_page {
 	    #----------------------------------------
 	    # Make IGV batch script
 	    #----------------------------------------
-	    if ($data{bam_dir}) {
+	    if ($data->{bam_dir}) {
 		# Make IGV Snapshot BAT files
 		my $file_base = $locus;
 		$file_base =~ s/[:\-]/_/g;
@@ -1033,7 +1101,7 @@ END_BAT
 	    # Variant Page - Sample Table Rows
 	    #----------------------------------------
 	    $html .= "        <tr>\n";
-	    $html .= "          <th>$flag</th>\n";
+	    $html .= "          <td>$flag</th>\n";
 	    $html .= "      	<td>$indv</td>\n";
 	    $html .= "      	<td>$sample_id</td>\n";
 	    $html .= "          <td>$gt_nt_txt</td>\n";
@@ -1055,7 +1123,7 @@ END_BAT
     $html .= "  </body>\n";
     $html .= "</html>\n";
 
-    my $filename = "${var_path}/${var_key_fmt}.html";
+    my $filename = "${path}/${var_key_fmt}.html";
     $filename =~ s/:/-/g;
     open(my $OUT, '>', $filename) ||
 	die "FATAL : cant_open_file_for_writing : $filename\n";
@@ -1068,55 +1136,120 @@ END_BAT
 
 #--------------------------------------------------------------------------------
 
-sub write_igv_bat {
-    my $data = shift @_;
+# sub write_igv_bat {
+#     my $data = shift @_;
+# 
+#     # Get base level data
+#     my $base_name = $data->{base_name};
+# 
+#     # Get gene data
+#     my $crnt_gene = $data->{crnt_gene};
+#     
+#     # Get Phevor data
+#     my $phevor_record = $crnt_gene->{phevor_record};
+#     my $phevor_gene = $phevor_record->{gene};
+# 
+#     # Get VAAST data
+#     my $vaast_record = $crnt_gene->{vaast_record};
+#     my ($chrom, $vaast_rank, $vaast_gene, $vaast_feature, $vaast_score, $vaast_pval) = 
+#     	@{$vaast_record}{qw(chrom rank gene feature_id score p_value)};
+# 
+#     # Get variant data
+#     my $var = $data->{crnt_var};
+# 
+#     my ($var_key, $var_start, $var_type, $var_score, $ref_nt,
+# 	$het_gt_txt, $hom_gt_txt, $nc_gt_txt, $nt_gt_txt, $ref_aa,
+# 	$aa_gt_txt) = @{$var}{qw(var_key start type score ref_nt
+# 	het_gt_txt hom_gt_txt nc_gt_txt nt_gt_txt ref_aa aa_gt_txt)};
+# 
+#     $nt_gt_txt =~ s/;/, /g;
+#     $aa_gt_txt =~ s/;/, /g;
+#     
+#     my $locus =  "$chrom:$var_start-$var_start";
+#     
+#     my @het_data = split /,/, $het_gt_txt;
+#     map{$het_data[$_] ||= 0} (0..2);
+#     $het_gt_txt = "$het_data[0] Bckg=$het_data[1] Target=$het_data[2]";
+# 
+#     my @hom_data = split /,/, $hom_gt_txt;
+#     map{$hom_data[$_] ||= 0} (0..2);
+#     $hom_gt_txt = "$hom_data[0] Bckg=$hom_data[1] Target=$hom_data[2]";
+# 
+#     my @nc_data = split /,/, $nc_gt_txt;
+#     map{$nc_data[$_] ||= 0} (0..2);
+#     $nc_gt_txt = "$nc_data[0] Bckg=$nc_data[1] Target=$nc_data[2]";
+#     
+#     my $var_key_fmt = $var_key;
+#     $var_key_fmt =~ s/\-/ins/;
+#     $var_key_fmt =~ s/:/-/g;
+# 
+#     
+# 
+#     
+#     
+# }
 
-    # Get base level data
-    my $base_name = $data->{base_name};
 
-    # Get gene data
-    my $crnt_gene = $data->{crnt_gene};
-    
-    # Get Phevor data
-    my $phevor_record = $crnt_gene->{phevor_record};
-    my $phevor_gene = $phevor_record->{gene};
-
-    # Get VAAST data
-    my $vaast_record = $crnt_gene->{vaast_record};
-    my ($chrom, $vaast_rank, $vaast_gene, $vaast_feature, $vaast_score, $vaast_pval) = 
-    	@{$vaast_record}{qw(chrom rank gene feature_id score p_value)};
-
-    # Get variant data
-    my $var = $data->{crnt_var};
-
-    my ($var_key, $var_start, $var_type, $var_score, $ref_nt,
-	$het_gt_txt, $hom_gt_txt, $nc_gt_txt, $nt_gt_txt, $ref_aa,
-	$aa_gt_txt) = @{$var}{qw(var_key start type score ref_nt
-	het_gt_txt hom_gt_txt nc_gt_txt nt_gt_txt ref_aa aa_gt_txt)};
-
-    $nt_gt_txt =~ s/;/, /g;
-    $aa_gt_txt =~ s/;/, /g;
-    
-    my $locus =  "$chrom:$var_start-$var_start";
-    
-    my @het_data = split /,/, $het_gt_txt;
-    map{$het_data[$_] ||= 0} (0..2);
-    $het_gt_txt = "$het_data[0] Bckg=$het_data[1] Target=$het_data[2]";
-
-    my @hom_data = split /,/, $hom_gt_txt;
-    map{$hom_data[$_] ||= 0} (0..2);
-    $hom_gt_txt = "$hom_data[0] Bckg=$hom_data[1] Target=$hom_data[2]";
-
-    my @nc_data = split /,/, $nc_gt_txt;
-    map{$nc_data[$_] ||= 0} (0..2);
-    $nc_gt_txt = "$nc_data[0] Bckg=$nc_data[1] Target=$nc_data[2]";
-    
-    my $var_key_fmt = $var_key;
-    $var_key_fmt =~ s/\-/ins/;
-    $var_key_fmt =~ s/:/-/g;
-
-    
-
-    
-    
-}
+# #----------------------------------------
+# # Add HTML formatting (var annotations)
+# #----------------------------------------
+# 
+# #----------------------------------------
+# # Gnomad_Cmlt_AF
+# #----------------------------------------
+# if ($data->{crnt_var}{gnomad_cmlt_af} <= 0.0001) {
+# 	$data->{crnt_var}{gnomad_cmlt_af_fmt} = [$data->{crnt_var}{gnomad_cmlt_af}, {bgcolor => 'LightGreen'}];
+# }
+# elsif ($data->{crnt_var}{gnomad_cmlt_af} <= 0.01) {
+# 	$data->{crnt_var}{gnomad_cmlt_af_fmt} = [$data->{crnt_var}{gnomad_cmlt_af}, {bgcolor => 'LightYellow'}];
+# }
+# else {
+# 	$data->{crnt_var}{gnomad_cmlt_af_fmt} = [$data->{crnt_var}{gnomad_cmlt_af}, {bgcolor => 'LightCoral'}];
+# }
+# 
+# #----------------------------------------
+# # Variant Location
+# #----------------------------------------
+# $data->{crnt_var}{locus} = join ':', $data->{crnt_gene}{vaast_record}{chrom}, $data->{crnt_var}{start}; 
+# 
+# #----------------------------------------
+# # Var_Type
+# #----------------------------------------
+# if ($data->{crnt_var}{type} eq 'SNV') {
+# 	$data->{crnt_var}{var_type_fmt} = [$data->{crnt_var}{type}, {bgcolor => 'LightGreen'}];
+# }
+# else {
+# 	$data->{crnt_var}{var_type_fmt} = [$data->{crnt_var}{type}, {bgcolor => 'LightYellow'}];
+# }
+# 
+# #----------------------------------------
+# # Var_Score
+# #----------------------------------------
+# if ($data->{crnt_var}{score} >= 8) {
+# 	$data->{crnt_var}{var_score_fmt} = [$data->{crnt_var}{score}, {bgcolor => 'LightGreen'}];
+# }
+# elsif ($data->{crnt_var}{score} >= 2) {
+# 	$data->{crnt_var}{var_score_fmt} = [$data->{crnt_var}{score}, {bgcolor => 'LightYellow'}];
+# }
+# else {
+# 	$data->{crnt_var}{var_score_fmt} = [$data->{crnt_var}{score}, {bgcolor => 'LightCoral'}];
+# }
+# 
+# #----------------------------------------
+# # NT Change
+# #----------------------------------------
+# # $data->{crnt_var}{nt_change};
+# 
+# #----------------------------------------
+# # AA Change
+# #----------------------------------------
+# 
+# #----------------------------------------
+# # NC_GT_TXT
+# #----------------------------------------
+# if ($data->{crnt_var}{nc_gt_txt} eq '.') {
+# 	$data->{crnt_var}{nc_gt_txt_fmt} = [$data->{crnt_var}{nc_gt_txt}, {bgcolor => 'LightGreen'}];
+# }
+# else {
+# 	$data->{crnt_var}{nc_gt_txt_fmt} = [$data->{crnt_var}{nc_gt_txt}, {bgcolor => 'LightCoral'}];
+# }
