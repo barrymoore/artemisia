@@ -312,14 +312,15 @@ sub process_data {
     while (my $phevor_record = $phevor_data->next_record) {
 	
 	# Clear any previous 'current' record data.
-	delete $data->{crnt_gene} if exists $data->{crnt_gene};
+	my $crnt_gene = {};
+	$data->{crnt_gene} = $crnt_gene;
 
 	#----------------------------------------
 	# Get Phevor data
 	#----------------------------------------
 	my ($phevor_rank, $phevor_gene, $phevor_score, $phevor_prior) =
 	    @{$phevor_record}{qw(rank gene score prior orig_p)};
-	$data->{crnt_gene}{phevor_rank} = $phevor_rank + 1;
+	$crnt_gene->{phevor_rank} = $phevor_rank + 1;
 
 	#----------------------------------------
 	# Skip boring data
@@ -333,7 +334,7 @@ sub process_data {
 	my $vaast_record = $vaast_map{$phevor_gene};
 	my ($vaast_rank, $vaast_gene, $vaast_feature, $vaast_score, $vaast_pval) = 
 	    @{$vaast_record}{qw(rank gene feature_id score p_value)};
-	$data->{crnt_gene}{vaast_rank} = $vaast_rank + 1;;
+	$crnt_gene->{vaast_rank} = $vaast_rank + 1;;
 	
 	#----------------------------------------
 	# Format floating points
@@ -347,83 +348,83 @@ sub process_data {
 
 	# Phevor_Gene
 	#--------------------
-    	$data->{crnt_gene}{phevor_gene_fmt} = "<a href=$data->{rel_base}/${phevor_gene}.html>$phevor_gene</a>";
+    	$crnt_gene->{phevor_gene_fmt} = "<a href=$data->{rel_base}/${phevor_gene}.html>$phevor_gene</a>";
 
 	# Phevor_Rank
 	#--------------------
 	if ($phevor_rank <= 10) {
-	    $data->{crnt_gene}{phevor_rank_fmt} = [$phevor_rank, {bgcolor => 'LightGreen'}];
+	    $crnt_gene->{phevor_rank_fmt} = 'background-color: LightGreen';
 	}
 	elsif ($phevor_rank <= 30) {
-	    $data->{crnt_gene}{phevor_rank_fmt} = [$phevor_rank, {bgcolor => 'LightYellow'}];
+	    $crnt_gene->{phevor_rank_fmt} = 'background-color: LightYellow';
 	}
 	else {
-	    $data->{crnt_gene}{phevor_rank_fmt} = [$phevor_rank, {bgcolor => 'LightCoral'}];
+	    $crnt_gene->{phevor_rank_fmt} = 'background-color: LightCoral';
 	}
 	
 	# Phevor_Score
 	#--------------------
 	if ($phevor_score >= 2.3) {
-	    $data->{crnt_gene}{phevor_score_fmt} = [$phevor_score, {bgcolor => 'LightGreen'}];
+	    $crnt_gene->{phevor_score_fmt} = 'background-color: LightGreen';
 	}
 	elsif ($phevor_score >= 1) {
-	    $data->{crnt_gene}{phevor_score_fmt} = [$phevor_score, {bgcolor => 'LightYellow'}];
+	    $crnt_gene->{phevor_score_fmt} = 'background-color: LightYellow';
 	}
 	else {
-	    $data->{crnt_gene}{phevor_score_fmt} = [$phevor_score, {bgcolor => 'LightCoral'}];
+	    $crnt_gene->{phevor_score_fmt} = 'background-color: LightCoral';
 	}
 	
 	# Phevor_Prior
 	#--------------------
 	if ($phevor_prior >= .75) {
-	    $data->{crnt_gene}{phevor_prior_fmt} = [$phevor_prior, {bgcolor => 'LightGreen'}];
+	    $crnt_gene->{phevor_prior_fmt} = 'background-color: LightGreen';
 	}
 	elsif ($phevor_prior >= 0.5) {
-	    $data->{crnt_gene}{phevor_prior_fmt} = [$phevor_prior, {bgcolor => 'LightYellow'}];
+	    $crnt_gene->{phevor_prior_fmt} = 'background-color: LightYellow';
 	}
 	else {
-	    $data->{crnt_gene}{phevor_prior_fmt} = [$phevor_prior, {bgcolor => 'LightCoral'}];
+	    $crnt_gene->{phevor_prior_fmt} = 'background-color: LightCoral';
 	}
 	
 	# Vaast_Rank
 	#--------------------
 	if ($vaast_rank <= 25) {
-	    $data->{crnt_gene}{vaast_rank_fmt} = [$vaast_rank, {bgcolor => 'LightGreen'}];
+	    $crnt_gene->{vaast_rank_fmt} = 'background-color: LightGreen';
 	}
 	elsif ($vaast_rank <= 100) {
-	    $data->{crnt_gene}{vaast_rank_fmt} = [$vaast_rank, {bgcolor => 'LightYellow'}];
+	    $crnt_gene->{vaast_rank_fmt} = 'background-color: LightYellow';
 	}
 	else {
-	    $data->{crnt_gene}{vaast_rank_fmt} = [$vaast_rank, {bgcolor => 'LightCoral'}];
+	    $crnt_gene->{vaast_rank_fmt} = 'background-color: LightCoral';
 	}
 	
 	# Vaast_Score
 	#--------------------
 	if ($vaast_score >= 10) {
-	    $data->{crnt_gene}{vaast_score_fmt} = [$vaast_score, {bgcolor => 'LightGreen'}];
+	    $crnt_gene->{vaast_score_fmt} = 'background-color: LightGreen';
 	}
 	elsif ($vaast_score >= 5) {
-	    $data->{crnt_gene}{vaast_score_fmt} = [$vaast_score, {bgcolor => 'LightYellow'}];
+	    $crnt_gene->{vaast_score_fmt} = 'background-color: LightYellow';
 	}
 	else {
-	    $data->{crnt_gene}{vaast_score_fmt} = [$vaast_score, {bgcolor => 'LightCoral'}];
+	    $crnt_gene->{vaast_score_fmt} = 'background-color: LightCoral';
 	}
 	
 	# VAAST p-value
 	#--------------------
 	if ($vaast_pval <= 0.001) {
-	    $data->{crnt_gene}{vaast_pval_fmt} = [$vaast_pval, {bgcolor => 'LightGreen'}];
+	    $crnt_gene->{vaast_pval_fmt} = 'background-color: LightGreen';
 	}
 	elsif ($vaast_pval <= 0.01) {
-	    $data->{crnt_gene}{vaast_pval_fmt} = [$vaast_pval, {bgcolor => 'LightYellow'}];
+	    $crnt_gene->{vaast_pval_fmt} = 'background-color: LightYellow';
 	}
 	else {
-	    $data->{crnt_gene}{vaast_pval_fmt} = [$vaast_pval, {bgcolor => 'LightCoral'}];
+	    $crnt_gene->{vaast_pval_fmt} = 'background-color: LightCoral';
 	}
 	    
 	# Store current Phevor and VAAST records
-	$data->{crnt_gene}{phevor_record} = $phevor_record;
-	$data->{crnt_gene}{vaast_record}  = $vaast_record;
+	$crnt_gene->{phevor_record} = $phevor_record;
+	$crnt_gene->{vaast_record}  = $vaast_record;
 
 	#----------------------------------------
 	# Preprocess all variant for current gene
@@ -439,15 +440,15 @@ sub process_data {
 	# Save data for each variant
 	#----------------------------------------
 	
-	push @{$data->{row_data}}, [$data->{crnt_gene}{phevor_gene_fmt},
-				    $data->{crnt_gene}{phevor_rank_fmt},
-				    $data->{crnt_gene}{phevor_score_fmt},
-				    $data->{crnt_gene}{phevor_prior_fmt},
-				    $data->{crnt_gene}{vaast_rank_fmt},
-				    $data->{crnt_gene}{vaast_score_fmt},
-				    $data->{crnt_gene}{vaast_pval_fmt},
-				    $data->{crnt_gene}{affected_count},
-				    $data->{crnt_gene}{nc_count}];
+	push @{$data->{row_data}}, [[$crnt_gene->{phevor_gene_fmt}],
+				    [$phevor_rank,  {'style' => $crnt_gene->{phevor_rank_fmt}}],
+				    [$phevor_score, {'style' => $crnt_gene->{phevor_score_fmt}}],
+				    [$phevor_prior, {'style' => $crnt_gene->{phevor_prior_fmt}}],
+				    [$vaast_rank,   {'style' => $crnt_gene->{vaast_rank_fmt}}],
+				    [$vaast_score,  {'style' => $crnt_gene->{vaast_score_fmt}}],
+				    [$vaast_pval,   {'style' => $crnt_gene->{vaast_pval_fmt}}],
+				    [$crnt_gene->{affected_count}],
+				    [$crnt_gene->{nc_count}]];       
 	print '';
     }
     return;
@@ -603,6 +604,9 @@ sub process_variant_data {
 		$data->{crnt_gene}{affected_count} += $count;
 	    }
 	}
+	$data->{crnt_gene}{nc_count} ||= 0;
+	$data->{crnt_gene}{affected_count} ||= 0;
+
 	print '';
     }
     print '';
@@ -613,11 +617,13 @@ sub process_variant_data {
 sub create_gene_page {
     my ($data) = shift @_;
 
-    my $phevor_record = $data->{crnt_gene}{phevor_record};
+    my $crnt_gene = $data->{crnt_gene};
+    
+    my $phevor_record = $crnt_gene->{phevor_record};
     my ($phevor_rank, $phevor_gene, $phevor_score, $phevor_prior) =
 	@{$phevor_record}{qw(rank gene score prior orig_p)};
 
-    my $vaast_record = $data->{crnt_gene}{vaast_record};
+    my $vaast_record = $crnt_gene->{vaast_record};
     my ($chrom, $vaast_rank, $vaast_gene, $vaast_feature, $vaast_score, $vaast_pval) = 
 	@{$vaast_record}{qw(chrom rank gene feature_id score p_value)};
 
@@ -638,19 +644,22 @@ sub create_gene_page {
     $html .= "     <script>\n";
     $html .= "       \$(document).ready(function() {\n";
     $html .= "       	 \$('#datatable').DataTable({\n";
+    $html .= "              searching: false,\n";
+    $html .= "              info: false,\n";
     $html .= "       	    ordering: false,\n";
     $html .= "       	    paging: false,\n";
     $html .= "       	    });\n";
     $html .= "       	 \$('#vartable').DataTable({\n";
-    $html .= "       	    order : [[4, 'dsc']],\n";
-    $html .= "            pageLength: 25,\n";
+    $html .= "       	    order : [[3, 'dsc']],\n";
+    $html .= "              pageLength: 25,\n";
     $html .= "       	    });\n";
     $html .= "       });\n";
     $html .= "     </script>\n";
     $html .= "   </head>\n";
     $html .= "  <body>\n";
     $html .= "\n";
-    $html .= "    <h1 style=\"text-align: center;\">$data->{title} - $phevor_gene</h1>\n";
+    $html .= "    <h1 style=\"text-align: center;\">$data->{title}</h1>\n";
+    $html .= "    <h2 style=\"text-align: center;\">$phevor_gene</h2>\n";
     #----------------------------------------
     # Gene Page - Gene Summary Table
     #----------------------------------------
@@ -668,27 +677,27 @@ sub create_gene_page {
     $html .= "        </tr>\n";
     $html .= "        <tr>\n";
     $html .= "          <th style='text-align: right'>Phevor Rank</th>\n";
-    $html .= "          <td>$phevor_rank</td>\n";
+    $html .= "          <td style='$crnt_gene->{phevor_rank_fmt}'>$phevor_rank</td>\n";
     $html .= "        </tr>\n";
     $html .= "        <tr>\n";
     $html .= "          <th style='text-align: right'>Phevor Score</th>\n";
-    $html .= "          <td>$phevor_score</td>\n";
+    $html .= "          <td style='$crnt_gene->{phevor_score_fmt}'>$phevor_score</td>\n";
     $html .= "        </tr>\n";
     $html .= "        <tr>\n";
     $html .= "          <th style='text-align: right'>Phevor Prior</th>\n";
-    $html .= "          <td>$phevor_prior</td>\n";
+    $html .= "          <td style='$crnt_gene->{phevor_prior_fmt}'>$phevor_prior</td>\n";
     $html .= "        </tr>\n";
     $html .= "        <tr>\n";
     $html .= "          <th style='text-align: right'>VAAST Rank</th>\n";
-    $html .= "          <td>$vaast_rank</td>\n";
+    $html .= "          <td style='$crnt_gene->{vaast_rank_fmt}'>$vaast_rank</td>\n";
     $html .= "        </tr>\n";
     $html .= "        <tr>\n";
     $html .= "          <th style='text-align: right'>VAAST Score</th>\n";
-    $html .= "          <td>$vaast_score</td>\n";
+    $html .= "          <td style='$crnt_gene->{vaast_score_fmt}'>$vaast_score</td>\n";
     $html .= "        </tr>\n";
     $html .= "        <tr>\n";
     $html .= "          <th style='text-align: right'>VAAST P-value</th>\n";
-    $html .= "          <td>$vaast_pval</td>\n";
+    $html .= "          <td style='$crnt_gene->{vaast_pval_fmt}'>$vaast_pval</td>\n";
     $html .= "        </tr>\n";
     $html .= "      </tbody>\n";
     $html .= "    </table>    \n";
@@ -712,6 +721,7 @@ sub create_gene_page {
     $html .= "	  <th>Locus</th>\n";
     $html .= "	  <th>Type</th>\n";
     $html .= "	  <th>Variant CLRT Score</th>\n";
+    $html .= "	  <th>Gnomad AF</th>\n";
     $html .= "	  <th>REF NT</th>\n";
     $html .= "	  <th>NT Genotype</th>\n";
     $html .= "	  <th>REF AA</th>\n";
@@ -787,6 +797,7 @@ sub create_gene_page {
 		  "target=\"_blank\">${locus}</a></td>\n");
 	$html .= "      <td>$var->{type}</td>\n";
 	$html .= "      <td>$var->{score}</td>\n";
+	$html .= "      <td>$var->{gnomad_cmlt_af}</td>\n";
 	$html .= "      <td>$var->{ref_nt}</td>\n";
 	$html .= "      <td>$var->{nt_gt_txt}</td>\n";
 	$html .= "      <td>$var->{ref_aa}</td>\n";
@@ -930,11 +941,13 @@ sub create_variant_page {
     $html .= "     <script>\n";
     $html .= "       \$(document).ready(function() {";
     $html .= "       \$('#datatable').DataTable({";
-    $html .= "          ordering: false,\n";
-    $html .= "          paging: false,\n";
+    $html .= "          searching: false,\n";
+    $html .= "          info: false,\n";
+    $html .= "       	ordering: false,\n";
+    $html .= "       	paging: false,\n";
     $html .= "          });\n";
     $html .= "       \$('#target_table').DataTable({";
-    $html .= "          order: [[2, 'asc']],";
+    $html .= "          order : [[5, 'dsc'], [6, 'dsc']],\n";
     $html .= "          pageLength: 50,\n";
     $html .= "          });\n";
     $html .= "       });\n";
@@ -942,7 +955,8 @@ sub create_variant_page {
     $html .= "   </head>\n";
     $html .= "  <body>\n";
     $html .= "\n";
-    $html .= "    <h1 style=\"text-align: center;\">$data->{title} - $phevor_gene $var_key</h1>\n";
+    $html .= "    <h1 style=\"text-align: center;\">$data->{title} - $phevor_gene</h1>\n";
+    $html .= "    <h2 style=\"text-align: center;\">$var_key</h1>\n";
     #----------------------------------------
     # Variant Page - Variant Summary Table
     #----------------------------------------
@@ -1051,9 +1065,15 @@ sub create_variant_page {
 	    my $sample_id = exists $ID_MAP{$indv} ? $ID_MAP{$indv} : 'N/A';
 
 	    my $gt = 'N/A';
+
 	    my $gq = 'N/A';
+	    my $gq_fmt = '';
+
 	    my $dp = 'N/A';
+	    my $dp_fmt = '';
+
 	    my $ad = 'N/A';
+	    my $ad_fmt = '';
 
 	    #----------------------------------------
 	    # Prep VCF FORMAT Data
@@ -1062,6 +1082,61 @@ sub create_variant_page {
 		my $var_data_txt = `bcftools query -f '[\%GT\\t\%GQ\\t\%DP\\t\%AD\\n]' -s $sample_id -r $range_locus $data->{vcf_file}`;
 		chomp $var_data_txt;
 		($gt, $gq, $dp, $ad) = split /\t/, $var_data_txt;
+
+		#----------------------------------------
+		# Format Genotype Quality
+		#----------------------------------------
+		if ($gq >= 50) {
+		    $gq_fmt = 'background-color: LightGreen';
+		}
+		elsif ($gq >= 30) {
+		    $gq_fmt = 'background-color: LightYellow';
+		}
+		else {
+		    $gq_fmt = 'background-color: LightCoral';
+		}
+
+		#----------------------------------------
+		# Format Depth
+		#----------------------------------------
+		if ($dp >= 30) {
+		    $dp_fmt = 'background-color: LightGreen';
+		}
+		elsif ($dp >= 15) {
+		    $dp_fmt = 'background-color: LightYellow';
+		}
+		else {
+		    $dp_fmt = 'background-color: LightCoral';
+		}
+
+		#----------------------------------------
+		# Format Allelic Depth
+		#----------------------------------------
+		my ($ref_ad, $alt_ad) = split ',', $ad;
+		my $alt_ratio;
+		if (($ref_ad + $alt_ad) > 0) {
+		    $alt_ratio = $alt_ad/($ref_ad + $alt_ad);
+		}
+		else {
+		    $alt_ratio = 0;
+		}
+
+		my $abs_diff = abs(0.5 - $alt_ratio);
+		if ($gt =~ /^0[\/\|]1$/) {
+		    if ($abs_diff <= 0.15) {
+			$ad_fmt = 'background-color: LightGreen';
+		    }
+		    elsif ($abs_diff <= 0.3) {
+			$ad_fmt = 'background-color: LightYellow';
+		    }
+		    elsif ($abs_diff <= 0.5) {
+			$ad_fmt = 'background-color: LightCoral';
+		    }
+		    else {
+			$ad_fmt = 'background-color: Silver';
+		    }
+		}
+
 		print '';
 	    }
 
@@ -1097,6 +1172,7 @@ END_BAT
 		close $BAT;
 		print '';
 	    }
+
 	    #----------------------------------------
 	    # Variant Page - Sample Table Rows
 	    #----------------------------------------
@@ -1106,9 +1182,9 @@ END_BAT
 	    $html .= "      	<td>$sample_id</td>\n";
 	    $html .= "          <td>$gt_nt_txt</td>\n";
 	    $html .= "          <td>$gt_aa_txt</td>\n";
-	    $html .= "      	<td>$gq</td>\n";
-	    $html .= "      	<td>$dp</td>\n";
-	    $html .= "      	<td>$ad</td>\n";
+	    $html .= "      	<td style='$gq_fmt'>$gq</td>\n";
+	    $html .= "      	<td style='$dp_fmt'>$dp</td>\n";
+	    $html .= "      	<td style='$ad_fmt'>$ad</td>\n";
 	    $html .= "      	<td><a href=\"../../igv_img/${png_file}\" target=\"_blank\">IGV Screen Shot</a></td>\n" if $data->{bam_dir};
 	    $html .= "        </tr>\n";
 	}
@@ -1198,13 +1274,13 @@ END_BAT
 # # Gnomad_Cmlt_AF
 # #----------------------------------------
 # if ($data->{crnt_var}{gnomad_cmlt_af} <= 0.0001) {
-# 	$data->{crnt_var}{gnomad_cmlt_af_fmt} = [$data->{crnt_var}{gnomad_cmlt_af}, {bgcolor => 'LightGreen'}];
+# 	$data->{crnt_var}{gnomad_cmlt_af_fmt} = [$data->{crnt_var}{gnomad_cmlt_af}, {style => 'background-color: LightGreen'}];
 # }
 # elsif ($data->{crnt_var}{gnomad_cmlt_af} <= 0.01) {
-# 	$data->{crnt_var}{gnomad_cmlt_af_fmt} = [$data->{crnt_var}{gnomad_cmlt_af}, {bgcolor => 'LightYellow'}];
+# 	$data->{crnt_var}{gnomad_cmlt_af_fmt} = [$data->{crnt_var}{gnomad_cmlt_af}, {style => 'background-color: LightYellow'}];
 # }
 # else {
-# 	$data->{crnt_var}{gnomad_cmlt_af_fmt} = [$data->{crnt_var}{gnomad_cmlt_af}, {bgcolor => 'LightCoral'}];
+# 	$data->{crnt_var}{gnomad_cmlt_af_fmt} = [$data->{crnt_var}{gnomad_cmlt_af}, {style => 'background-color: LightCoral'}];
 # }
 # 
 # #----------------------------------------
@@ -1216,23 +1292,23 @@ END_BAT
 # # Var_Type
 # #----------------------------------------
 # if ($data->{crnt_var}{type} eq 'SNV') {
-# 	$data->{crnt_var}{var_type_fmt} = [$data->{crnt_var}{type}, {bgcolor => 'LightGreen'}];
+# 	$data->{crnt_var}{var_type_fmt} = [$data->{crnt_var}{type}, {style => 'background-color: LightGreen'}];
 # }
 # else {
-# 	$data->{crnt_var}{var_type_fmt} = [$data->{crnt_var}{type}, {bgcolor => 'LightYellow'}];
+# 	$data->{crnt_var}{var_type_fmt} = [$data->{crnt_var}{type}, {style => 'background-color: LightYellow'}];
 # }
 # 
 # #----------------------------------------
 # # Var_Score
 # #----------------------------------------
 # if ($data->{crnt_var}{score} >= 8) {
-# 	$data->{crnt_var}{var_score_fmt} = [$data->{crnt_var}{score}, {bgcolor => 'LightGreen'}];
+# 	$data->{crnt_var}{var_score_fmt} = [$data->{crnt_var}{score}, {style => 'background-color: LightGreen'}];
 # }
 # elsif ($data->{crnt_var}{score} >= 2) {
-# 	$data->{crnt_var}{var_score_fmt} = [$data->{crnt_var}{score}, {bgcolor => 'LightYellow'}];
+# 	$data->{crnt_var}{var_score_fmt} = [$data->{crnt_var}{score}, {style => 'background-color: LightYellow'}];
 # }
 # else {
-# 	$data->{crnt_var}{var_score_fmt} = [$data->{crnt_var}{score}, {bgcolor => 'LightCoral'}];
+# 	$data->{crnt_var}{var_score_fmt} = [$data->{crnt_var}{score}, {style => 'background-color: LightCoral'}];
 # }
 # 
 # #----------------------------------------
@@ -1248,8 +1324,8 @@ END_BAT
 # # NC_GT_TXT
 # #----------------------------------------
 # if ($data->{crnt_var}{nc_gt_txt} eq '.') {
-# 	$data->{crnt_var}{nc_gt_txt_fmt} = [$data->{crnt_var}{nc_gt_txt}, {bgcolor => 'LightGreen'}];
+# 	$data->{crnt_var}{nc_gt_txt_fmt} = [$data->{crnt_var}{nc_gt_txt}, {style => 'background-color: LightGreen'}];
 # }
 # else {
-# 	$data->{crnt_var}{nc_gt_txt_fmt} = [$data->{crnt_var}{nc_gt_txt}, {bgcolor => 'LightCoral'}];
+# 	$data->{crnt_var}{nc_gt_txt_fmt} = [$data->{crnt_var}{nc_gt_txt}, {style => 'background-color: LightCoral'}];
 # }
