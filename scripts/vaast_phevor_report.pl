@@ -166,10 +166,12 @@ sub build_table {
   $html .= "  <head>\n";
   $html .= "    <title>$data->{title}</title>\n";
   $html .= "    <link rel=\"stylesheet\" type=\"text/css\" href=\"https://cdn.datatables.net/1.10.19/css/jquery.dataTables.min.css\">\n";
+  $html .= "    <link rel=\"stylesheet\" type=\"text/css\" href=\"https://cdn.datatables.net/fixedheader/3.1.5/css/fixedHeader.dataTables.min.css\">\n";
   $html .= "\n";
   $html .= "    <script src=\"https://code.jquery.com/jquery-3.4.1.js\"></script>\n";
   $html .= "    <script src=\"https://code.jquery.com/ui/1.12.1/jquery-ui.js\"></script>\n";
   $html .= "    <script src=\"https://cdn.datatables.net/1.10.19/js/jquery.dataTables.min.js\"></script>\n";
+  $html .= "    <script src=\"https://cdn.datatables.net/fixedheader/3.1.5/js/dataTables.fixedHeader.min.js\"></script>\n";
 # $html .= "    <script>\n";
 # $html .= "  	  \$(function() {\n";
 # $html .= "  	    \$(document).tooltip();\n";
@@ -179,6 +181,7 @@ sub build_table {
   $html .= "    <script>\n";
   $html .= "      \$(document).ready(function() {\n";
   $html .= "        \$('#datatable').DataTable({\n";
+  $html .= "          fixedHeader: true,\n";
   $html .= "          order : [[2, 'dsc'], [4, 'asc']],\n";
   $html .= "          pageLength : 100,\n";
   $html .= "          });\n";
@@ -259,6 +262,18 @@ sub build_table {
       }
       $html .= "        </tr>\n"
   }
+
+  $html .= "\n";
+  #----------------------------------------
+  # Add footer row
+  #----------------------------------------
+  $html .= "      <tfoot>\n";
+  $html .= "        <tr>\n";
+  for my $column_head (@{$data->{columns}}) {
+    $html .= "      <th>$column_head</th>\n";
+  }
+  $html .= "        </tr>\n";
+  $html .= "      </tfoot>\n";
 
   #----------------------------------------
   # End Table
@@ -755,6 +770,32 @@ sub create_gene_page {
 	my $locus = $var->{locus};
 	
 	#----------------------------------------
+	# Format score
+	#----------------------------------------
+	if ($var->{score} >= 3) {
+	    $var->{score_fmt} = 'background-color: LightGreen';
+	}
+	elsif ($var->{score} >= 1) {
+	    $var->{score_fmt} = 'background-color: LightYellow';
+	}
+	else {
+	    $var->{score_fmt} = 'background-color: LightCoral';
+	}
+
+	#----------------------------------------
+	# Format gnomad_cmlt_af
+	#----------------------------------------
+	if ($var->{gnomad_cmlt_af} <= 0.001) {
+	    $var->{gnomad_cmlt_af_fmt} = 'background-color: LightGreen';
+	}
+	elsif ($var->{gnomad_cmlt_af} <= 0.01) {
+	    $var->{gnomad_cmlt_af_fmt} = 'background-color: LightYellow';
+	}
+	else {
+	    $var->{gnomad_cmlt_af_fmt} = 'background-color: LightCoral';
+	}
+
+	#----------------------------------------
 	# Format HET/HOM/NC GT data
 	#----------------------------------------
 	my @het_data = split /,/, $var->{het_gt_txt};
@@ -796,8 +837,8 @@ sub create_gene_page {
 		  "db=hg19&position=${chrom}%3A${start}-${start}\" " .
 		  "target=\"_blank\">${locus}</a></td>\n");
 	$html .= "      <td>$var->{type}</td>\n";
-	$html .= "      <td>$var->{score}</td>\n";
-	$html .= "      <td>$var->{gnomad_cmlt_af}</td>\n";
+	$html .= "      <td style='$var->{score_fmt}'>$var->{score}</td>\n";
+	$html .= "      <td style='$var->{gnomad_cmlt_af_fmt}'>$var->{gnomad_cmlt_af}</td>\n";
 	$html .= "      <td>$var->{ref_nt}</td>\n";
 	$html .= "      <td>$var->{nt_gt_txt}</td>\n";
 	$html .= "      <td>$var->{ref_aa}</td>\n";
@@ -973,18 +1014,22 @@ sub create_variant_page {
     $html .= "	        <td>${var_key}</th>";
     $html .= "        </tr>\n";
     $html .= "        <tr>\n";
-    $html .= "          <th style='text-align: right'>Variant CLRT Score</th>\n";
-    $html .= "	        <td>${score}</th>";
-    $html .= "        </tr>\n";
-    $html .= "        <tr>\n";
     $html .= "          <th style='text-align: right'>Locus</th>\n";
-    $html .= ("      <td><a href=\"http://genome.ucsc.edu/cgi-bin/hgTracks?" .
+    $html .= ("         <td><a href=\"http://genome.ucsc.edu/cgi-bin/hgTracks?" .
 	      "db=hg19&position=${chrom}%3A${start}-${start}\" " .
 	      "target=\"_blank\">${locus}</a></td>\n");
     $html .= "        </tr>\n";
     $html .= "        <tr>\n";
     $html .= "          <th style='text-align: right'>Type</th>\n";
     $html .= "	        <td>${type}</th>";
+    $html .= "        </tr>\n";
+    $html .= "        <tr>\n";
+    $html .= "          <th style='text-align: right'>Variant CLRT Score</th>\n";
+    $html .= "	        <td style='$var->{score_fmt}'>${score}</th>";
+    $html .= "        </tr>\n";
+    $html .= "        <tr>\n";
+    $html .= "          <th style='text-align: right'>Gnomad AF</th>\n";
+    $html .= "	        <td style='$var->{gnomad_cmlt_af_fmt}'>$var->{gnomad_cmlt_af}</th>";
     $html .= "        </tr>\n";
     $html .= "        <tr>\n";
     $html .= "          <th style='text-align: right'>REF NT</th>\n";
