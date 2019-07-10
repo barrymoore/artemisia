@@ -231,8 +231,8 @@ my %seen;
 		# Print variant and bail.
 		my $mrna = $mrnas->{chrs}{$$chrom}[$idx];
 		# Reset record values for current mRNA.
-		$record{transcript} = $mrna->{attributes}{ID}[0];
-		$record{gene}       = $mrna->{attributes}{Parent}[0];
+		$record{transcript}  = $mrna->{attributes}{ID}[0];
+		$record{vvp_gene}    = $mrna->{attributes}{Parent}[0];
 		$record{vaast_rec_p} = 'null';
 		$record{vaast_dom_p} = 'null';
 		
