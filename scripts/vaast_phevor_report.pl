@@ -1194,6 +1194,7 @@ sub create_variant_page {
 		my $file_base = $locus;
 		$file_base =~ s/[:\-]/_/g;
 		$file_base .= "-${sample_id}";
+		$file_base =~ s|\/|_|g;		
 
 		my $bat_file = "${igv_path}/${file_base}.bat";
 		$png_file = "${file_base}.png";
