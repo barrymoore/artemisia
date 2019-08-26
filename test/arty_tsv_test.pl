@@ -4,21 +4,20 @@ use warnings;
 use Getopt::Long;
 
 use lib "$ENV{HOME}/artemisia/lib/";
-use Arty::CDR;
+use Arty::TSV;
 
 #-----------------------------------------------------------------------------
 #----------------------------------- MAIN ------------------------------------
 #-----------------------------------------------------------------------------
-
 my $usage = "
 
 Synopsis:
 
-arty_cdr_test.pl data/cases.cdr
+arty_tsv_test.pl data/tsv.txt
 
 Description:
 
-Test script for developing Arty::CDR.pm
+Test script for developing Arty::TSV.pm
 
 ";
 
@@ -32,10 +31,15 @@ die $usage if $help || ! $opt_success;
 my $file = shift;
 die $usage unless $file;
 
-my $cdr = Arty::CDR->new(file => $file);
+my $tsv = Arty::TSV->new(file => $file)->all_records;
 
-while (my $record = $cdr->next_record) {
-
-    print join "\t", @{$record}{qw(chrom start end type)};
+for my $record (@{$tsv}) {
+    print join "\t", @{$record};
     print "\n";
 }
+
+# while (my $record = $tsv->next_record) {
+# 
+#     print join "\t", @{$record}{qw(chrom start end)};
+#     print "\n";
+# }
