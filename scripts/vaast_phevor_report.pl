@@ -5,7 +5,7 @@ use Getopt::Long;
 
 use FindBin;
 use lib "$FindBin::RealBin/../lib";
-    
+
 use Arty::VAAST;
 use Arty::Phevor;
 use Arty::VCF;
@@ -91,9 +91,9 @@ sub prep_data {
     # Prep columns
     #----------------------------------------
     my @columns = qw(gene phv_rank phvr_score phv_prior
-                     vaast_rank vaast_score vaast_pval 
-                     gnomad_cmlt_af variant
-                     type score het hom nc);
+		     vaast_rank vaast_score vaast_pval
+		     gnomad_cmlt_af variant
+		     type score het hom nc);
 
     #----------------------------------------
     # Loop Phevor data
@@ -101,7 +101,7 @@ sub prep_data {
     my @data;
  GENE:
     while (my $record = $phevor->next_record) {
-	
+
 	#----------------------------------------
 	# Get Phevor data
 	#----------------------------------------
@@ -114,15 +114,15 @@ sub prep_data {
 	#----------------------------------------
 	next GENE if $phv_score <= 0;
 	next GENE unless exists $vaast_map{$phv_gene};
-	
+
 	#----------------------------------------
 	# Get VAAST data
 	#----------------------------------------
 	my $vaast_record = $vaast_map{$phv_gene};
-	my ($vaast_rank, $vaast_gene, $vaast_feature, $vaast_score, $vaast_pval) = 
+	my ($vaast_rank, $vaast_gene, $vaast_feature, $vaast_score, $vaast_pval) =
 	    @{$vaast_record}{qw(rank gene feature_id score p_value)};
 	$vaast_rank++;
-	
+
 	#----------------------------------------
 	# Format floating points
 	#----------------------------------------
@@ -136,7 +136,7 @@ sub prep_data {
 	# Phv_Gene
 	#--------------------
 	$phv_gene = "<a href=\"https://www.genecards.org/cgi-bin/carddisp.pl?gene=$phv_gene\">$phv_gene</a>";
-	
+
 	# Phv_Rank
 	#--------------------
 	if ($phv_rank <= 10) {
@@ -148,7 +148,7 @@ sub prep_data {
 	else {
 	    $phv_rank = [$phv_rank, {bgcolor => 'LightCoral'}];
 	}
-	
+
 	# Phevor_Score
 	#--------------------
 	if ($phv_score >= 2.3) {
@@ -160,7 +160,7 @@ sub prep_data {
 	else {
 	    $phv_score = [$phv_score, {bgcolor => 'LightCoral'}];
 	}
-	
+
 	# Phv_Prior
 	#--------------------
 	if ($phv_prior >= .75) {
@@ -172,7 +172,7 @@ sub prep_data {
 	else {
 	    $phv_prior = [$phv_prior, {bgcolor => 'LightCoral'}];
 	}
-	
+
 	# Vaast_Rank
 	#--------------------
 	if ($vaast_rank <= 25) {
@@ -184,7 +184,7 @@ sub prep_data {
 	else {
 	    $vaast_rank = [$vaast_rank, {bgcolor => 'LightCoral'}];
 	}
-	
+
 	# Vaast_Score
 	#--------------------
 	if ($vaast_score >= 10) {
@@ -196,7 +196,7 @@ sub prep_data {
 	else {
 	    $vaast_score = [$vaast_score, {bgcolor => 'LightCoral'}];
 	}
-	
+
 	# VAAST p-value
 	#--------------------
 	if ($vaast_pval <= 0.001) {
@@ -208,7 +208,7 @@ sub prep_data {
 	else {
 	    $vaast_pval = [$vaast_pval, {bgcolor => 'LightCoral'}];
 	}
-	    
+
 	#----------------------------------------
 	# Calculate allele counts
 	# Sort variants by score
@@ -216,7 +216,7 @@ sub prep_data {
 	my @allele_data;
       VAR:
 	for my $var_key (sort {($vaast_record->{Alleles}{$b}{score}
-				<=> 
+				<=>
 				$vaast_record->{Alleles}{$a}{score})}
 			 keys %{$vaast_record->{Alleles}}) {
 
@@ -232,7 +232,7 @@ sub prep_data {
 	    # Format floating points
 	    #----------------------------------------
 	    $gnomad_cmlt_af =  sprintf '%.2g', $gnomad_cmlt_af;
-	    
+
 	    #----------------------------------------
 	    # Get variant data
 	    #----------------------------------------
@@ -272,7 +272,7 @@ sub prep_data {
 		    push @{$gt_data{HOM}}, $gt_txt;
 		}
 		else {
-		    push @{$gt_data{HET}}, $gt_txt;		    
+		    push @{$gt_data{HET}}, $gt_txt;
 		}
 	    }
 
@@ -289,7 +289,7 @@ sub prep_data {
 	    #----------------------------------------
 	    # Add HTML formatting (var annotations)
 	    #----------------------------------------
-	    
+
 	    # Gnomad_Cmlt_AF
 	    #--------------------
 	    if ($gnomad_cmlt_af <= 0.0001) {
@@ -301,7 +301,7 @@ sub prep_data {
 	    else {
 		$gnomad_cmlt_af = [$gnomad_cmlt_af, {bgcolor => 'LightCoral'}];
 	    }
-	
+
 	    # Var_Type
 	    #--------------------
 	    if ($var_type eq 'SNV') {
@@ -310,7 +310,7 @@ sub prep_data {
 	    else {
 		$var_type = [$var_type, {bgcolor => 'LightYellow'}];
 	    }
-	    
+
 	    # Var_Score
 	    #--------------------
 	    if ($var_score >= 8) {
@@ -322,7 +322,7 @@ sub prep_data {
 	    else {
 		$var_score = [$var_score, {bgcolor => 'LightCoral'}];
 	    }
-	    
+
 	    # NC_GT_TXT
 	    #--------------------
 	    if ($nc_gt_txt eq '.') {
@@ -331,9 +331,9 @@ sub prep_data {
 	    else {
 		$nc_gt_txt = [$nc_gt_txt, {bgcolor => 'LightCoral'}];
 	    }
-	    
+
 	    #----------------------------------------
-	    # Print data for each variant
+	    # Stash data for each variant
 	    #----------------------------------------
 	    push @data, [$phv_gene, $phv_rank, $phv_score, $phv_prior,
 			 $vaast_rank, $vaast_score, $vaast_pval, $gnomad_cmlt_af,
