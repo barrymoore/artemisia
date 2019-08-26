@@ -178,7 +178,91 @@ sub scored {
   return $self->{scored};
 }
 
-#-----------------------------------------------------------------------------
+# #-----------------------------------------------------------------------------
+# 
+#  sub _initialize_args {
+#    my ($self, @args) = @_;
+# 
+# @@ -137,15 +137,28 @@ sub _initialize_args {
+# 
+#     LINE:
+#       while (my $line = $self->readline) {
+# 	  - return undef if ! defined $line;
+# 	  - if ($line =~ /^\#/) {
+# 	      -     chomp $line;
+# 	      -     push @{$self->{header}}, $line;
+# 	      - }
+# 	  - else {
+# 	      -     $self->_push_stack($line);
+# 	      -     last LINE;
+# 	      - }
+# +         return undef if ! defined $line;
+# +         if ($line =~ /^\#/) {
+# +             chomp $line;
+# +             push @{$self->{header}}, $line;
+# +             if ($line =~ /##\s+COMMAND\s+VAAST/) {
+# +                     if ($line =~ /\s+\-m\s+pvaast/) {
+# +                             $self->mode('pvaast');
+# +                     }
+# +                     elsif ($line =~ /\s+\-m\s+lrt/) {
+# +                             $self->mode('lrt');
+# +                     }
+# +                     else {
+# +                             info_msg('vaast_mode_unknown',
+# +                                      "Unable to determine VAAST " .
+# +                                      "mode from $line\n");
+# +                     }
+# +             }
+# +     }
+# +         else {
+# +             $self->_push_stack($line);
+# +             last LINE;
+# +         }
+#       }
+#  }
+# 
+# @@ -156,7 +169,7 @@ sub _initialize_args {
+#  =head1 ATTRIBUTES
+# 
+#  =cut
+# -
+# +
+#  =head2 scored
+# 
+#   Title   : scored
+# @@ -180,6 +193,34 @@ sub scored {
+# 
+#  #-----------------------------------------------------------------------------
+# 
+# +=head2 mode
+# +
+# +  Title   : mode
+# +  Usage   : $mode = $self->mode($mode_value);
+# +  Function: Get/set the value of the --mode option used to produce the given
+# +            VAAST analysis.
+# +  Returns : The mode value
+# +  Args    : A mode value.  Valid values are 'pvaast' and 'lrt'.
+# +
+# +=cut
+# +
+# +sub mode {
+# +        my ($self, $mode) = @_;
+# +
+# +        if ($mode) {
+# +                if ($mode ne 'pvaast' && $mode ne 'lrt') {
+# +                        throw_msg('invalid_vaast_mode', "VAAST mode $mode " .
+# +                                  "not supported.  Check spelling then " .
+# +                                  "request support.");
+# +                }
+# +                $self->{mode} = $mode;
+# +        }
+# +
+# +        return $self->{mode};
+# +}
+# +
+# +#-----------------------------------------------------------------------------
+# +
+
 
 # =head2 attribute
 #
@@ -285,6 +369,9 @@ sub parse_vaast_record {
 	#---------------------------------------
 	# Parse Variant Line
 	#---------------------------------------
+	# TU: 168.82 1017981@chr11 T|H N|0-6|A:A|L:L
+	# T: 99.98 ins-chrX-101395783-1 ~ 1|G:G|AP:AP 2-3,5-8|G:G|P:P
+	# BR: 1013992@chr11	C|S 898|C:T|S:N
 	if ($line =~ /^(T|TR|TU|P|PR|B|BR):\s+/) {
 	    my @fields = split /\s+/, $line;
 	    my ($tag, $score, $lod_score, $locus, $ref_seqs, @genotype_data);
@@ -297,6 +384,8 @@ sub parse_vaast_record {
 	    #---------------------------------------
 	    # Parse Target Variants
 	    #---------------------------------------
+	    # TU: 168.82 1017981@chr11 T|H N|0-6|A:A|L:L
+	    # T: 99.98 ins-chrX-101395783-1 ~ 1|G:G|AP:AP 2-3,5-8|G:G|P:P
 	    if ($line =~ /^T[RU]?:\s+/) {
 		($tag, $score, $locus, $ref_seqs, @genotype_data) = @fields;
 		if ($score =~ /\(.*\)/) {
@@ -307,6 +396,7 @@ sub parse_vaast_record {
 	    #---------------------------------------
 	    # Parse Background Variants
 	    #---------------------------------------
+	    # BR: 1013992@chr11	C|S 898|C:T|S:N
 	    elsif ($line =~ /^[BP]R?:\s+/) {
 		($tag, $locus, $ref_seqs, @genotype_data) = @fields;
 	    }
@@ -320,18 +410,22 @@ sub parse_vaast_record {
 	    #---------------------------------------
 	    # Set Target/Background tags
 	    #---------------------------------------
+	    # TU: 168.82 1017981@chr11 T|H N|0-6|A:A|L:L
 	    $tag =~ s/:$//;
 	    my ($short_tag) = substr($tag, 0, 1);
 
 	    #---------------------------------------
 	    # Parse variant details
 	    #---------------------------------------
+	    # T: 99.98 ins-chrX-101395783-1 ~ 1|G:G|AP:AP 2-3,5-8|G:G|P:P
 	    my ($type, $start, $chrom, $length);
 	    if ($tag =~ '^(T|P|B)$') {
 		($type, $chrom, $start, $length) = split /\-/, $locus;
 		$type = exists $type_map{$type} ? $type_map{$type} :
 		    $type;
 	    }
+	    # TU: 168.82 1017981@chr11 T|H N|0-6|A:A|L:L
+	    # BR: 1013992@chr11	C|S 898|C:T|S:N
 	    else {
 		($start, $chrom) = split /\@/, $locus;
 		$type = 'SNV';
@@ -346,7 +440,7 @@ sub parse_vaast_record {
 	    #---------------------------------------
 	    # Parse Genotypes
 	    #---------------------------------------
-	    my @genotypes;
+	    my %genotypes;
 	    my %allele_counts;
 	  GENOTYPE:
 	    for my $genotype_datum (@genotype_data) {
@@ -354,6 +448,8 @@ sub parse_vaast_record {
 		#---------------------------------------
 		# Genotype flag
 		#---------------------------------------
+		# N|0-6|A:A|L:L
+		# 100,843,847,953|C:T|G:R
 		my @fields = split /\|/, $genotype_datum;
 		my $flag = shift @fields if $tag =~ /^T[RU]/;
 		$flag ||= '';
@@ -390,12 +486,13 @@ sub parse_vaast_record {
 		#---------------------------------------
 		# Build & store genotype data
 		#---------------------------------------	
+		
 		my %genotype = (flag  => $flag,
 				indvs => \@indvs,
 				gt_nt => \@gt_nts,
 				gt_aa => \@gt_aas,
 		    );
-		push @genotypes, \%genotype;
+		$genotypes{$gt_nt_txt} = \%genotype;
 	    }
 	    #---------------------------------------
 	    # ^^^ END GENOTYPE LOOP ^^^
@@ -417,12 +514,12 @@ sub parse_vaast_record {
 	    #---------------------------------------
 	    my %alt_nt_hash;
 	    for my $nt (keys %{$allele_counts{nt}}) {
-		$record{Alleles}{$var_key}{AC}{$nt}{$short_tag} +=
+		$record{vars}{$var_key}{ac}{$nt}{$short_tag} +=
 		    $allele_counts{nt}{$nt}{$short_tag};
-		$record{Alleles}{$var_key}{type}  = $type
+		$record{vars}{$var_key}{type}  = $type
 		    if defined $type;
-		$record{Alleles}{$var_key}{score} = $score
-		    if defined $score;
+		$record{vars}{$var_key}{score} = defined $score ?
+		    $score : $record{vars}{$var_key}{score};
 		if ($nt ne $ref_nt && $nt ne '^') {
 		    $alt_nt_hash{$nt}++;
 		}
@@ -439,13 +536,15 @@ sub parse_vaast_record {
 	    else {
 		($alt_nt) = keys %alt_nt_hash;
 	    }
+	    $alt_nt ||= '.';
+	    # my $var_key_alt = join ':', $var_key, $alt_nt;
 
 	    # #---------------------------------------
 	    # # Aggregate aa allele data
 	    # #---------------------------------------
 	    # my %alt_aa_hash;
 	    # for my $aa (keys %{$allele_counts{aa}}) {
-	    # 	$record{Alleles}{$var_key}{AAC}{$aa}{$short_tag} +=
+	    # 	$record{vars}{$var_key}{aac}{$aa}{$short_tag} +=
 	    # 	    $allele_counts{aa}{$aa}{$short_tag};
 	    # 	if ($aa ne $ref_aa && $aa ne '^' && $aa ne '-') {
 	    # 	    $alt_aa_hash{$aa}++;
@@ -469,26 +568,58 @@ sub parse_vaast_record {
 	    # Aggregate gt allele data
 	    #---------------------------------------
 	    for my $gt (keys %{$allele_counts{gt}}) {
-		$record{Alleles}{$var_key}{GT}{$gt}{$short_tag} +=
+		$record{vars}{$var_key}{gc}{$gt}{$short_tag} +=
 		    $allele_counts{gt}{$gt}{$short_tag};
 	    }
 
+	    # #---------------------------------------
+	    # # Build & store variant data
+	    # #---------------------------------------
+	    # my $var_data = {start     => $start,
+	    # 		    score     => $score,
+	    # 		    ref_nt    => $ref_nt,
+	    # 		    ref_aa    => $ref_aa,
+	    # 		    alt_nt    => $alt_nt,
+	    # 		    tag       => $tag,
+	    # 		    # alt_aa    => $alt_aa,
+	    # 		    genotypes => \@genotypes
+	    # };
+	    # $var_data->{lod_score} = $lod_score if defined $lod_score;
+	    # $var_data->{type}   = $type   if $type;
+	    # $var_data->{length} = $length if $length;
+	    # push @{$record{$tag}}, $var_data;
+	    
 	    #---------------------------------------
 	    # Build & store variant data
 	    #---------------------------------------
-	    my $var_data = {start     => $start,
-			    score     => $score,
-			    ref_nt    => $ref_nt,
-			    ref_aa    => $ref_aa,
-			    alt_nt    => $alt_nt,
-			    # alt_aa    => $alt_aa,
-			    genotypes => \@genotypes
-	    };
-	    $var_data->{lod_score} = $lod_score if defined $lod_score;
-	    $var_data->{type}   = $type   if $type;
-	    $var_data->{length} = $length if $length;
-	    
-	    push @{$record{$tag}}, $var_data;
+	    $record{vars}{$var_key}{start}  = $start
+		unless exists $record{vars}{$var_key}{start};
+	    $record{vars}{$var_key}{score} = ($score || 0)
+		unless exists $record{vars}{$var_key}{score};
+	    $record{vars}{$var_key}{ref_nt} = $ref_nt
+		unless exists $record{vars}{$var_key}{ref_nt};
+	    $record{vars}{$var_key}{ref_aa} = $ref_aa
+		unless exists $record{vars}{$var_key}{ref_aa};
+	    $record{vars}{$var_key}{alt_nt} = $alt_nt
+		unless exists $record{vars}{$var_key}{alt_nt};
+	    $record{vars}{$var_key}{lod_score} = $lod_score
+		if defined $lod_score;
+	    $record{vars}{$var_key}{type} = $type
+		if $type;
+	    $record{vars}{$var_key}{length} = $length
+		if $length;
+	    for my $gt (keys %genotypes) {
+		#(flag  => $flag,
+		# indvs => \@indvs,
+		# gt_nt => \@gt_nts,
+		# gt_aa => \@gt_aas)
+		$record{vars}{$var_key}{gts}{$gt}{gt_nt} = $genotypes{$gt}{gt_nt}
+		unless exists $record{vars}{$var_key}{gts}{$gt}{gt_nt};
+		$record{vars}{$var_key}{gts}{$gt}{gt_aa} = $genotypes{$gt}{gt_aa}
+		unless exists $record{vars}{$var_key}{gts}{$gt}{gt_aa};
+		$record{vars}{$var_key}{gts}{$gt}{$short_tag}{flag}  = $genotypes{$gt}{flag};
+		$record{vars}{$var_key}{gts}{$gt}{$short_tag}{indvs} = $genotypes{$gt}{indvs};
+	    }
 	    print '';
 	}
 	#---------------------------------------
@@ -664,6 +795,7 @@ sub parse_vaast_record {
 	else {
 	    warn_msg('invalid_data_line', $line);
 	}
+	print '';
     }
     #---------------------------------------
     # ^^^ END LINE LOOP ^^^
@@ -672,16 +804,16 @@ sub parse_vaast_record {
     #---------------------------------------
     # Finalize allele count data 
     #---------------------------------------
-    for my $var_key (keys %{$record{Alleles}}) {
-	my $var = $record{Alleles}{$var_key};
+    for my $var_key (keys %{$record{vars}}) {
+	my $var = $record{vars}{$var_key};
 	$var->{score} ||= 0;
-	for my $nt_key (keys %{$var->{AC}}) {
-	    my $nt = $var->{AC}{$nt_key};
+	for my $nt_key (keys %{$var->{ac}}) {
+	    my $nt = $var->{ac}{$nt_key};
 	    $nt->{T} ||= 0;
 	    $nt->{B} ||= 0;
 	}
-	for my $gt_key (keys %{$var->{GT}}) {
-	    my $gt = $var->{GT}{$gt_key};
+	for my $gt_key (keys %{$var->{gc}}) {
+	    my $gt = $var->{gc}{$gt_key};
 	    $gt->{T} ||= 0;
 	    $gt->{B} ||= 0;
 	}

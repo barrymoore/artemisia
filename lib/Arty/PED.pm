@@ -1,4 +1,4 @@
-package Arty::Template;
+package Arty::PED;
 
 use strict;
 use warnings;
@@ -10,16 +10,16 @@ use Arty::Utils qw(:all);
 
 =head1 NAME
 
-Arty::Template - Parse Template files
+Arty::PED - Parse PED files
 
 =head1 VERSION
 
-This document describes Arty::Template version 0.0.1
+This document describes Arty::PED version 0.0.1
 
 =head1 SYNOPSIS
 
-    use Arty::Template;
-    my $template = Arty::Template->new('data.template');
+    use Arty::PED;
+    my $ped = Arty::PED->new('pedigree.ped');
 
     while (my $record = $parser->next_record) {
 	print $record->{gene} . "\n";
@@ -27,23 +27,38 @@ This document describes Arty::Template version 0.0.1
 
 =head1 DESCRIPTION
 
-L<Arty::Template> provides Template parsing ability for the Artemisia suite
-of genomics tools.
+L<Arty::PED> provides pedigree (PED) file parsing ability for the
+Artemisia suite of genomics tools.  The format supported is L<PED
+format|http://zzz.bwh.harvard.edu/plink/data.shtml#ped> from the PLINK
+tool with the following columns:
+
+ * Family ID
+ * Individual ID
+ * Paternal ID
+ * Maternal ID
+ * Sex (1=male; 2=female; 0|9=unknown)
+ * Phenotype (1=unaffected; 2=affected; 0|9=unknown)
+
+Lines begining with '#' are treated as headers and ignored.  The
+sematic content of headers are not considered.
+
+Additional columns are allowed and will simply be stored in an array
+as $record->{data}.
 
 =head1 CONSTRUCTOR
 
-New L<Arty::Template> objects are created by the class method new.
+New L<Arty::PED> objects are created by the class method new.
 Arguments should be passed to the constructor as a list (or reference)
 of key value pairs.  If the argument list has only a single argument,
 then this argument is applied to the 'file' attribute and thus
-specifies the Template filename.  All attributes of the L<Arty::Template>
+specifies the PED filename.  All attributes of the L<Arty::PED>
 object can be set in the call to new. An simple example of object
 creation would look like this:
 
-    my $parser = Arty::Template->new('data.template');
+    my $parser = Arty::PED->new('pedigree.ped');
 
     # This is the same as above
-    my $parser = Arty::Template->new('file' => 'data.template');
+    my $parser = Arty::PED->new('file' => 'pedigree.ped');
 
 
 The constructor recognizes the following parameters which will set the
@@ -51,7 +66,7 @@ appropriate attributes:
 
 =over
 
-=item * C<< file => data.template >>
+=item * C<< file => pedigree.ped >>
 
 This optional parameter provides the filename for the file containing
 the data to be parsed. While this parameter is optional either it, or
@@ -74,9 +89,9 @@ must be set.
 =head2 new
 
      Title   : new
-     Usage   : Arty::Template->new();
-     Function: Creates a Arty::Template object;
-     Returns : An Arty::Template object
+     Usage   : Arty::PED->new();
+     Function: Creates a Arty::PED object;
+     Returns : An Arty::PED object
      Args    :
 
 =cut
@@ -99,9 +114,7 @@ sub new {
  Title   : _initialize_args
  Usage   : $self->_initialize_args($args);
  Function: Initialize the arguments passed to the constructor.  In particular
-           set all attributes passed.  For most classes you will just need to
-           customize the @valid_attributes array within this method as you add
-           Get/Set methods for each attribute.
+           set all attributes passed.
  Returns : N/A
  Args    : A hash or array reference of arguments.
 
@@ -139,14 +152,18 @@ sub _initialize_args {
  sub _process_header {
      my $self = shift @_;
 
+     my $fh = $self->fh;
+
    LINE:
      while (my $line = $self->readline) {
+         return undef if ! defined $line;
+
          if ($line =~ /^\#/) {
              chomp $line;
              push @{$self->{header}}, $line;
          }
          else {
-	     $self->_push_stack($line);
+             $self->_push_stack($line);
              last LINE;
          }
      }
@@ -160,7 +177,7 @@ sub _initialize_args {
 
 =cut
 
-#  =head2 attribute
+# =head2 attribute
 # 
 #   Title   : attribute
 #   Usage   : $attribute = $self->attribute($attribute_value);
@@ -168,7 +185,7 @@ sub _initialize_args {
 #   Returns : An attribute value
 #   Args    : An attribute value
 # 
-#  =cut
+# =cut
 # 
 #  sub attribute {
 #    my ($self, $attribute_value) = @_;
@@ -190,21 +207,21 @@ sub _initialize_args {
 
  Title   : next_record
  Usage   : $record = $vcf->next_record();
- Function: Return the next record from the Template file.
- Returns : A hash (or reference) of Template record data.
+ Function: Return the next record from the PED file.
+ Returns : A hash (or reference) of PED record data.
  Args    : N/A
 
 =cut
 
 sub next_record {
-    my $self = shift @_;
+        my $self = shift @_;
 
-    my $line = $self->readline;
-    return undef if ! defined $line;
+        my $line = $self->readline;
+        return undef if ! defined $line;
 
-    my $record = $self->parse_record($line);
-    
-    return wantarray ? %{$record} : $record;
+	my $record = $self->parse_record($line);
+
+        return wantarray ? %{$record} : $record;
 }
 
 #-----------------------------------------------------------------------------
@@ -212,35 +229,36 @@ sub next_record {
 =head2 parse_record
 
  Title   : parse_record
- Usage   : $record = $tempalte->parse_record($line);
- Function: Parse Template line into a data structure.
- Returns : A hash (or reference) of Template record data.
- Args    : A scalar containing a string of Tempalte record text.
+ Usage   : $record = $vcf->parse_record();
+ Function: Parse PED line into a data structure.
+ Returns : A hash (or reference) of PED record data.
+ Args    : A scalar containing a string of PED record text.
 
 =cut
 
 sub parse_record {
-    my ($self, $line) = @_;
-    chomp $line;
-    
-    my @cols = split /\t/, $line;
-    
-    my %record;
-    
-    @record{qw(chrom start end)} = @cols;
-    
-    return wantarray ? %record : \%record;
+        my ($self, $line) = @_;
+        chomp $line;
+
+        my @cols = split /\s+/, $line;
+
+	my %record;
+
+        @record{qw(kindred proband father mother sex phenotype)} = splice(@cols, 0, 6);
+	$record{data} = \@cols if scalar @cols;
+
+	return wantarray ? %record : \%record;
 }
 
 #-----------------------------------------------------------------------------
 
 =head1 DIAGNOSTICS
 
-L<Arty::Template> does not throw any warnings or errors.
+L<Arty::PED> does not throw any warnings or errors.
 
 =head1 CONFIGURATION AND ENVIRONMENT
 
-L<Arty::Template> requires no configuration files or environment variables.
+L<Arty::PED> requires no configuration files or environment variables.
 
 =head1 DEPENDENCIES
 

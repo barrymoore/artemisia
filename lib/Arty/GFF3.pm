@@ -130,7 +130,7 @@ sub _initialize_args {
 
   Title   : _process_header
   Usage   : $self->_process_header
-  Function: Parse and store header data
+  Function: Parse and store header lines
   Returns : N/A
   Args    : N/A
 
@@ -140,6 +140,7 @@ sub _initialize_args {
      my $self = shift @_;
 
      my $fh = $self->fh;
+     $self->{header} ||= [];
 
    LINE:
      while (my $line = $self->readline) {
@@ -266,6 +267,51 @@ sub parse_attributes {
     push @{$attributes{$key}}, @values;
  }
  return wantarray ? %attributes : \%attributes;
+}
+
+#-----------------------------------------------------------------------------
+
+=head2 format_gff3_record
+
+ Title   : format_gff3_record
+ Usage   : $gff3->format_gff3_record($gff3_record);
+ Function: Format a Arty::GFF3 record as a GFF3 text string (basically this
+           is the opposite of parse_record).
+ Returns : A string of GFF3 record text.
+ Args    : A Arty::GFF3 structured record.
+
+=cut
+
+sub format_gff3_record {
+    my ($self, $record) = @_;
+
+    my @attrb_pairs;
+    for my $key (sort keys %{$record->{attributes}}) {
+	my $values = $record->{attributes}{$key};
+	my $values_txt = join ',', @{$values};
+	push @attrb_pairs, "$key=$values_txt";
+    }
+    my $attrb_txt = join ';', @attrb_pairs;
+    my $record_txt = join "\t", @{$record}{qw(chrom source type start end score strand phase)}, $attrb_txt;
+    return $record_txt;
+}
+
+#-----------------------------------------------------------------------------
+
+=head2 get_header
+
+ Title   : get_header
+ Usage   : @header = $gff3->get_header();
+ Function: Get the GFF3 header lines as a list.
+ Returns : An array (or reference) of GFF3 header lines.
+ Args    : N/A
+
+=cut
+
+sub get_header {
+ my $self = shift @_;
+
+ return wantarray ? @{$self->{header}} : $self->{header};
 }
 
 #-----------------------------------------------------------------------------

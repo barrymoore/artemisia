@@ -13,7 +13,7 @@ my $usage = "
 
 Synopsis:
 
-arty_bed_test.pl data.bed
+arty_bed_test.pl data/cds.bed
 
 Description:
 
