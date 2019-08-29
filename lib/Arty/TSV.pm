@@ -1,4 +1,4 @@
-package Arty::Template;
+package Arty::TSV;
 
 use strict;
 use warnings;
@@ -10,16 +10,16 @@ use Arty::Utils qw(:all);
 
 =head1 NAME
 
-Arty::Template - Parse Template files
+Arty::TSV - Parse TSV files
 
 =head1 VERSION
 
-This document describes Arty::Template version 0.0.1
+This document describes Arty::TSV version 0.0.1
 
 =head1 SYNOPSIS
 
-    use Arty::Template;
-    my $template = Arty::Template->new('data.template');
+    use Arty::TSV;
+    my $tsv = Arty::TSV->new('data.tsv');
 
     while (my $record = $parser->next_record) {
 	print $record->{gene} . "\n";
@@ -27,23 +27,25 @@ This document describes Arty::Template version 0.0.1
 
 =head1 DESCRIPTION
 
-L<Arty::Template> provides Template parsing ability for the Artemisia suite
-of genomics tools.
+L<Arty::TSV> provides TSV (tab-separated values) parsing ability for
+the Artemisia suite of genomics tools.
+
+Data is available as a reference to an array stored in $record->{data}.
 
 =head1 CONSTRUCTOR
 
-New L<Arty::Template> objects are created by the class method new.
+New L<Arty::TSV> objects are created by the class method new.
 Arguments should be passed to the constructor as a list (or reference)
 of key value pairs.  If the argument list has only a single argument,
 then this argument is applied to the 'file' attribute and thus
-specifies the Template filename.  All attributes of the L<Arty::Template>
+specifies the TSV filename.  All attributes of the L<Arty::TSV>
 object can be set in the call to new. An simple example of object
 creation would look like this:
 
-    my $parser = Arty::Template->new('data.template');
+    my $parser = Arty::TSV->new('data.tsv');
 
     # This is the same as above
-    my $parser = Arty::Template->new('file' => 'data.template');
+    my $parser = Arty::TSV->new('file' => 'data.tsv');
 
 
 The constructor recognizes the following parameters which will set the
@@ -51,7 +53,7 @@ appropriate attributes:
 
 =over
 
-=item * C<< file => data.template >>
+=item * C<< file => data.tsv >>
 
 This optional parameter provides the filename for the file containing
 the data to be parsed. While this parameter is optional either it, or
@@ -74,9 +76,9 @@ must be set.
 =head2 new
 
      Title   : new
-     Usage   : Arty::Template->new();
-     Function: Creates a Arty::Template object;
-     Returns : An Arty::Template object
+     Usage   : Arty::TSV->new();
+     Function: Creates a Arty::TSV object;
+     Returns : An Arty::TSV object
      Args    :
 
 =cut
@@ -190,8 +192,8 @@ sub _initialize_args {
 
  Title   : next_record
  Usage   : $record = $vcf->next_record();
- Function: Return the next record from the Template file.
- Returns : A hash (or reference) of Template record data.
+ Function: Return the next record from the TSV file.
+ Returns : A hash (or reference) of TSV record data.
  Args    : N/A
 
 =cut
@@ -213,8 +215,8 @@ sub next_record {
 
  Title   : parse_record
  Usage   : $record = $tempalte->parse_record($line);
- Function: Parse Template line into a data structure.
- Returns : A hash (or reference) of Template record data.
+ Function: Parse TSV line into a data structure.
+ Returns : A hash (or reference) of TSV record data.
  Args    : A scalar containing a string of Tempalte record text.
 
 =cut
@@ -227,7 +229,7 @@ sub parse_record {
     
     my %record;
     
-    @record{qw(chrom start end)} = @cols;
+    @record{data} = \@cols;
     
     return wantarray ? %record : \%record;
 }
@@ -236,11 +238,11 @@ sub parse_record {
 
 =head1 DIAGNOSTICS
 
-L<Arty::Template> does not throw any warnings or errors.
+L<Arty::TSV> does not throw any warnings or errors.
 
 =head1 CONFIGURATION AND ENVIRONMENT
 
-L<Arty::Template> requires no configuration files or environment variables.
+L<Arty::TSV> requires no configuration files or environment variables.
 
 =head1 DEPENDENCIES
 

@@ -6,7 +6,7 @@ use Getopt::Long;
 use File::Path qw(make_path);
 use FindBin;
 use lib "$FindBin::RealBin/../lib";
-    
+
 use Arty::VAAST;
 use Arty::Phevor;
 use Arty::VCF;
@@ -314,21 +314,32 @@ sub process_data {
     #----------------------------------------
     # Prep columns
     #----------------------------------------
+<<<<<<< HEAD
+    my @columns = qw(gene phv_rank phvr_score phv_prior
+		     vaast_rank vaast_score vaast_pval
+		     gnomad_cmlt_af variant
+		     type score het hom nc);
+=======
 
     $data->{columns} = ['Gene', 'Phevor Rank', 'Phevor Score',
 		      'Phevor Prior', 'VAAST Rank', 'VAAST Score',
 		      'VAAST Pval', 'Affected Count', 'No-call Count'];
+>>>>>>> d06e2dd0dd5e93900f3aa82597de2e354a11ad52
 
     #----------------------------------------
     # Loop Phevor data
     #----------------------------------------
 
  GENE:
+<<<<<<< HEAD
+    while (my $record = $phevor->next_record) {
+=======
     while (my $phevor_record = $phevor_data->next_record) {
 	
 	# Clear any previous 'current' record data.
 	my $crnt_gene = {};
 	$data->{crnt_gene} = $crnt_gene;
+>>>>>>> d06e2dd0dd5e93900f3aa82597de2e354a11ad52
 
 	#----------------------------------------
 	# Get Phevor data
@@ -340,17 +351,30 @@ sub process_data {
 	#----------------------------------------
 	# Skip boring data
 	#----------------------------------------
+<<<<<<< HEAD
+	next GENE if $phv_score <= 0;
+	next GENE unless exists $vaast_map{$phv_gene};
+=======
 	next GENE if $phevor_score <= 0;
 	next GENE unless exists $vaast_map{$phevor_gene};
+>>>>>>> d06e2dd0dd5e93900f3aa82597de2e354a11ad52
 
 	#----------------------------------------
 	# Get VAAST data
 	#----------------------------------------
+<<<<<<< HEAD
+	my $vaast_record = $vaast_map{$phv_gene};
+	my ($vaast_rank, $vaast_gene, $vaast_feature, $vaast_score, $vaast_pval) =
+	    @{$vaast_record}{qw(rank gene feature_id score p_value)};
+	$vaast_rank++;
+
+=======
 	my $vaast_record = $vaast_map{$phevor_gene};
 	my ($vaast_rank, $vaast_gene, $vaast_feature, $vaast_score, $vaast_pval) = 
 	    @{$vaast_record}{qw(rank gene feature_id score p_value)};
 	$crnt_gene->{vaast_rank} = $vaast_rank + 1;;
 	
+>>>>>>> d06e2dd0dd5e93900f3aa82597de2e354a11ad52
 	#----------------------------------------
 	# Format floating points
 	#----------------------------------------
@@ -363,9 +387,15 @@ sub process_data {
 
 	# Phevor_Gene
 	#--------------------
+<<<<<<< HEAD
+	$phv_gene = "<a href=\"https://www.genecards.org/cgi-bin/carddisp.pl?gene=$phv_gene\">$phv_gene</a>";
+
+	# Phv_Rank
+=======
     	$crnt_gene->{phevor_gene_fmt} = "<a href=$data->{rel_base}/${phevor_gene}.html>$phevor_gene</a>";
 
 	# Phevor_Rank
+>>>>>>> d06e2dd0dd5e93900f3aa82597de2e354a11ad52
 	#--------------------
 	if ($phevor_rank <= 10) {
 	    $crnt_gene->{phevor_rank_fmt} = 'background-color: LightGreen';
@@ -376,7 +406,7 @@ sub process_data {
 	else {
 	    $crnt_gene->{phevor_rank_fmt} = 'background-color: LightCoral';
 	}
-	
+
 	# Phevor_Score
 	#--------------------
 	if ($phevor_score >= 2.3) {
@@ -388,8 +418,13 @@ sub process_data {
 	else {
 	    $crnt_gene->{phevor_score_fmt} = 'background-color: LightCoral';
 	}
+<<<<<<< HEAD
+
+	# Phv_Prior
+=======
 	
 	# Phevor_Prior
+>>>>>>> d06e2dd0dd5e93900f3aa82597de2e354a11ad52
 	#--------------------
 	if ($phevor_prior >= .75) {
 	    $crnt_gene->{phevor_prior_fmt} = 'background-color: LightGreen';
@@ -400,7 +435,7 @@ sub process_data {
 	else {
 	    $crnt_gene->{phevor_prior_fmt} = 'background-color: LightCoral';
 	}
-	
+
 	# Vaast_Rank
 	#--------------------
 	if ($vaast_rank <= 25) {
@@ -412,7 +447,7 @@ sub process_data {
 	else {
 	    $crnt_gene->{vaast_rank_fmt} = 'background-color: LightCoral';
 	}
-	
+
 	# Vaast_Score
 	#--------------------
 	if ($vaast_score >= 10) {
@@ -424,7 +459,7 @@ sub process_data {
 	else {
 	    $crnt_gene->{vaast_score_fmt} = 'background-color: LightCoral';
 	}
-	
+
 	# VAAST p-value
 	#--------------------
 	if ($vaast_pval <= 0.001) {
@@ -436,6 +471,27 @@ sub process_data {
 	else {
 	    $crnt_gene->{vaast_pval_fmt} = 'background-color: LightCoral';
 	}
+<<<<<<< HEAD
+
+	#----------------------------------------
+	# Calculate allele counts
+	# Sort variants by score
+	#----------------------------------------
+	my @allele_data;
+      VAR:
+	for my $var_key (sort {($vaast_record->{Alleles}{$b}{score}
+				<=>
+				$vaast_record->{Alleles}{$a}{score})}
+			 keys %{$vaast_record->{Alleles}}) {
+
+	    my ($chrom, $start, $ref) = split /:/, $var_key;
+	    my $gnomad_vcf = Arty::VCF->new(file  => $gnomad_file,
+					    tabix => "$chrom:${start}-${start}");
+	    my $gnomad_cmlt_af = 0;
+	    while ($record = $gnomad_vcf->next_record) {
+		$gnomad_cmlt_af += $record->{info}{AF}[0];
+	    }
+=======
 	    
 	# Store current Phevor and VAAST records
 	$crnt_gene->{phevor_record} = $phevor_record;
@@ -445,6 +501,7 @@ sub process_data {
 	# Preprocess all variant for current gene
 	#----------------------------------------
 	process_variant_data($data);
+>>>>>>> d06e2dd0dd5e93900f3aa82597de2e354a11ad52
 
 	#----------------------------------------
 	# Create gene page
@@ -573,10 +630,17 @@ sub process_variant_data {
 	    #---------------------------------------
 	    # Get genotype count data
 	    #----------------------------------------
+<<<<<<< HEAD
+	    # Format floating points
+	    #----------------------------------------
+	    $gnomad_cmlt_af =  sprintf '%.2g', $gnomad_cmlt_af;
+
+=======
 	    my $gt = $var->{gc}{$gt_key};
 	    my $b_count = $gt->{B};
 	    my $t_count = $gt->{T};
 	    
+>>>>>>> d06e2dd0dd5e93900f3aa82597de2e354a11ad52
 	    #----------------------------------------
 	    # Collect B & T count of each genotype
 	    # by class (NC, HOM, HET)
@@ -1163,6 +1227,9 @@ sub create_variant_page {
 		    $alt_ratio = $alt_ad/($ref_ad + $alt_ad);
 		}
 		else {
+<<<<<<< HEAD
+		    push @{$gt_data{HET}}, $gt_txt;
+=======
 		    $alt_ratio = 0;
 		}
 
@@ -1180,6 +1247,7 @@ sub create_variant_page {
 		    else {
 			$ad_fmt = 'background-color: Silver';
 		    }
+>>>>>>> d06e2dd0dd5e93900f3aa82597de2e354a11ad52
 		}
 
 		print '';
@@ -1196,6 +1264,56 @@ sub create_variant_page {
 		$file_base .= "-${sample_id}";
 		$file_base =~ s|\/|_|g;		
 
+<<<<<<< HEAD
+	    #----------------------------------------
+	    # Add HTML formatting (var annotations)
+	    #----------------------------------------
+
+	    # Gnomad_Cmlt_AF
+	    #--------------------
+	    if ($gnomad_cmlt_af <= 0.0001) {
+		$gnomad_cmlt_af = [$gnomad_cmlt_af, {bgcolor => 'LightGreen'}];
+	    }
+	    elsif ($gnomad_cmlt_af <= 0.01) {
+		$gnomad_cmlt_af = [$gnomad_cmlt_af, {bgcolor => 'LightYellow'}];
+	    }
+	    else {
+		$gnomad_cmlt_af = [$gnomad_cmlt_af, {bgcolor => 'LightCoral'}];
+	    }
+
+	    # Var_Type
+	    #--------------------
+	    if ($var_type eq 'SNV') {
+		$var_type = [$var_type, {bgcolor => 'LightGreen'}];
+	    }
+	    else {
+		$var_type = [$var_type, {bgcolor => 'LightYellow'}];
+	    }
+
+	    # Var_Score
+	    #--------------------
+	    if ($var_score >= 8) {
+		$var_score = [$var_score, {bgcolor => 'LightGreen'}];
+	    }
+	    elsif ($var_score >= 2) {
+		$var_score = [$var_score, {bgcolor => 'LightYellow'}];
+	    }
+	    else {
+		$var_score = [$var_score, {bgcolor => 'LightCoral'}];
+	    }
+
+	    # NC_GT_TXT
+	    #--------------------
+	    if ($nc_gt_txt eq '.') {
+		$nc_gt_txt = [$nc_gt_txt, {bgcolor => 'LightGreen'}];
+	    }
+	    else {
+		$nc_gt_txt = [$nc_gt_txt, {bgcolor => 'LightCoral'}];
+	    }
+
+	    #----------------------------------------
+	    # Stash data for each variant
+=======
 		my $bat_file = "${igv_path}/${file_base}.bat";
 		$png_file = "${file_base}.png";
 
@@ -1221,6 +1339,7 @@ END_BAT
 
 	    #----------------------------------------
 	    # Variant Page - Sample Table Rows
+>>>>>>> d06e2dd0dd5e93900f3aa82597de2e354a11ad52
 	    #----------------------------------------
 	    $html .= "        <tr>\n";
 	    $html .= "          <td>$flag</th>\n";
