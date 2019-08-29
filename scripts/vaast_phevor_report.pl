@@ -182,8 +182,8 @@ sub build_table {
   $html .= "      \$(document).ready(function() {\n";
   $html .= "        \$('#datatable').DataTable({\n";
   $html .= "          fixedHeader: true,\n";
-  $html .= "          order : [[2, 'dsc'], [4, 'asc']],\n";
-  $html .= "          pageLength : 100,\n";
+  $html .= "          order : [[1, 'asc'], [4, 'asc']],\n";
+  $html .= "          pageLength : 25,\n";
   $html .= "          });\n";
   $html .= "      });\n";
   $html .= "    </script>\n";
