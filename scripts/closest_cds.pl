@@ -254,7 +254,7 @@ my %seen;
 	}
 	
 	# If no other rules printed the record then make sure we print
-	# it here so it's not lost
+	# it here so it's not lost (or is skipped in > MAX_DISTANCE
 	# * Rule #6
 	#     * If the variant is annotated as noncoding by VVP
 	#     * And the VVP transcript is NOT found in the mRNA lookup from
@@ -278,10 +278,9 @@ sub print_record {
 
     my $record = shift @_;
 
-    # As of 8/21/19 it looks like this may skip some variants
-    # entirely and also throws error on 'null'.
-    # return if $record->{distance} > $RANGE + 1;
-
+    # Skip records that have distance > $MAX_DIST
+    return if $record->{distance} >= $MAX_DIST;
+    
     my $key = join ':', @{$record}{qw(chrom pos vid vvp_gene
 			 	      transcript type parentage
 			 	      zygosity phevor coverage
