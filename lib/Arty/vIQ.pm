@@ -204,9 +204,8 @@ sub _initialize_args {
 	     if ($line =~ /^\#\#\s+GENOTYPE SKEW CHECK/) {
 	     	 ($self->{pval_alpha}) = ($line =~ /P_value\s+alpha\s+=\s+(\S+)\s+/);
 	     }
-	     elsif ($key eq 'FILE-INDEX') {
-	     	 my ($idx, $id) = split /\t/, $value;
-	     	 $footer{$key}{$idx} = $id;
+	     elsif ($line) {
+		 # Do something
 	     }
 	     else {
 	     	 warn('unknown_viq_metadata', $line);
@@ -217,6 +216,11 @@ sub _initialize_args {
          }
      }
      $self->{footer} = \%footer;
+
+     my $line = $self->readline;
+     if ($line !~ /^\#/) {
+	 throw_msg('missing_header_row', "First line: $line\n");
+     }
 }
 
 #-----------------------------------------------------------------------------
@@ -315,8 +319,10 @@ sub parse_record {
     # Parse var_qual
     # 24:14|0.5|0.1197
     my ($bayesf, $prob);
-    %{$record{var_qual}}{qw(ad bayesf prob)} = split /\|/, $record{var_qual};
-    @{$record{var_qual}{ad}} = split /:/, $record{var_qual}{ad};
+    my %var_qual_hash;
+    @var_qual_hash{qw(ad bayesf prob)} = split /\|/, $record{var_qual};
+    $record{var_qual} = \%var_qual_hash;
+    $record{var_qual}{ad} = [split /:/, $record{var_qual}{ad}];
     
     return wantarray ? %record : \%record;
 }

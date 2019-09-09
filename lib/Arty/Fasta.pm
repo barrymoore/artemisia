@@ -124,23 +124,23 @@ sub file {
 
 	if (defined $file) {
 	  if (! -e $file) {
-	    $self->send_message('FATAL', 'file_does_not_exist', $file);
+	    $self->handle_message('FATAL', 'file_does_not_exist', $file);
 	  }
 	  elsif (! -r $file) {
-	    $self->send_message('FATAL', 'file_not_readable', $file);
+	    $self->handle_message('FATAL', 'file_not_readable', $file);
 	  }
 
 	  if (exists $self->{file} && defined $self->{file}) {
-	    $self->send_message('WARN', 'file_attribute_is_being_reset', $file);
+	    $self->handle_message('WARN', 'file_attribute_is_being_reset', $file);
 	  }
 	  $self->{file} = $file;
 	  open(my $fh, '<', $file) or
-	    $self->send_message('FATAL', 'cant_open_file_for_reading', $file);
+	    $self->handle_message('FATAL', 'cant_open_file_for_reading', $file);
 	  $self->fh($fh);
 	}
 
 	if (! exists $self->{file} || ! defined $self->{file}) {
-	  $self->send_message('WARN', 'file_attribute_undefined');
+	  $self->handle_message('WARN', 'file_attribute_undefined');
 	}
 
 	return $self->{file};
@@ -164,13 +164,13 @@ sub fh {
 
   if (defined $fh) {
     if (exists $self->{fh} && defined $self->{fh}) {
-      $self->send_message('WARN', 'fh_attribute_is_being_reset', $fh);
+      $self->handle_message('WARN', 'fh_attribute_is_being_reset', $fh);
     }
     $self->{fh} = $fh;
   }
 
   if (! exists $self->{fh} || ! defined $self->{fh}) {
-    $self->send_message('WARN', 'fh_attribute_undefined');
+    $self->handle_message('WARN', 'fh_attribute_undefined');
   }
 
   return $self->{fh};
