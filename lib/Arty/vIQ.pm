@@ -51,7 +51,6 @@ creation would look like this:
     # This is the same as above
     my $parser = Arty::vIQ->new('file' => 'sample.viq_output.txt');
 
-
 The constructor recognizes the following parameters which will set the
 appropriate attributes:
 
