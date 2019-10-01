@@ -29,7 +29,9 @@ my $opt_success = GetOptions('help' => \$help,
 
 die $usage if $help || ! $opt_success;
 
-my $file = shift;
+my $file = shift @ARGV;
+$file ||= 'data/viq_output2.txt';
+
 die $usage unless $file;
 
 my $viq = Arty::vIQ->new(file => $file);
