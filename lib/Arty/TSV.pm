@@ -229,7 +229,7 @@ sub parse_record {
     
     my %record;
     
-    @record{data} = \@cols;
+    $record{data} = \@cols;
     
     return wantarray ? %record : \%record;
 }
