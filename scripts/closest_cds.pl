@@ -259,11 +259,11 @@ my %seen;
 	#     * If the variant is annotated as noncoding by VVP
 	#     * And the VVP transcript is NOT found in the mRNA lookup from
 	#       the GFF3 file,
-	#     * Then the distance is set to 'null'.
+	#     * Then the distance is set to $RANGE + 1.
 	if (! $printed) {
 	    $record{vaast_rec_p} = 'null';
 	    $record{vaast_dom_p} = 'null';
-	    $record{distance}    = 'null';
+	    $record{distance}    = $RANGE + 1;
 	    $printed++;
 	    print_record(\%record);
 	}
@@ -278,7 +278,9 @@ sub print_record {
 
     my $record = shift @_;
 
-    return if $record->{distance} > $RANGE;
+    # As of 8/21/19 it looks like this may skip some variants
+    # entirely and also throws error on 'null'.
+    # return if $record->{distance} > $RANGE + 1;
 
     my $key = join ':', @{$record}{qw(chrom pos vid vvp_gene
 			 	      transcript type parentage

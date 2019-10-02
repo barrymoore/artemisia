@@ -4,21 +4,20 @@ use warnings;
 use Getopt::Long;
 
 use lib "$ENV{HOME}/artemisia/lib/";
-use Arty::CDR;
+use Arty::PED;
 
 #-----------------------------------------------------------------------------
 #----------------------------------- MAIN ------------------------------------
 #-----------------------------------------------------------------------------
-
 my $usage = "
 
 Synopsis:
 
-arty_cdr_test.pl data/cases.cdr
+arty_ped_test.pl data/pedigree.ped
 
 Description:
 
-Test script for developing Arty::CDR.pm
+Test script for developing Arty::PED.pm
 
 ";
 
@@ -32,10 +31,15 @@ die $usage if $help || ! $opt_success;
 my $file = shift;
 die $usage unless $file;
 
-my $cdr = Arty::CDR->new(file => $file);
+my $ped = Arty::PED->new(file => $file)->all_records;
 
-while (my $record = $cdr->next_record) {
-
-    print join "\t", @{$record}{qw(chrom start end type)};
+for my $record (@{$ped}) {
+    print join "\t", @{$record}{qw(kindred proband mother father sex phenotype)};
     print "\n";
 }
+
+# while (my $record = $ped->next_record) {
+# 
+#     print join "\t", @{$record}{qw(chrom start end)};
+#     print "\n";
+# }
