@@ -224,8 +224,8 @@ sub _initialize_args {
 	 my @cols = split /\t/, $line;
 	 map {$_ =~ s/\s+$//} @cols;
 	 my $col_count = scalar @cols;
-	 if ($col_count != 26) {
-	     handle_message('FATAL', 'incorrect_column_count', "(expected 26 got $col_count columns) $line");	
+	 if ($col_count != 28) {
+	     handle_message('FATAL', 'incorrect_column_count', "(expected 28 got $col_count columns) $line");	
 	 }
      }
 }
@@ -305,18 +305,18 @@ sub parse_record {
     map {$_ =~ s/\s+$//} @cols;
 
     my $col_count = scalar @cols;
-    if ($col_count != 26) {
-	handle_message('FATAL', 'incorrect_column_count', "(expected 26 got $col_count columns) $line");	
+    if ($col_count != 28) {
+	handle_message('FATAL', 'incorrect_column_count', "(expected 28 got $col_count columns) $line");	
     }
     
     my %record;
 
-    #  #Rank  Gene  Transcript       vID                Coding  Denovo     Type  Zygo  Par  Loc  PPP      vPene    breath   vIQscr  p_scor  s_scor  PHEV   VVP    VAAST  G_tag  p_mod  s_mod  G_tag_scr  ClinVar  var_qual          vID
-    #  1      RPGR  ENST00000378505  X:38145411:C:CTCC  0       0(0.0000)  2     2     M    x    0.47524  0.95000  0.50000  1.1507  1.1507  -3.112  0.906  0.782  0.989  null   xr     xd     null       VUS      0:6|0.5|0.4999    riq:00637675
-    #  2      SON   ENST00000356577  21:34927019:C:T    0       0(0.0000)  1     1     F    a    0.25185  0.47500  0.50000  1.1440  1.1440  0.8338  0.986  0.836  0.983  null   ad     ar     null       VUS      23:27|0.5|0.2137  riq:00613462
+    #  #Rank  Gene  Transcript       vID              Coding  Denovo     Type  Zygo  Par  Loc  GFLG  GFPr     PPP      vPene    breath   vIQscr  p_scor  s_scor  PHEV   VVP    VAAST  G_tag  p_mod  s_mod  G_tag_scr  ClinVar  var_qual          vID
+    #  1      SON   ENST00000356577  21:34927019:C:T  0       0(0.0000)  1     1     F    a    0     0.50000  0.25185  0.47500  0.50000  1.1440  1.1440  0.8338  0.986  0.836  0.983  null   ad     ar     null       VUS      23:27|0.5|0.2137  riq:00613462
+    #  2      TCF3  ENST00000262965  19:1625658:G:A   0       0(0.0000)  1     1     M    a    0     0.50000  0.25185  0.47500  0.50000  0.7699  0.7699  0.4422  0.982  0.719  0.989  null   ad     ar     null       VUS      24:22|0.5|0.2369  riq:00560804
 
     @record{qw(rank gene transcript vid coding denovo type zygo par
-    	       loc ppp vpene breath viqscr p_scor s_scor phev vvp
+    	       loc gflg  gfpr ppp vpene breath viqscr p_scor s_scor phev vvp
     	       vaast g_tag p_mod s_mod g_tag_scr clinvar var_qual
     	       vid)} = @cols;
 

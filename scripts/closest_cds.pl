@@ -334,10 +334,10 @@ sub get_cds_distance {
                          $distance);
             last CDS;
         }
-        # If variant POS is contained in CDS then distance = 1
-        # and exit CDS loop as per Rule #2
+	        # If variant POS is contained in CDS then distance for
+        # synonomous = -1 and exit CDS loop as per Rule #2
         elsif ($cds->{start} <= $rcd_pos && $cds->{end} >= $rcd_pos) {
-            $distance = 1;
+            $distance = -1;
             last CDS;
         }
         # Else set distance, but keep loop to look for a shorter
