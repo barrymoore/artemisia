@@ -47,6 +47,7 @@ my $var_rs    = $schema->resultset('variant');
 my $samples = $vcf->{samples};
 for my $sample_id (@{$samples}) {
   my $sample_row = $sample_rs->update_or_create({sample_id => $sample_id});
+  print "INFO : loaded_sample: $sample_count ($sample_id)\n";
 }
 
 my $sample_idx = 0;
@@ -98,7 +99,7 @@ while (my $record = $vcf->next_record) {
     my $gt_row = $gt_rs->update_or_create(\%gt_row_data);
   }
 
-  print "Loaded $counter: $chrom:$start\n";
+  print "INFO : loaded_variant: $counter ($chrom:$record->{pos})\n";
   $counter++;
 
 }
