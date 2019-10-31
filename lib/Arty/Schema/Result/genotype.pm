@@ -13,13 +13,7 @@ __PACKAGE__->add_columns(qw(bin
 			    gt
 			    dp
 			    ad
-			    gle
-			    pl
-			    gp
 			    gq
-			    hq
-			    ps
-			    pq
 			  )
 			);
 
