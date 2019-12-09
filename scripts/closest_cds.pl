@@ -4,7 +4,6 @@ use warnings;
 use Getopt::Long;
 use Storable;
 
-use GAL::Annotation;
 use Arty::Utils qw(:all);
 use Arty::GFF3;
 
