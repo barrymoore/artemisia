@@ -96,6 +96,11 @@ die $usage if $help || ! $opt_success;
 $RANGE    ||= 10000;
 $MAX_DIST ||= 10000;
 
+if ($MAX_DIST <= $RANGE) {
+    $MAX_DIST = $RANGE + 1;
+    print STDERR "INFO : resetting_max_dist : max_dist cannot by <= range; resetting max_dist=$MAX_DIST\n";
+}
+
 my ($list_file, $gff3_file) = @ARGV;
 die $usage unless $list_file && $gff3_file;
 
@@ -142,23 +147,31 @@ my $mrnas = retrieve($gff3_store);
 my $file_descriptor = $list_file =~ /\.gz$/ ? "gunzip -c $list_file |" : "< $list_file";
 open(my $IN, $file_descriptor) || die "FATAL : cant_open_file_for_reading : $list_file\n";
 
+print join "\t", qw(#chrom pos end id vid vvp_gene transcript type
+                    parentage zygosity phevor coverage vvp_hemi
+                    vvp_het vvp_hom clinvar chrom_code gnomad_af
+                    vaast_dom_p vaast_rec_p distance alt_count
+                    gnmd_code gq csq);
+print "\n";
+
 my $row_count = 1;
 my %seen;
  LINE:
     while (my $line = <$IN>) {
         if ($line =~ /^\#/) {
-            print $line;
+            # print $line;
             next LINE;
         }
 
         chomp $line;
 
         my %record;
-        @record{qw(chrom pos rid vid vvp_gene transcript type parentage
-               zygosity phevor coverage vvp_hemi vvp_het vvp_hom
-               clinvar chrom_code gnomad_af vaast_dom_p vaast_rec_p
-               distance alt_count gnmd_code)} = split /\t/, $line;
+        @record{qw(chrom pos end id vid vvp_gene transcript type parentage
+		   zygosity phevor coverage vvp_hemi vvp_het vvp_hom
+		   clinvar chrom_code gnomad_af vaast_dom_p vaast_rec_p
+		   distance alt_count gnmd_code gq csq)} = split /\t/, $line;
         my $distance = \$record{distance};
+	$$distance = 1 if ($$distance eq 'null' || ! length($$distance));  #  Take this out after sv2viq update 11/22/19
         my $chrom    = \$record{chrom};
 
         # Flag to determine if record was printed.
@@ -237,6 +250,7 @@ my %seen;
                 $record{vaast_dom_p} = 'null';
 
                 $$distance = get_cds_distance(\%record, $mrna);
+		last MRNA if $$distance > $MAX_DIST;
                 $printed++;
                 print_record(\%record);
                 next MRNA;
@@ -279,27 +293,27 @@ sub print_record {
     my $record = shift @_;
 
     # Skip records that have distance > $MAX_DIST
-    return if $record->{distance} >= $MAX_DIST;
+    return if $record->{distance} > $MAX_DIST;
 
-    my $key = join ':', @{$record}{qw(chrom pos vid vvp_gene
+    my $key = join ':', @{$record}{qw(chrom pos end vid vvp_gene
                                       transcript type parentage
                                       zygosity phevor coverage
                                       vvp_hemi vvp_het vvp_hom clinvar
                                       chrom_code gnomad_af vaast_dom_p
                                       vaast_rec_p distance
-                                      alt_count gnmd_code)};
+                                      alt_count gnmd_code gq csq)};
 
         if (! $SEEN{$key}++) {
             $record->{rid} = sprintf("%08d", $ROW_COUNT++);
 
-            print join "\t", @{$record}{qw(chrom pos rid vid vvp_gene
+            print join "\t", @{$record}{qw(chrom pos end rid vid vvp_gene
                                            transcript type parentage
                                            zygosity phevor coverage
                                            vvp_hemi vvp_het vvp_hom
                                            clinvar chrom_code
                                            gnomad_af vaast_dom_p
                                            vaast_rec_p distance
-                                           alt_count gnmd_code)};
+                                           alt_count gnmd_code gq csq)};
 
             print "\n";
         }
@@ -313,6 +327,7 @@ sub get_cds_distance {
 
     my $rcd_chrom  = $record->{chrom};
     my $rcd_pos    = $record->{pos};
+    my $rcd_end    = $record->{end};
     my $mrna_chrom = $mrna->{chrom};
 
     if ($rcd_chrom ne $mrna_chrom) {
@@ -328,23 +343,26 @@ sub get_cds_distance {
     for my $cds (@{$mrna->{CDS}}) {
         # If CDS start is past variant POS then set distance
         # and exit CDS loop
-        if ($cds->{start} >= $rcd_pos) {
-            $distance = ($cds->{start} - $rcd_pos < $distance ?
-                         $cds->{start} - $rcd_pos :
-                         $distance);
+        if ($cds->{start} >= $rcd_end) {
+            $distance = $cds->{start} - $rcd_end;
             last CDS;
         }
-	        # If variant POS is contained in CDS then distance for
-        # synonomous = -1 and exit CDS loop as per Rule #2
-        elsif ($cds->{start} <= $rcd_pos && $cds->{end} >= $rcd_pos) {
-            $distance = -1;
+	# If variant overlaps the CDS then distance = 0
+        # and exit CDS loop as per Rule #2
+        elsif ($cds->{start} <= $rcd_end && $cds->{end} >= $rcd_pos) {
+            $distance = 0;
             last CDS;
         }
         # Else set distance, but keep loop to look for a shorter
         # distance as per Rule #3.
-        elsif ($cds->{end} <= $rcd_pos) {
+        elsif ($cds->{end} < $rcd_pos) {
             $distance = ($rcd_pos - $cds->{end} < $distance ?
                          $rcd_pos - $cds->{end} :
+                         $distance);
+        }
+        elsif ($cds->{start} > $rcd_end) {
+            $distance = ($cds->{start} - $rcd_end < $distance ?
+                         $cds->{start} - $rcd_end :
                          $distance);
         }
         else {
