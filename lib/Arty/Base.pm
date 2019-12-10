@@ -282,6 +282,8 @@ sub verbosity {
   return $self->{verbosity};
 }
 
+#-----------------------------------------------------------------------------
+
 =head2 file
 
  Title   : file

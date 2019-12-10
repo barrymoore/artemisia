@@ -1,4 +1,4 @@
-package Arty::vIQ;
+package Arty::Skeleton;
 
 use strict;
 use warnings;
@@ -7,20 +7,19 @@ use vars qw($VERSION);
 $VERSION = 0.0.1;
 use base qw(Arty::Base);
 use Arty::Utils qw(:all);
-use File::ReadBackwards;
 
 =head1 NAME
 
-Arty::vIQ - Parse vIQ files
+Arty::Skeleton - Parse vIQ List (input) files
 
 =head1 VERSION
 
-This document describes Arty::vIQ version 0.0.1
+This document describes Arty::Skeleton version 0.0.1
 
 =head1 SYNOPSIS
 
-    use Arty::vIQ;
-    my $viq = Arty::vIQ->new('sample.viq_output.txt');
+    use Arty::Skeleton;
+    my $viq = Arty::Skeleton->new('sample.viq_list.txt');
 
     while (my $record = $parser->next_record) {
         print $record->{gene} . "\n";
@@ -28,35 +27,37 @@ This document describes Arty::vIQ version 0.0.1
 
 =head1 DESCRIPTION
 
-L<Arty::vIQ> provides vIQ parsing ability for the Artemisia suite
-of genomics tools.
+L<Arty::Skeleton> provides vIQ skeleton file parsing ability for the
+Artemisia suite of genomics tools.
 
 =head1 DATA STRUCTURE
 
-Arty::vIQ returns records as a complex datastructure which has the
-following format.
+Arty::Skeleton returns records as a datastructure which has the
+following format:
+
+
 
 =head1 CONSTRUCTOR
 
-New L<Arty::vIQ> objects are created by the class method new.
+New L<Arty::Skeleton> objects are created by the class method new.
 Arguments should be passed to the constructor as a list (or reference)
 of key value pairs.  If the argument list has only a single argument,
 then this argument is applied to the 'file' attribute and thus
-specifies the vIQ filename.  All attributes of the L<Arty::vIQ>
+specifies the Skeleton filename.  All attributes of the L<Arty::Skeleton>
 object can be set in the call to new. An simple example of object
 creation would look like this:
 
-    my $parser = Arty::vIQ->new('sample.viq_output.txt');
+    my $parser = Arty::Skeleton->new('sample.viq_list.txt');
 
     # This is the same as above
-    my $parser = Arty::vIQ->new('file' => 'sample.viq_output.txt');
+    my $parser = Arty::Skeleton->new('file' => 'sample.viq_list.txt');
 
 The constructor recognizes the following parameters which will set the
 appropriate attributes:
 
 =over
 
-=item * C<< file => sample.viq_output.txt >>
+=item * C<< file => sample.viq_list.txt >>
 
 This optional parameter provides the filename for the file containing
 the data to be parsed. While this parameter is optional either it, or
@@ -79,9 +80,9 @@ must be set.
 =head2 new
 
      Title   : new
-     Usage   : Arty::vIQ->new();
-     Function: Creates a Arty::vIQ object;
-     Returns : An Arty::vIQ object
+     Usage   : Arty::Skeleton->new();
+     Function: Creates a Arty::Skeleton object;
+     Returns : An Arty::Skeleton object
      Args    :
 
 =cut
@@ -89,6 +90,7 @@ must be set.
 sub new {
         my ($class, @args) = @_;
         my $self = $class->SUPER::new(@args);
+        $self->columns;
         $self->_process_header;
         return $self;
 }
@@ -135,7 +137,7 @@ sub _initialize_args {
 
   Title   : _process_header
   Usage   : $self->_process_header
-  Function: Parse and store header data
+  Function: Parse and store header lines
   Returns : N/A
   Args    : N/A
 
@@ -144,88 +146,20 @@ sub _initialize_args {
  sub _process_header {
      my $self = shift @_;
 
-     my $file = $self->file;
+     my $fh = $self->fh;
+     $self->{header} ||= [];
 
-     my $fh = File::ReadBackwards->new($file) ||
-         throw('cant_open_file_for_reading', $file);
-
-     my %footer;
    LINE:
-     while (my $line = $fh->readline) {
+     while (my $line = $self->readline) {
          return undef if ! defined $line;
-         chomp $line;
-         if ($line =~ /^\#\#/) {
+
+         if ($line =~ /^\#/) {
              chomp $line;
-             ## GENOTYPE SKEW CHECK. P_value alpha = 0.00217391 based upon 90 previous observations.
-             ## CHR     NUM_HET         NUM_HOM         %HOM_OBS	%HOM_EXP	P_VALUE          het <- SKEW -> hom
-             ## 1       1513            1049            0.365898	0.274696	0.000375                  |+++
-             ## 10      553             358             0.272690	0.291090	0.294297                  |
-             ## 11      1003            619             0.278609	0.301593	0.315838                  |
-             ## 12      791             449             0.277184	0.303959	0.213623                  |
-             ## 13      215             156             0.240319	0.263517	0.318720                  |
-             ## 14      435             267             0.355716	0.303610	0.160983                  |
-             ## 15      463             275             0.250233	0.311576	0.099184                  |
-             ## 16      495             408             0.386705	0.260717	0.000310                  |+++
-             ## 17      764             496             0.361983	0.297246	0.028264                  |
-             ## 18      244             145             0.243623	0.293539	0.167482                  |
-             ## 19      1452            632             0.245067	0.292273	0.072342                  |
-             ## 2       900             642             0.344192	0.293646	0.038069                  |
-             ## 20      325             226             0.404374	0.289368	0.005903                  |
-             ## 21      206             121             0.258498	0.288819	0.297080                  |
-             ## 22      313             211             0.381979	0.306226	0.071771                  |
-             ## 3       701             410             0.293620	0.297334	0.459768                  |
-             ## 4       453             386             0.367176	0.307158	0.065433                  |
-             ## 5       521             455             0.414578	0.303541	0.003495                  |
-             ## 6       1183            574             0.253819	0.281636	0.314976                  |
-             ## 7       749             391             0.274987	0.280076	0.448544                  |
-             ## 8       486             300             0.303923	0.295137	0.410013                  |
-             ## 9       555             380             0.325267	0.292450	0.194712                  |
-             ## X       221             191             0.457104	0.647167	0.261059                  |
-             ##
-             ## LOH DETECTED:YES
-             ## SKEW DETECTED:YES (6)
-             ## VARIANTS_IN:638785 PASSING_FILTERS:240 p_obs:0.5
-             ## Proband Ancestry:Latino	Relative -Log Likelihoods:	Latino:446305,Asian:489299,Finish:503990,European(non-Finish):505357,Ashkenazi:510663,African:560289
-             ## Proband Sex:f P(MALE):0.630563534956827
-             ## MODE:TRIO
-             ## Number of variants failing -e m  a:cov:2,bias:36,tot:44 x:cov:0,bias:1,tot:1
-             ## CMD:/home/ubuntu/vIQ/bin/vIQ2 -a /home/ubuntu/vIQ_Workflow/snakemake/viq.config -c  -d  -e m -f 0.005 -g  -h  -k  -l VIQ/coding_dist.304059.viq_list.txt -m t -o  -p 0.5 -q n -r n -t 1 -v  -w  -x  -y  -z
-             ## VERSION:1.0
-             ## GMT:Wed Aug 28 03:56:04 2019
-             ## EOF
-
-             ## GENOTYPE SKEW CHECK. P_value alpha = 0.00217391 based upon 90 previous observations.
-             ## CHR     NUM_HET         NUM_HOM         %HOM_OBS	%HOM_EXP	P_VALUE          het <- SKEW -> hom
-             ## 1       1513            1049            0.365898	0.274696	0.000375                  |+++
-             ## 10      553             358             0.272690	0.291090	0.294297                  |
-
-
-             if ($line =~ /^\#\#\s+GENOTYPE SKEW CHECK/) {
-                 ($self->{pval_alpha}) = ($line =~ /P_value\s+alpha\s+=\s+(\S+)\s+/);
-             }
-             elsif ($line) {
-                 # Do something
-             }
-             else {
-                 warn('unknown_viq_metadata', $line);
-             }
-         }
+             push @{$self->{header}}, $line;
+              }
          else {
-             last LINE;
-         }
-     }
-     $self->{footer} = \%footer;
-
-     my $line = $self->readline;
-     if ($line !~ /^\#/) {
-         throw_msg('missing_header_row', "First line: $line\n");
-     }
-     else {
-         my @cols = split /\t/, $line;
-         map {$_ =~ s/\s+$//} @cols;
-         my $col_count = scalar @cols;
-         if ($col_count != 35) {
-             handle_message('FATAL', 'incorrect_column_count', "(expected 35 got $col_count columns) $line");
+                      $self->_push_stack($line);
+                           last LINE;
          }
      }
 }
@@ -237,6 +171,30 @@ sub _initialize_args {
 =head1 ATTRIBUTES
 
 =cut
+
+=head2 columns
+
+  Title   : columns
+  Usage   : $columns = $self->columns($columns_value);
+  Function: Get columns
+  Returns : An list of columns for vIQ list files
+  Args    : No arguments accepted.  The columns attribute is get only.
+
+=cut
+
+ sub columns {
+   my ($self) = shift @_;
+
+   # chrom  pos     ref  alt  gene    transcript       csq_so overlap          distance af
+   # 1      856436  TG   T    SAMD11  ENST00000342066  26      .               0      0.258865;0.0732858;0.163977;0.1817;0.0423077;0.234483;0.185767;0.145429
+
+   $self->{columns} ||= [qw(chrom pos end ref alt gene transcript
+                            csq_so overlap distance af)];
+
+   return wantarray ? @{$self->{columns}} : $self->{columns};
+}
+
+#-----------------------------------------------------------------------------
 
 # =head2 attribute
 #
@@ -268,8 +226,8 @@ sub _initialize_args {
 
  Title   : next_record
  Usage   : $record = $vcf->next_record();
- Function: Return the next record from the vIQ file.
- Returns : A hash (or reference) of vIQ record data.
+ Function: Return the next record from the Skeleton file.
+ Returns : A hash (or reference) of Skeleton record data.
  Args    : N/A
 
 =cut
@@ -278,7 +236,7 @@ sub next_record {
     my $self = shift @_;
 
     my $line = $self->readline;
-    return undef if ! defined $line || $line =~ /^\#/;
+    return undef if ! defined $line;
 
     my $record = $self->parse_record($line);
 
@@ -291,8 +249,8 @@ sub next_record {
 
  Title   : parse_record
  Usage   : $record = $tempalte->parse_record($line);
- Function: Parse vIQ line into a data structure.
- Returns : A hash (or reference) of vIQ record data.
+ Function: Parse Skeleton line into a data structure.
+ Returns : A hash (or reference) of Skeleton record data.
  Args    : A scalar containing a string of Tempalte record text.
 
 =cut
@@ -302,37 +260,16 @@ sub parse_record {
     chomp $line;
 
     my @cols = split /\t/, $line;
-    map {$_ =~ s/\s+$//} @cols;
+    map {$_ = '' unless defined $_} @cols;
 
     my $col_count = scalar @cols;
-    if ($col_count != 35) {
-        handle_message('FATAL', 'incorrect_column_count', "(expected 35 got $col_count columns) $line");
+    if ($col_count != 11) {
+        handle_message('FATAL', 'incorrect_column_count', "(expected 11 got $col_count columns) $line");
     }
 
     my %record;
 
-    @record{qw(rank chr gene transcript vid csq dist denovo type zygo
-               par loc length gqs gflg gflpr ppp vpene breath fix
-               viqscr p_scor s_scor phev vvp vaast rprob g_tag p_mod
-               s_mod g_tag_scr clinvar var_qual vid)} = @cols;
-
-    # Parse denovo
-    ($record{denovo}, $record{maf}) = split /\(/, $record{denovo};
-    $record{maf} =~ s/\)$//;
-
-    # Parse indendental
-    $record{incendental} = 0;
-    if ($record{clinvar} =~ /\*/) {
-        $record{incendental}++
-    }
-
-    # Parse var_qual
-    # 24:14|0.5|0.1197
-    my ($bayesf, $prob);
-    my %var_qual_hash;
-    @var_qual_hash{qw(ad bayesf prob)} = split /\|/, $record{var_qual};
-    $record{var_qual} = \%var_qual_hash;
-    $record{var_qual}{ad} = [split /:/, $record{var_qual}{ad}];
+    @record{($self->columns)} = @cols;
 
     return wantarray ? %record : \%record;
 }
@@ -341,11 +278,11 @@ sub parse_record {
 
 =head1 DIAGNOSTICS
 
-L<Arty::vIQ> does not throw any warnings or errors.
+L<Arty::Skeleton> does not throw any warnings or errors.
 
 =head1 CONFIGURATION AND ENVIRONMENT
 
-L<Arty::vIQ> requires no configuration files or environment variables.
+L<Arty::Skeleton> requires no configuration files or environment variables.
 
 =head1 DEPENDENCIES
 
