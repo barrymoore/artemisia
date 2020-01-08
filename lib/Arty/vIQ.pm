@@ -147,7 +147,7 @@ sub _initialize_args {
      my $file = $self->file;
 
      my $fh = File::ReadBackwards->new($file) ||
-         throw('cant_open_file_for_reading', $file);
+         throw_msg('cant_open_file_for_reading', $file);
 
      my %footer;
    LINE:
@@ -156,58 +156,173 @@ sub _initialize_args {
          chomp $line;
          if ($line =~ /^\#\#/) {
              chomp $line;
-             ## GENOTYPE SKEW CHECK. P_value alpha = 0.00217391 based upon 90 previous observations.
-             ## CHR     NUM_HET         NUM_HOM         %HOM_OBS	%HOM_EXP	P_VALUE          het <- SKEW -> hom
-             ## 1       1513            1049            0.365898	0.274696	0.000375                  |+++
-             ## 10      553             358             0.272690	0.291090	0.294297                  |
-             ## 11      1003            619             0.278609	0.301593	0.315838                  |
-             ## 12      791             449             0.277184	0.303959	0.213623                  |
-             ## 13      215             156             0.240319	0.263517	0.318720                  |
-             ## 14      435             267             0.355716	0.303610	0.160983                  |
-             ## 15      463             275             0.250233	0.311576	0.099184                  |
-             ## 16      495             408             0.386705	0.260717	0.000310                  |+++
-             ## 17      764             496             0.361983	0.297246	0.028264                  |
-             ## 18      244             145             0.243623	0.293539	0.167482                  |
-             ## 19      1452            632             0.245067	0.292273	0.072342                  |
-             ## 2       900             642             0.344192	0.293646	0.038069                  |
-             ## 20      325             226             0.404374	0.289368	0.005903                  |
-             ## 21      206             121             0.258498	0.288819	0.297080                  |
-             ## 22      313             211             0.381979	0.306226	0.071771                  |
-             ## 3       701             410             0.293620	0.297334	0.459768                  |
-             ## 4       453             386             0.367176	0.307158	0.065433                  |
-             ## 5       521             455             0.414578	0.303541	0.003495                  |
-             ## 6       1183            574             0.253819	0.281636	0.314976                  |
-             ## 7       749             391             0.274987	0.280076	0.448544                  |
-             ## 8       486             300             0.303923	0.295137	0.410013                  |
-             ## 9       555             380             0.325267	0.292450	0.194712                  |
-             ## X       221             191             0.457104	0.647167	0.261059                  |
-             ##
-             ## LOH DETECTED:YES
-             ## SKEW DETECTED:YES (6)
-             ## VARIANTS_IN:638785 PASSING_FILTERS:240 p_obs:0.5
-             ## Proband Ancestry:Latino	Relative -Log Likelihoods:	Latino:446305,Asian:489299,Finish:503990,European(non-Finish):505357,Ashkenazi:510663,African:560289
-             ## Proband Sex:f P(MALE):0.630563534956827
-             ## MODE:TRIO
-             ## Number of variants failing -e m  a:cov:2,bias:36,tot:44 x:cov:0,bias:1,tot:1
-             ## CMD:/home/ubuntu/vIQ/bin/vIQ2 -a /home/ubuntu/vIQ_Workflow/snakemake/viq.config -c  -d  -e m -f 0.005 -g  -h  -k  -l VIQ/coding_dist.304059.viq_list.txt -m t -o  -p 0.5 -q n -r n -t 1 -v  -w  -x  -y  -z
-             ## VERSION:1.0
-             ## GMT:Wed Aug 28 03:56:04 2019
-             ## EOF
 
-             ## GENOTYPE SKEW CHECK. P_value alpha = 0.00217391 based upon 90 previous observations.
-             ## CHR     NUM_HET         NUM_HOM         %HOM_OBS	%HOM_EXP	P_VALUE          het <- SKEW -> hom
-             ## 1       1513            1049            0.365898	0.274696	0.000375                  |+++
-             ## 10      553             358             0.272690	0.291090	0.294297                  |
-
-
+	     ##
+	     ## GENOTYPE SKEW CHECK. P_value alpha = 0.00217391 based upon 90 previous observations.
+	     ## CHR  	NUM_HET 	NUM_HOM 	%HOM_OBS	%HOM_EXP	P_VALUE      	 het <- SKEW -> hom
+	     ## 1    	997     	483     	0.227294	0.274696	0.036451	          |
+	     ## 10   	308     	211     	0.297960	0.291090	0.419939	          |
+	     ## 11   	624     	356     	0.249404	0.301593	0.138652	          |
+	     ## 12   	378     	259     	0.250310	0.303959	0.056605	          |
+	     ## 13   	100     	86      	0.268353	0.263517	0.460651	          |
+	     ## 14   	221     	192     	0.411432	0.303610	0.021162	          |
+	     ## 15   	256     	189     	0.313465	0.311576	0.484459	          |
+	     ## 16   	309     	157     	0.210225	0.260717	0.079425	          |
+	     ## 17   	466     	311     	0.320673	0.297246	0.242981	          |
+	     ## 18   	135     	92      	0.308609	0.293539	0.385453	          |
+	     ## 19   	751     	388     	0.275261	0.292273	0.298386	          |
+	     ## 2    	510     	319     	0.254488	0.293646	0.084042	          |
+	     ## 20   	201     	92      	0.267919	0.289368	0.316484	          |
+	     ## 21   	142     	68      	0.203445	0.288819	0.068075	          |
+	     ## 22   	215     	96      	0.242973	0.306226	0.110561	          |
+	     ## 3    	420     	231     	0.264814	0.297334	0.190794	          |
+	     ## 4    	306     	193     	0.268066	0.307158	0.162067	          |
+	     ## 5    	409     	178     	0.201248	0.303541	0.006367	          |
+	     ## 6    	658     	278     	0.268690	0.281636	0.411322	          |
+	     ## 7    	396     	216     	0.272805	0.280076	0.426349	          |
+	     ## 8    	235     	175     	0.363392	0.295137	0.039244	          |
+	     ## 9    	294     	200     	0.335630	0.292450	0.129483	          |
+	     ## X    	48      	153     	0.616815	0.647167	0.459246	          |
+	     ##
+	     ## LOH DETECTED:NO
+	     ## SKEW DETECTED:NO (0)
+	     ## Estimated Consanguinity:6.84%
+	     ## VARIANTS_IN:13917 NUMBER OF SVs:123 PASSING_FILTERS:20991 p_obs:0.5
+	     ## Proband Ancestry:European(non-Finish)	Relative -Log Likelihoods:	European(non-Finish):9513,Finish:9549,Ashkenazi:9702,Other:9810,Asian:10878,African:11622
+	     ## Proband Sex:m P(MALE):0.999229070239989
+	     ## ADJ FOR INBREEDING:0.544641331565072
+	     ## MODE:SINGLETON
+	     ## Number of variants failing -e m  a:cov:5,bias:137,tot:174 x:cov:0,bias:16,tot:16
+	     ## VAAST-VVP COOR:0.329363798096313
+	     ## BLS-BND COOR:0.0283600493218249
+	     ## BLS-NOA COOR:0.0184956843403206
+	     ## PHEV-KPR COOR:0.763782068377952
+	     ## COVERAGE-HETEROZYGOSITY COOR:-0.535448334928468
+	     ## K_PRIOR:0.86772
+	     ## K_PRIOR_PROB:0.26962179747865
+	     ## U_PRIOR_PROB:0.0488741490661546
+	     ## AVE DEPTH OF COVERAGE a MEAN:50.9793738489871 VARIANCE:330.698911177429
+	     ## AVE DEPTH OF COVERAGE m MEAN:1 VARIANCE:1
+	     ## AVE DEPTH OF COVERAGE x MEAN:27.4222222222222 VARIANCE:124.976767676768
+	     ## AVE DEPTH OF COVERAGE y MEAN:1 VARIANCE:1
+	     ## CMD:/home/ubuntu/vIQ/bin/vIQ2 -a /home/ubuntu/fabric_viq_workflow/snakemake/viq.config -c  -d  -e m -f 0.005 -g  -h  -k  -l VIQ/coding_dist.CT.244799.viq_list.txt -m s -o  -p 0.5 -q n -r n -v  -w  -x  -y  -z
+	     ## VERSION:4.0
+	     ## GMT:Wed Jan  8 04:52:25 2020
+	     ## EOF
+	     
              if ($line =~ /^\#\#\s+GENOTYPE SKEW CHECK/) {
                  ($self->{pval_alpha}) = ($line =~ /P_value\s+alpha\s+=\s+(\S+)\s+/);
              }
-             elsif ($line) {
-                 # Do something
+	     ## LOH DETECTED:NO
+             elsif ($line =~ /^\#\#\s+LOH DETECTED:\s*(.*)/) {
+                 $self->{loh_detected} = $1;
+             }
+	     ## SKEW DETECTED:NO (0)
+             elsif ($line =~ /^\#\#\s+SKEW DETECTED:\s*(\S+)\s+\(.*?\)/) {
+                 $self->{skew_detected} = $1;
+                 $self->{skew_detected_score} = $2;
+             }
+	     ## Estimated Consanguinity:6.84%
+             elsif ($line =~ /^\#\#\s+Estimated Consanguinity:\s*(.*)%/) {
+                 $self->{estimated_consanguinity} = $1;
+             }
+	     ## VARIANTS_IN:13917 NUMBER OF SVs:123 PASSING_FILTERS:20991 p_obs:0.5
+             elsif ($line =~ /^\#\#\s+VARIANTS_IN:\s*(\d+)\s+NUMBER OF SVs:(\d+)\s+PASSING_FILTERS:(\d+)\s+p_obs:(.*)/) {
+                 $self->{variants_in}     = $1;
+		 $self->{number_of_svs}   = $2;
+		 $self->{passing_filters} = $3;
+		 $self->{p_obs}           = $4;
+             }
+	     ## Proband Ancestry:European(non-Finish)	Relative -Log Likelihoods:	European(non-Finish):9513,Finish:9549,Ashkenazi:9702,Other:9810,Asian:10878,African:11622
+             elsif ($line =~ /^\#\#\s+Proband Ancestry:\s*(.*)\s+Relative -Log Likelihoods:\s+(.*)/) {
+                 $self->{proband_ancestry} = $1;
+		 $self->{ancestry_relative_log_likelihoods} = $2;
+             }
+	     ## Proband Sex:m P(MALE):0.999229070239989
+             elsif ($line =~ /^\#\#\s+Proband Sex:\s*(\S+)\s+P\(MALE\):(.*)/) {
+                 $self->{proband_sex} = $1;
+		 $self->{prob_proband_male} = $2
+             }
+
+	     # ## ADJ FOR INBREEDING:0.544641331565072
+             # elsif ($line =~ /^\#\#\s+XXXX:\s*(.*)/) {
+             #     $self->{xxxx} = $1;
+             # }
+	     # ## MODE:SINGLETON
+             # elsif ($line =~ /^\#\#\s+XXXX:\s*(.*)/) {
+             #     $self->{xxxx} = $1;
+             # }
+	     # ## Number of variants failing -e m  a:cov:5,bias:137,tot:174 x:cov:0,bias:16,tot:16
+             # elsif ($line =~ /^\#\#\s+XXXX:\s*(.*)/) {
+             #     $self->{xxxx} = $1;
+             # }
+	     # ## VAAST-VVP COOR:0.329363798096313
+             # elsif ($line =~ /^\#\#\s+XXXX:\s*(.*)/) {
+             #     $self->{xxxx} = $1;
+             # }
+	     # ## BLS-BND COOR:0.0283600493218249
+             # elsif ($line =~ /^\#\#\s+XXXX:\s*(.*)/) {
+             #     $self->{xxxx} = $1;
+             # }
+	     # ## BLS-NOA COOR:0.0184956843403206
+             # elsif ($line =~ /^\#\#\s+XXXX:\s*(.*)/) {
+             #     $self->{xxxx} = $1;
+             # }
+	     # ## PHEV-KPR COOR:0.763782068377952
+             # elsif ($line =~ /^\#\#\s+XXXX:\s*(.*)/) {
+             #     $self->{xxxx} = $1;
+             # }
+	     # ## COVERAGE-HETEROZYGOSITY COOR:-0.535448334928468
+             # elsif ($line =~ /^\#\#\s+XXXX:\s*(.*)/) {
+             #     $self->{xxxx} = $1;
+             # }
+	     # ## K_PRIOR:0.86772
+             # elsif ($line =~ /^\#\#\s+XXXX:\s*(.*)/) {
+             #     $self->{xxxx} = $1;
+             # }
+	     # ## K_PRIOR_PROB:0.26962179747865
+             # elsif ($line =~ /^\#\#\s+XXXX:\s*(.*)/) {
+             #     $self->{xxxx} = $1;
+             # }
+	     # ## U_PRIOR_PROB:0.0488741490661546
+             # elsif ($line =~ /^\#\#\s+XXXX:\s*(.*)/) {
+             #     $self->{xxxx} = $1;
+             # }
+	     # ## AVE DEPTH OF COVERAGE a MEAN:50.9793738489871 VARIANCE:330.698911177429
+             # elsif ($line =~ /^\#\#\s+XXXX:\s*(.*)/) {
+             #     $self->{xxxx} = $1;
+             # }
+	     # ## AVE DEPTH OF COVERAGE m MEAN:1 VARIANCE:1
+             # elsif ($line =~ /^\#\#\s+XXXX:\s*(.*)/) {
+             #     $self->{xxxx} = $1;
+             # }
+	     # ## AVE DEPTH OF COVERAGE x MEAN:27.4222222222222 VARIANCE:124.976767676768
+             # elsif ($line =~ /^\#\#\s+XXXX:\s*(.*)/) {
+             #     $self->{xxxx} = $1;
+             # }
+	     # ## AVE DEPTH OF COVERAGE y MEAN:1 VARIANCE:1
+             # elsif ($line =~ /^\#\#\s+XXXX:\s*(.*)/) {
+             #     $self->{xxxx} = $1;
+             # }
+	     # ## CMD:/home/ubuntu/vIQ/bin/vIQ2 -a /home/ubuntu/fabric_viq_workflow/snakemake/viq.config -c  -d  -e m -f 0.005 -g  -h  -k  -l VIQ/coding_dist.CT.244799.viq_list.txt -m s -o  -p 0.5 -q n -r n -v  -w  -x  -y  -z
+             # elsif ($line =~ /^\#\#\s+XXXX:\s*(.*)/) {
+             #     $self->{xxxx} = $1;
+             # }
+	     # ## VERSION:4.0
+             # elsif ($line =~ /^\#\#\s+XXXX:\s*(.*)/) {
+             #     $self->{xxxx} = $1;
+             # }
+	     # ## GMT:Wed Jan  8 04:52:25 2020
+             # elsif ($line =~ /^\#\#\s+XXXX:\s*(.*)/) {
+             #     $self->{xxxx} = $1;
+             # }
+
+	     ## EOF
+             elsif ($line =~ /^\#\#\s+EOF/) {
+                 $self->{eof}++;
              }
              else {
-                 warn('unknown_viq_metadata', $line);
+                 # $self->warn_message('unknown_viq_metadata', $line);
              }
          }
          else {
@@ -224,10 +339,13 @@ sub _initialize_args {
          my @cols = split /\t/, $line;
          map {$_ =~ s/\s+$//} @cols;
          my $col_count = scalar @cols;
-         if ($col_count != 35) {
-             handle_message('FATAL', 'incorrect_column_count', "(expected 35 got $col_count columns) $line");
+         if ($col_count != 37) {
+             handle_message('FATAL', 'incorrect_column_count', "(expected 37 got $col_count columns) $line");
          }
      }
+     throw_msg('missing_end_of_file_mark',
+	       "File should end with '# EOF'")
+	 unless $self->{eof};
 }
 
 #-----------------------------------------------------------------------------
@@ -305,16 +423,22 @@ sub parse_record {
     map {$_ =~ s/\s+$//} @cols;
 
     my $col_count = scalar @cols;
-    if ($col_count != 35) {
-        handle_message('FATAL', 'incorrect_column_count', "(expected 35 got $col_count columns) $line");
+    if ($col_count != 37) {
+        handle_message('FATAL', 'incorrect_column_count', "(expected 37 got $col_count columns) $line");
     }
 
     my %record;
 
-    @record{qw(rank chr gene transcript vid csq dist denovo type zygo
-               par loc length gqs gflg gflpr ppp vpene breath fix
-               viqscr p_scor s_scor phev vvp vaast rprob g_tag p_mod
-               s_mod g_tag_scr clinvar var_qual vid)} = @cols;
+
+    # Rank CHR Gene Transcript vID CSQ DIST Denovo Type Zygo CSN PLDY
+    # SITES Par Loc Length GQS GFLG GFLpr PPP vPene breath FIX vIQscr
+    # p_scor s_scor PHEV/K VVP/SVP VAAST RPROB G_tag p_mod s_mod
+    # G_tag_scr ClinVar var_qual vID
+
+    @record{qw(rank chr gene transcript vid csq dist denovo type zygo csn pldy
+    sites par loc length gqs gflg gflpr ppp vpene breath fix viqscr
+    p_scor s_scor phev_k vvp_svp vaast rprob g_tag p_mod s_mod
+    g_tag_scr clinvar var_qual rid)} = @cols;
 
     # Parse denovo
     ($record{denovo}, $record{maf}) = split /\(/, $record{denovo};
