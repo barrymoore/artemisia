@@ -343,9 +343,11 @@ sub _initialize_args {
              handle_message('FATAL', 'incorrect_column_count', "(expected 37 got $col_count columns) $line");
          }
      }
-     throw_msg('missing_end_of_file_mark',
-	       "File should end with '# EOF'")
-	 unless $self->{eof};
+
+     if (! $self->{eof}) {
+	 throw_msg('missing_end_of_file_mark',
+		   "File $file does not have '## EOF'")
+     }
 }
 
 #-----------------------------------------------------------------------------
