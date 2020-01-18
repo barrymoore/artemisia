@@ -15,7 +15,17 @@ polish_skeleton.pl skeleton_data.txt > skeleton_file.txt
 Description:
 
 A script to polish the raw skeleton data from Gnomad VCF file into a
-skeleton file ready for closest_cds.pl
+skeleton file ready for closest_cds.pl.
+
+Specifically, the script adds the following columns:
+
+End
+Gene
+Transcript
+Distance
+
+In addition, it maps CSQ consequence values to integer values.  See
+the %csq_map variable in the code for the mapping.
 
 ";
 
@@ -78,6 +88,8 @@ while (my $line = <$IN>) {
           split /\t/, $line;
 
         my $end = $pos + length($ref) - 1;
+
+        $af = join(';', (map {$_ = $_ eq '.' ? 0 : $_} split(/;/, $af)));
 
         my @csq_values = split /\|/, $csq_txt;
         # Add this step to the polish script

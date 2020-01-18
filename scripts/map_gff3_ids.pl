@@ -51,7 +51,7 @@ my $gff3 = Arty::GFF3->new(file => $gff3_file);
 print join "\n", $gff3->get_header;
 
 print "\n";
-print "# $CL\n";
+print "# Command='$CL'\n";
 
 my @map_atts = qw(ID Name Parent Derives_from);
 

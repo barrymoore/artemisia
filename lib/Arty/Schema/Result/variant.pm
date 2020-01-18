@@ -18,8 +18,7 @@ __PACKAGE__->add_columns(qw(bin
 			    dbsnp
 			  )
 			);
-__PACKAGE__->add_unique_constraints(var_key_uniq_constr  => 'var_key');
-                        );
+__PACKAGE__->add_unique_constraints(var_key_uniq_constr  => ['var_key']);
 
 #--------------------------------------------------------------------------------
 

@@ -39,19 +39,21 @@ my $dbi_dsn = "dbi:SQLite:$db_name";
 print STDERR "INFO : connecting_to_db : $dbi_dsn\n";
 my $schema = Arty::Schema->connect($dbi_dsn);
 
-my $gt_rs     = $schema->resultset('genotype');
-my $sample_rs = $schema->resultset('sample');
+# my $gt_rs     = $schema->resultset('genotype');
+# my $sample_rs = $schema->resultset('sample');
 my $var_rs    = $schema->resultset('variant');
 
 # Load sample
-my $samples = $vcf->{samples};
-for my $sample_id (@{$samples}) {
-  my $sample_row = $sample_rs->update_or_create({sample_id => $sample_id});
-  print "INFO : loaded_sample: $sample_count ($sample_id)\n";
-}
-
-my $sample_idx = 0;
-my %sample_key = map {$sample_idx++ => $_} @{$samples};
+# my $sample_count = 1;
+# my $samples = $vcf->{samples};
+# for my $sample_id (@{$samples}) {
+#   my $sample_row = $sample_rs->update_or_create({sample_id => $sample_id});
+#   print "INFO : loaded_sample: $sample_count ($sample_id)\n";
+#   $sample_count++;
+# }
+# 
+# my $sample_idx = 0;
+# my %sample_key = map {$sample_idx++ => $_} @{$samples};
 
 
 my $counter = 1;
@@ -84,23 +86,24 @@ while (my $record = $vcf->next_record) {
 
   my $var_row = $var_rs->update_or_create(\%var_row_data);
 
-  Load genotype
-  my $gt = $record->{gt};
-  for my $gt_idx (0 .. $#{$gt}) {
-    my $gt_data = $gt->[$gt_idx];
-    my @keys = qw(GT DP AD FT GL GLE PL GP GQ HQ PS PQ);
-
-    my %gt_row_data;
-    for my $key (@keys) {
-      my $lc_key = lc $key;
-      next unless exists $gt_data->{$key};
-      $gt_row_data{$lc_key} = join ',', @{$gt_data->{$key}}
-    }
-    my $gt_row = $gt_rs->update_or_create(\%gt_row_data);
-  }
-
   print "INFO : loaded_variant: $counter ($chrom:$record->{pos})\n";
   $counter++;
+
+  # Load genotype
+  # my $gt = $record->{gt};
+  # for my $gt_idx (0 .. $#{$gt}) {
+  #   my $gt_data = $gt->[$gt_idx];
+  #   my @keys = qw(GT DP AD GQ);
+  # 
+  #   my %gt_row_data;
+  #   for my $key (@keys) {
+  #     my $lc_key = lc $key;
+  #     next unless exists $gt_data->{$key};
+  #     $gt_row_data{$lc_key} = join ',', @{$gt_data->{$key}}
+  #   }
+  #   my $gt_row = $gt_rs->update_or_create(\%gt_row_data);
+  #   print "INFO : loaded_genotype: ($var_key $gt_idx)\r";
+  # }
 
 }
 
