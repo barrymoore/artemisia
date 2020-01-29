@@ -262,7 +262,14 @@ sub next_record {
     my $self = shift @_;
 
     my $line = $self->readline;
-    return undef if ! defined $line;
+    if (defined $line) {
+	while ($line =~ /^\#/) {
+	    $line = $self->readline;
+	}
+    }
+    else {
+	return undef;
+    }
 
     my $record = $self->parse_record($line);
 
