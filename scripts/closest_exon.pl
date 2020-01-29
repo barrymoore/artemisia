@@ -112,6 +112,16 @@ $format   ||= 'viq_list';
 $RANGE    ||= 2000;
 $MAX_DIST ||= 10000;
 
+my %SUPPORTED_NCRNAS = (snRNA  => 1,
+			snoRNA => 1,
+    );
+
+my %SUPPORTED_MRNAS = (mRNA => 1);
+
+my %SUPPORTED_RNAS;
+map {$SUPPORTED_RNAS{$_}++} keys %SUPPORTED_NCRNAS;
+map {$SUPPORTED_RNAS{$_}++} keys %SUPPORTED_MRNAS;
+
 if ($MAX_DIST <= $RANGE) {
     $MAX_DIST = $RANGE + 1;
     print STDERR "INFO : resetting_max_dist : max_dist cannot by <= range; resetting max_dist=$MAX_DIST\n";
@@ -127,18 +137,27 @@ if (! -e $gff3_store ||
 
         my $gff3 = Arty::GFF3->new(file => $gff3_file);
 
+        my %seen_ncRNAs;
+	# First pass to record all ncRNAs for logic below.
+        while (my $record = $gff3->next_record) {
+	    if (exists $SUPPORTED_NCRNAS{$record->{type}}) {
+		$seen_ncRNAs{$record->{attributes}{Parent}[0]}++
+	    }
+	}
+
+	# Reopen GFF3 file
+        $gff3 = Arty::GFF3->new(file => $gff3_file);
+
         my %transcripts;
         my %mapped_exon;
-        my %seen_mRNAs;
       RECORD:
         while (my $record = $gff3->next_record) {
                 # Store transcripts
-                if ($record->{type} =~ /^(mRNA|snRNA|snoRNA)$/) {
+                if (exists $SUPPORTED_RNAS{$record->{type}}) {
                         $record->{attributes}{ID}[0] =~ s/^transcript://;
                         $record->{attributes}{Parent}[0] =~ s/^gene://;
                         push @{$transcripts{chrs}{$record->{chrom}}}, $record;
                         $transcripts{ids}{$record->{attributes}{ID}[0]} = $record;
-                        $seen_mRNAs{$record->{attributes}{ID}[0]}++ if $record->{type} eq 'mRNA';
                 }
                 # Store CDSs (will only happen for mRNA)
                 elsif ($record->{type} eq 'CDS') {
@@ -153,7 +172,7 @@ if (! -e $gff3_store ||
                 elsif ($record->{type} eq 'exon') {
                         $record->{attributes}{Parent}[0] =~ s/^transcript://;
                         #...only for ncRNAs
-                        if (! exists $seen_mRNAs{$record->{attributes}{Parent}[0]}) {
+                        if (exists $seen_ncRNAs{$record->{type}}) {
                                 next RECORD unless exists $record->{attributes}{Parent} &&
                                   defined $record->{attributes}{Parent}[0];
                                 my $parent = $record->{attributes}{Parent}[0];
@@ -265,20 +284,25 @@ while (my $record = $parser->next_record) {
                 $range_start = 1 if $range_start < 1;
                 my $range_end = $record->{pos} + $RANGE;
                 # Remove transcripts from list that are behind us
+		# my $keep_one_5p_trns;
               TRIM_TRANSCRIPT:
-                while (defined $transcripts->{chrs}{$$chrom}[0] &&
-                       $transcripts->{chrs}{$$chrom}[0]{end} < $range_start) {
+
+		# Check [1] here not [0] to always leave the closest
+		# 5' transcript for distance calculations.
+                while (defined $transcripts->{chrs}{$$chrom}[1] &&
+                       $transcripts->{chrs}{$$chrom}[1]{end} < $range_start) {
                         shift @{$transcripts->{chrs}{$$chrom}};
                 }
-
+		
+		
               TRANSCRIPT:
                 for my $idx (0 .. $#{$transcripts->{chrs}{$$chrom}}) {
                         # If transcript start is beyond range_end then quit looking
                         # Print variant and bail.
                         my $transcript = $transcripts->{chrs}{$$chrom}[$idx];
                         # Reset record values for current transcript.
-                        $record->{transcript}  = $transcript->{attributes}{ID}[0];
-                        $record->{gene}        = $transcript->{attributes}{Parent}[0];
+                        $record->{transcript} = $transcript->{attributes}{ID}[0];
+                        $record->{vvp_gene}   = $transcript->{attributes}{Parent}[0];
                         if (exists $record->{vaast_rec_p}) {
                                 $record->{vaast_rec_p} = 'null';
                         }
@@ -287,7 +311,7 @@ while (my $record = $parser->next_record) {
                         }
 
                         $$distance = get_exon_distance($record, $transcript);
-                        last TRANSCRIPT if $$distance > $MAX_DIST;
+                        last TRANSCRIPT if $$distance >= $MAX_DIST;
                         $printed++;
                         print_record($record, $format);
                         next TRANSCRIPT;
@@ -437,7 +461,7 @@ sub get_exon_distance {
         # If EXON start is past variant POS then set distance
         # and exit EXON loop
         if ($exon->{start} >= $rcd_end) {
-            $distance = $exon->{start} - $rcd_end;
+            $distance = ($exon->{start} - $rcd_end < $distance) ? $exon->{start} - $rcd_end : $distance;
             last EXON;
         }
         # If variant overlaps the EXON then distance = 0
