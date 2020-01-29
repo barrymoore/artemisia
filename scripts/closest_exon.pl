@@ -126,10 +126,10 @@ if (! -e $gff3_store ||
     (stat($gff3_file))[9] > (stat($gff3_store))[9]) {
 
         my $gff3 = Arty::GFF3->new(file => $gff3_file);
-
-        my %transcripts;
-        my %mapped_exon;
         my %seen_mRNAs;
+        my %transcripts;
+        my %mapped_cds;
+        my %mapped_exon;
       RECORD:
         while (my $record = $gff3->next_record) {
                 # Store transcripts
@@ -146,24 +146,26 @@ if (! -e $gff3_store ||
                         next RECORD unless exists $record->{attributes}{Parent} &&
                           defined $record->{attributes}{Parent}[0];
                         my $parent = $record->{attributes}{Parent}[0];
-                        push @{$mapped_exon{$parent}}, $record;
+                        push @{$mapped_cds{$parent}}, $record;
                         print '';
                 }
                 # Store exons...
                 elsif ($record->{type} eq 'exon') {
                         $record->{attributes}{Parent}[0] =~ s/^transcript://;
-                        #...only for ncRNAs
-                        if (! exists $seen_mRNAs{$record->{attributes}{Parent}[0]}) {
-                                next RECORD unless exists $record->{attributes}{Parent} &&
-                                  defined $record->{attributes}{Parent}[0];
-                                my $parent = $record->{attributes}{Parent}[0];
-                                push @{$mapped_exon{$parent}}, $record;
-                                print '';
-                        }
+                        next RECORD unless exists $record->{attributes}{Parent} &&
+                          defined $record->{attributes}{Parent}[0];
+                        my $parent = $record->{attributes}{Parent}[0];
+                        push @{$mapped_exon{$parent}}, $record;
+                        print '';
                 }
                 print '';
         }
 
+        # Copy CDSs on top of exons.  This will clobber mRNA exons
+        # which is what we want - exons for ncRNA and CDSs for mRNAs.
+        for my $mrna (keys %mapped_cds) {
+                $mapped_exon{$mrna} = $mapped_cds{$mrna};
+        }
 
         for my $chrom (keys %{$transcripts{chrs}}) {
                 my $chrom_transcripts = $transcripts{chrs}{$chrom};
