@@ -66,11 +66,13 @@ while (my $record = $gff3->next_record) {
 
                 my $id = $record->{attributes}{ID}[0];
                 my $parent = $record->{attributes}{Parent}[0];
+                my $type  = $record->{attributes}{biotype}[0];
+                $type = $type eq 'protein_coding' ? 1 : 0;
 
                 $record->{start} -= $pad;
                 $record->{start} = 0 if $record->{start} < 0;
                 $record->{end} += $pad;
-                print join "\t", @{$record}{qw(chrom start end)}, $parent, $id;
+                print join "\t", @{$record}{qw(chrom start end)}, $parent, $id, $type;
                 print "\n";
                 print '';
         }
