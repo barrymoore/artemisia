@@ -1,0 +1,234 @@
+# QC config file for ucgd_data_qc_report.pl
+# See `ucgd_data_qc_report.pl --help`
+
+alignstats:
+  UnmappedReadsPct:
+    - gt:
+        value: 1
+        level: 'INFO'
+        note: 'Value greater than 1%'
+    - gt:
+        value: 3
+        level: 'WARN'
+        note: 'Value greater than 3%'
+    - gt:
+        value: 10
+        level: 'FATAL'
+        note: 'Value greater than 10%'
+  UnmappedBasesPct:
+    - gt:
+        value: 3
+        level: 'INFO'
+        note: 'Value greater than 3%'
+    - gt:
+        value: 5
+        level: 'WARN'
+        note: 'Value greater than 5%'
+    - gt:
+        value: 10
+        level: 'FATAL'
+        note: 'Value greater than 10%'
+  SoftClippedBasesPct:
+    - gt:
+        value: 5
+        level: 'INFO'
+        note: 'Value greater than 5%'
+    - gt:
+        value: 10
+        level: 'WARN'
+        note: 'Value greater than 10%'
+    - gt:
+        value: 20
+        level: 'FATAL'
+        note: 'Value greater than 20%'
+  AlignedReadLengthMean:
+    - lt:
+        value: 150
+        level: 'INFO'
+        note: 'Value less than 150 nts'
+    - lt:
+        value: 147
+        level: 'WARN'
+        note: 'Value less than 145 nts'
+    - lt:
+        value: 145
+        level: 'FATAL'
+        note: 'Value less than 140 nts'
+  AlignedReadLengthMedian:
+    - lt:
+        value: 150
+        level: 'INFO'
+        note: 'Value less than 150 nts'
+    - lt:
+        value: 147
+        level: 'WARN'
+        note: 'Value less than 147 nts'
+    - lt:
+        value: 145
+        level: 'FATAL'
+        note: 'Value less than 145 nts'
+  UnpairedReadsPct:
+    - gt:
+        value: 1
+        level: 'INFO'
+        note: 'Value greater than 1%'
+    - gt:
+        value: 2
+        level: 'WARN'
+        note: 'Value greater than 1%'
+    - gt:
+        value: 5
+        level: 'FATAL'
+        note: 'Value greater than 5%'
+  DuplicateReadsPct:
+    - gt:
+        value: 10
+        level: 'INFO'
+        note: 'Value greater than 10%'
+    - gt:
+        value: 25
+        level: 'WARN'
+        note: 'Value greater than 25%'
+    - gt:
+        value: 50
+        level: 'FATAL'
+        note: 'Value greater than 50%'
+  MappedReadsPct:
+    - lt:
+        value: 98
+        level: 'INFO'
+        note: 'Value less than 98%'
+    - lt:
+        value: 97
+        level: 'WARN'
+        note: 'Value less than 97%'
+    - lt:
+        value: 95
+        level: 'FATAL'
+        note: 'Value less than 95%'
+  Q20BasesPct:
+    - lt:
+        value: 95
+        level: 'INFO'
+        note: 'Value less than 95%'
+    - lt:
+        value: 90
+        level: 'WARN'
+        note: 'Value less than 90%'
+    - lt:
+        value: 80
+        level: 'FATAL'
+        note: 'Value less than 80%'
+  WgsCoverageMean:
+    - lt:
+        value: 38
+        level: 'INFO'
+        note: 'Value less than 38 read depth'
+    - lt:
+        value: 36
+        level: 'WARN'
+        note: 'Value less than 36 read depth'
+    - lt:
+        value: 27
+        level: 'FATAL'
+        note: 'Value less than 27 read depth'
+  WgsCoverageMedian:
+    - lt:
+        value: 38
+        level: 'INFO'
+        note: 'Value less than 38 read depth'
+    - lt:
+        value: 36
+        level: 'WARN'
+        note: 'Value less than 36 read depth'
+    - lt:
+        value: 27
+        level: 'FATAL'
+        note: 'Value less than 27 read depth'
+  InsertSizeMean: Note in JIRA if 300 > value > 500
+    - lt:
+        value: 300
+        level: 'INFO'
+        note: 'Value less than 300 nts'
+    - gt:
+        value: 500
+        level: 'WARN'
+        note: 'Value greater than 500 nts'
+    - lt:
+        value: 200
+        level: 'WARN'
+        note: 'Value less than 200 nts'
+    - gt:
+        value: 600
+        level: 'WARN'
+        note: 'Value greater than 600 nts'
+    - lt:
+        value: 100
+        level: 'FATAL'
+        note: 'Value less than 100 nts'
+    - gt:
+        value: 700
+        level: 'FATAL'
+        note: 'Value greater than 700 nts'
+
+# bcftools:
+# 
+# fastp:
+# 
+# sequencing: output should read 'paired end (151 cycles + 151 cycles)'
+# 
+# mean_length before filtering: output should read '151bp, 151bp'
+# 
+# mean_length_after_filtering: output should read '150bp, 150bp'
+# 
+# Before/After filtering
+# 
+# total_reads: For 30x WGS coverage with 150 bp reads on GRCh38 placed scaffolds (2,937,639,396 bp) this we should have 587e6 reads. If we accept +- 10% on WGS coverage we would need a minimum of 528e6 reads to achieve 30x coverage. Note in JIRA & flag in primary report if total_reads < 528e6.
+# ## Meeting Notes
+# 
+# Flag = make a note on primary report.
+# Rong would like to see mean/median coverage in the primary report.  Probably both at BAM and VCF level
+# Matt Velinder: mosdepth a useful tool for evaluating loss of coverage for espcieally for candidate genes.
+# Update these total values based on total scaffolds.  Should we update these values to ~40x coverage?
+# total_bases: For 30x WGS coverage on the mappable genome accepting +- 10% as range we should have 79e9 bases.
+# 
+# q20_rate: Note in JIRA if value is < 0.95, flag in primary report if value is < 90.
+# 
+# q30_rate: Note in JIRA if value is < 0.89, flag in primary report if value is < 0.85.
+# 
+# GC content: Note in JIRA if 0.49 > value < 0.41, flag in primary report if value is 0.54 > value < 0.29.
+# 
+# Filtering result
+# 
+# passed_filter_reads: flag in primary report if value is < 95% of total_reads
+# 
+# low_quality_reads: flag in primary report if value is > 5% of total_reads
+# 
+# too_many_N_reads: flag in primary report if value is > 0.5% of total_reads
+# 
+# too_short_reads: flag in primary report if value is > 1% of total_reads
+# 
+# too_long_reads: flag in primary report if value is > 0
+# 
+# goleft:
+# 
+# nextflow:
+# 
+# peddy:
+# 
+# 4.1 Sex Check
+# 
+# Note in JIRA any samples that appear to fall significantly off of the male/female bimodal distribution. Flag in primary report any samples identified as sex errors by Peddy. Project cannot proceed until sex errors are resolved.
+# 
+# 4.2 Het Check
+# 
+# Flag in primary report any samples identified as het outliers - we could use more detail here. Depending on the severity of het outliers, project may need to be put on hold to invesitgate possible sample contamination issues and modifications to the variant calling pipeline or the analyses may need to be implimented.
+# 
+# 4.3 Ped Check
+# 
+# Flag any projects/samples identified by peddy as having pedigree errors. Determine if errors can be resolved unambigously. Project cannot proceed until pedigree errors have been resolved. We should not move forward with analysis until we have confirmed with the clincial team that corrections can be corroborated. Note in JIRA and flag in primary report any ped check errors and their resolution.
+# 
+# 4.4 PCA
+# 
+# Note in JIRA any samples that are not classified by Peddy as 'European' and discuss with research team implications for anlaysis. Note in JIRA and flag in primary report if sample is different ancestry is defined by peddy to a different value than described in the manifest.
+
