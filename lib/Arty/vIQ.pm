@@ -453,12 +453,13 @@ sub parse_record {
     }
 
     # Parse var_qual
-    # 24:14|0.5|0.1197
-    my ($bayesf, $prob);
-    my %var_qual_hash;
-    @var_qual_hash{qw(ad bayesf prob)} = split /\|/, $record{var_qual};
-    $record{var_qual} = \%var_qual_hash;
-    $record{var_qual}{ad} = [split /:/, $record{var_qual}{ad}];
+    # 24:14|0.5|0.1197 - SNV/Indel
+    # (83|54|0.00068|25) 8/15.3946097|25.0000|0.50000|14.0113 - Badges/SVs
+    # my ($bayesf, $prob);
+    # my %var_qual_hash;
+    # @var_qual_hash{qw(ad bayesf prob)} = split /\|/, $record{var_qual};
+    # $record{var_qual} = \%var_qual_hash;
+    # $record{var_qual}{ad} = [split /:/, $record{var_qual}{ad}];
 
     return wantarray ? %record : \%record;
 }
