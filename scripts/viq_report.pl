@@ -52,13 +52,13 @@ die $usage if $help || ! $opt_success;
 
 $min_score = 0 unless defined $min_score;
 
-my $viq_file = shift @ARGV;
+my @viq_files = @ARGV;
 
-die "$usage\n\nFATAL : missing_viq_file\n" unless $viq_file;
+die "$usage\n\nFATAL : missing_viq_file(s)\n" unless @viq_files;
 
 # my %ped_data;
 # my $ped = Arty::PED->new(file => $ped_file);
-# 
+#
 # while (my $record = $ped->next_record) {
 #     print '';
 #     my $kindred = $record->{kindred};
@@ -70,7 +70,7 @@ die "$usage\n\nFATAL : missing_viq_file\n" unless $viq_file;
 #     # $ped_data{graph}{$kindred}{$sample}{father} = $father if $father;
 #     # $ped_data{graph}{$kindred}{$sample}{mother} = $mother if $mother;
 #     # $ped_data{data}{$kindred}{$sample} = $record;
-# 
+#
 #     if ($ped_data{$kindred}{samples}{$sample}++ > 1) {
 #         print STDERR "WARN : sample_id_seen_before_in_family : $kindred $sample\n";
 #     }
@@ -82,7 +82,7 @@ die "$usage\n\nFATAL : missing_viq_file\n" unless $viq_file;
 #         $ped_data{$kindred}{mother} = $mother;
 #         $ped_data{$kindred}{children}{$sample}++;
 #     }
-# 
+#
 #     if ($record->{phenotype} eq '2') {
 #         $ped_data{$kindred}{affected}{$sample}++;
 #         $ped_data{$kindred}{affected_count}++
@@ -94,14 +94,14 @@ die "$usage\n\nFATAL : missing_viq_file\n" unless $viq_file;
 #     $ped_data{$kindred}{samples}{$sample} = $record;
 #     print '';
 # }
-# 
+#
 # my %ped_summary;
 # for my $kindred (keys %ped_data) {
 #     my $fam = $ped_data{$kindred};
 #     my $father = $fam->{father};
 #     my $mother = $fam->{mother};
 #     my $samples = $fam->{samples};
-# 
+#
 #     my @member_types;
 #     my $child_count = 0;
 #   SAMPLE:
@@ -122,7 +122,7 @@ die "$usage\n\nFATAL : missing_viq_file\n" unless $viq_file;
 #     else {
 #         push @member_types, 'F-';
 #   }
-# 
+#
 #     if (exists $fam->{mother}) {
 #         push @member_types, ($fam->{samples}{$fam->{mother}}{phenotype} == 2 ? 'M2' :
 #                              $fam->{samples}{$fam->{mother}}{phenotype} == 1 ? 'M1' :
@@ -131,8 +131,8 @@ die "$usage\n\nFATAL : missing_viq_file\n" unless $viq_file;
 #     else {
 #         push @member_types, 'M-';
 #   }
-# 
-# 
+#
+#
 #     $ped_summary{$kindred} = join ':', @member_types;
 # }
 # print '';
@@ -199,21 +199,35 @@ my %type_map = (1 => 'SNV',
                 9 => 'BND',
                );
 
-my @headers = qw(rank chr gene vid csq dist denovo type zygo pldy
+my @headers = qw(file rank chr gene vid csq denovo type zygo pldy
                  sites par length gqs viqscr phev_k vvp_svp vaast
                  g_tag p_mod clinvar var_qual);
 
 print join "\t", @headers;
 print "\n";
 
-my $viq = Arty::vIQ->new(file => $viq_file);
+for my $viq_file (@viq_files) {
 
-RECORD:
-while (my $record = $viq->next_record) {
+        my $viq = Arty::vIQ->new(file => $viq_file);
 
-        for my $key (keys %{$record}) {
-                $record->{$key} = 'null' unless length $record->{$key};
-        }
+      RECORD:
+        while (my $record = $viq->next_record) {
+
+                for my $key (keys %{$record}) {
+                        $record->{$key} = 'null' unless length $record->{$key};
+                }
+
+                my @csq_mapped;
+                map {push @csq_mapped, $csq_map{$_}} split /,/, $record->{csq};
+                $record->{csq} = join ',', @csq_mapped;
+
+                # Map variant type
+                $record->{type} = (exists $type_map{$record->{type}} ?
+                                   $type_map{$record->{type}}        :
+                                   $record->{type});
+
+                # Remove whitespace from ploidy
+                $record->{pldy} =~ s/\s+/,/g;
 
         my @csq_mapped;
         map {push @csq_mapped, $csq_map{$_}} split /,/, $record->{csq};
@@ -229,27 +243,26 @@ while (my $record = $viq->next_record) {
 
 	# Remove whitespace from vid
 	$record->{vid} =~ s/\s+/-/g;
-	
-        # my $ad_txt = join '\,', @{$record->{var_qual}{ad}};
-        # my $var_qual_txt = join ":", $ad_txt, $record->{var_qual}{bayesf}, $record->{var_qual}{prob};
-        $record->{var_qual} =~ s/\s+/,/g;
+                # my $ad_txt = join '\,', @{$record->{var_qual}{ad}};
+                # my $var_qual_txt = join ":", $ad_txt, $record->{var_qual}{bayesf}, $record->{var_qual}{prob};
+                $record->{var_qual} =~ s/\s+/,/g;
 
-        my $clinvar_incdt = $record->{clinvar} =~ s/(\*)$//;
-        $record->{clinvar} = (exists $clinvar_map{$record->{clinvar}} ?
-                              $clinvar_map{$record->{clinvar}}
-                              : $record->{clinvar});
-        $record->{clinvar} .= '*' if $clinvar_incdt;
+                my $clinvar_incdt = $record->{clinvar} =~ s/(\*)$//;
+                $record->{clinvar} = (exists $clinvar_map{$record->{clinvar}} ?
+                                      $clinvar_map{$record->{clinvar}}
+                                      : $record->{clinvar});
+                $record->{clinvar} .= '*' if $clinvar_incdt;
 
-        next RECORD if $record->{viqscr} < $min_score;
-        next RECORD if $skip_incdt && $clinvar_incdt;
+                next RECORD if $record->{viqscr} < $min_score;
+                next RECORD if $skip_incdt && $clinvar_incdt;
 
-        print join "\t", @{$record}{qw(rank chr gene vid csq dist denovo type
-                                       zygo pldy sites par length gqs viqscr
-                                       phev_k vvp_svp vaast g_tag p_mod
-                                       clinvar var_qual)};
-        print "\n";
-        print '';
+                print join "\t", $viq_file, @{$record}{qw(rank chr gene vid csq denovo type
+                                                          zygo pldy sites par length gqs viqscr
+                                                          phev_k vvp_svp vaast g_tag p_mod
+                                                          clinvar var_qual)};
+                print "\n";
+                print '';
+        }
 }
 
 #-------------------------------------------------------------------------------
-
