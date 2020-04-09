@@ -50,7 +50,7 @@ my $opt_success = GetOptions('help'            => \$help,
 
 die $usage if $help || ! $opt_success;
 
-$min_score = -999 unless defined $min_score;
+$min_score = 0 unless defined $min_score;
 
 my $viq_file = shift @ARGV;
 
@@ -227,6 +227,9 @@ while (my $record = $viq->next_record) {
         # Remove whitespace from ploidy
         $record->{pldy} =~ s/\s+/,/g;
 
+	# Remove whitespace from vid
+	$record->{vid} =~ s/\s+/-/g;
+	
         # my $ad_txt = join '\,', @{$record->{var_qual}{ad}};
         # my $var_qual_txt = join ":", $ad_txt, $record->{var_qual}{bayesf}, $record->{var_qual}{prob};
         $record->{var_qual} =~ s/\s+/,/g;
