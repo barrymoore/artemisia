@@ -199,7 +199,7 @@ my %type_map = (1 => 'SNV',
                 9 => 'BND',
                );
 
-my @headers = qw(file rank chr gene vid csq denovo type zygo pldy
+my @headers = qw(kindred rank chr gene vid csq denovo type zygo pldy
                  sites par length gqs viqscr phev_k vvp_svp vaast
                  g_tag p_mod clinvar var_qual);
 
@@ -209,6 +209,8 @@ print "\n";
 for my $viq_file (@viq_files) {
 
         my $viq = Arty::vIQ->new(file => $viq_file);
+
+        # print "## $viq_file\n";
 
       RECORD:
         while (my $record = $viq->next_record) {
@@ -229,20 +231,8 @@ for my $viq_file (@viq_files) {
                 # Remove whitespace from ploidy
                 $record->{pldy} =~ s/\s+/,/g;
 
-        my @csq_mapped;
-        map {push @csq_mapped, $csq_map{$_}} split /,/, $record->{csq};
-        $record->{csq} = join ',', @csq_mapped;
-
-        # Map variant type
-        $record->{type} = (exists $type_map{$record->{type}} ?
-                           $type_map{$record->{type}}        :
-                           $record->{type});
-
-        # Remove whitespace from ploidy
-        $record->{pldy} =~ s/\s+/,/g;
-
-	# Remove whitespace from vid
-	$record->{vid} =~ s/\s+/-/g;
+                # Remove whitespace from vid
+                $record->{vid} =~ s/\s+/-/g;
                 # my $ad_txt = join '\,', @{$record->{var_qual}{ad}};
                 # my $var_qual_txt = join ":", $ad_txt, $record->{var_qual}{bayesf}, $record->{var_qual}{prob};
                 $record->{var_qual} =~ s/\s+/,/g;
@@ -256,13 +246,17 @@ for my $viq_file (@viq_files) {
                 next RECORD if $record->{viqscr} < $min_score;
                 next RECORD if $skip_incdt && $clinvar_incdt;
 
-                print join "\t", $viq_file, @{$record}{qw(rank chr gene vid csq denovo type
-                                                          zygo pldy sites par length gqs viqscr
-                                                          phev_k vvp_svp vaast g_tag p_mod
+                print join "\t", $viq_file, @{$record}{qw(rank chr gene vid csq
+                                                          denovo type zygo pldy
+                                                          sites par length gqs
+                                                          viqscr phev_k vvp_svp
+                                                          vaast g_tag p_mod
                                                           clinvar var_qual)};
+
                 print "\n";
                 print '';
         }
+        # print "--------------------\n\n";
 }
 
 #-------------------------------------------------------------------------------
