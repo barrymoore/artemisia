@@ -244,7 +244,7 @@ sub parse_record {
 
 	my %record;
 
-        @record{qw(kindred proband father mother sex phenotype)} = splice(@cols, 0, 6);
+        @record{qw(kindred sample father mother sex phenotype)} = splice(@cols, 0, 6);
 	$record{data} = \@cols if scalar @cols;
 
 	return wantarray ? %record : \%record;
