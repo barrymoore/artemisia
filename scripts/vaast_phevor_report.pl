@@ -598,7 +598,7 @@ sub process_variant_data {
         $var->{nc_gt_txt}  ||= '.';
 
         #----------------------------------------
-        # Create Affected Count
+        # Create affected and no-call count
         #----------------------------------------
 
       GT:
