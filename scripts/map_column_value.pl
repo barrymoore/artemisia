@@ -21,11 +21,12 @@ Options:
 
   --map, -m <map_file.txt>
 
-    A required mapping file that has one column ('MAP FROM VALUE') with values
-    that match the column in the data file to be mapped and another
-    column ('MAP TO VALUE') that have values to map to.  Not that this
-    file should typically have a one to one mapping, although a
-    many-to-one mapping is allowed, but not a one-to-many mapping.
+    A required mapping file that has one column ('MAP FROM VALUE')
+    with values that match the column in the data file to be mapped
+    and another column ('MAP TO VALUE') that have values to map to.
+    Not that this file should typically have a one to one mapping,
+    although a many-to-one mapping is allowed, but not a one-to-many
+    mapping.  This behvior can be modified with --allow_one_to_many.
     File should be tab-delimited text.  Default behavior is to use the
     first column as the 'MAP FROM VALUE' and the second column as the
     'MAP TO VALUE', however, mapping columns can be altered with the
@@ -54,43 +55,52 @@ Options:
     not found in the map file lookup, the the value in the data file
     column should be mapped to null (no value).
 
+  --allow_one_to_many, -a
+
+    Tolerate one-to-many mappings in the mapping file.  The script
+    does not support on-to-manny mapping, but it ignores one-to-many
+    errors and just uses the last 'MAP TO VALUE' seen for a given 'MAP
+    FROM VALUE'.
+
 ";
 
 
-my ($help, $map_file, $map_col_txt, $data_cols_txt, $missing_null);
+my ($help, $map_file, $map_cols_txt, $data_cols_txt, $missing_null, $allow_one_many);
 
-my $opt_success = GetOptions('help'           => \$help,
-			     'map|m=s'        => \$map_file,
-			     'map_cols|o=s'   => \$map_col_txt,
-			     'cols|c=s'       => \$data_cols_txt,
-			     'missing_null|n' => \$missing_null);
+my $opt_success = GetOptions('help'           	   => \$help,
+			     'map|m=s'        	   => \$map_file,
+			     'map_cols|o=s'   	   => \$map_cols_txt,
+			     'cols|c=s'       	   => \$data_cols_txt,
+			     'missing_null|n' 	   => \$missing_null,
+			     'allow_one_to_many|a' => \$allow_one_many,
+    );
 
 die $usage if ! $opt_success;
 print $usage if $help;
 
 # Default and split map_cols
-$map_col_txt ||= '1,2';
-my @map_cols = split /,/, $map_col_txt;
+$map_cols_txt ||= '1,2';
+my @map_cols = split /,/, $map_cols_txt;
 my $max_map_col = 0;
 for my $map_col (@map_cols) {
-  $col--;
+  $map_col--;
   $max_map_col = ($map_col > $max_map_col) ? $map_col : $max_map_col;
   if ($map_col < 0) {
     die ("$usage\n\nFATAL : map_cols_value_to_low : Values cannot be < 1 " .
-	 "($map_col_txt) use 1-based column numbers.\n\n");
+	 "($map_cols_txt) use 1-based column numbers.\n\n");
   }
 }
 
-# Default and split cols
+# Default and split data_cols
 $data_cols_txt ||= 1;
 my @data_cols = split /,/, $data_cols_txt;
-my $max_map_col = 0;
+my $max_data_col = 0;
 for my $data_col (@data_cols) {
   $data_col--;
-  $max_map_col = ($data_col > $max_data_col) ? $data_col : $max_data_col;
+  $max_data_col = ($data_col > $max_data_col) ? $data_col : $max_data_col;
   if ($data_col < 0) {
     die("$usage\n\nFATAL : data_cols_value_to_low : Values cannot be < 1 ".
-	"($data_col_txt) use 1-based column numbers.\n\n");
+	"($data_cols_txt) use 1-based column numbers.\n\n");
   }
 }
 
@@ -101,22 +111,29 @@ my $data_file = shift;
 die "$usage\n\nFATAL : missing_data_file\n\n" unless $data_file;
 
 # Read mapping file
-open (my $MAP, '<', $map) or die("FATAL : cant_open_map_file_for_reading : " .
+open (my $MAP, '<', $map_file) or die("FATAL : cant_open_map_file_for_reading : " .
 				 "$map_file\n$!\n");
 
 my %map;
 MAP_LINE:
-while (my $line = <$IN>) {
+while (my $line = <$MAP>) {
   next MAP_LINE if $line =~ /^\#/;
+  chomp $line;
   my @cols = split /\t/, $line;
   if ((scalar(@cols) - 1) < $max_map_col) {
     die("$usage\n\nFATAL : map_cols_value_too_high : Mapping column values " .
-	"cannot be > column count in mapping file ($map_col_txt - $line).\n\n");
+	"cannot be > column count in mapping file ($map_cols_txt - $line).\n\n");
   }
   my ($key, $value) = @cols[@map_cols];
-  die "$usage\n\nFATAL : one_to_many_mapping_not_allowed : $line\n"
-    if exists $map{$key};
-  $map{$key}
+  if (exists $map{$key}) {
+      if ($allow_one_many) {
+	  warn "WARN : one_to_many_mapping_allowed : $line\n";
+      }
+      else {
+	  die "$usage\n\nFATAL : one_to_many_mapping_not_allowed : $line\n";
+      }
+  }
+  $map{$key} = $value;
 }
 
 open (my $IN, '<', $data_file) or die("FATAL : cant_open_data_file_for_reading : " .
@@ -127,9 +144,9 @@ while (my $line = <$IN>) {
   chomp $line;
   my @cols = split /\t/, $line;
 
-  if ((scalar(@cols) - 1) < $max_data_cols) {
+  if ((scalar(@cols) - 1) < $max_data_col) {
     die("$usage\n\nFATAL : data_cols_value_to_high : Data column values cannot " .
-	"be > column count in data file ($data_col_txt - $line).\n\n");
+	"be > column count in data file ($data_cols_txt - $line).\n\n");
   }
   for my $data_col (@data_cols) {
     my $value = $cols[$data_col];
