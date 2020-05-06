@@ -150,7 +150,7 @@ sub _initialize_args {
         ######################################################################
         my $args = $self->SUPER::_initialize_args(@args);
         # Set valid class attributes here
-        my @valid_attributes = qw();
+        my @valid_attributes = qw(payload);
         $self->set_attributes($args, @valid_attributes);
         ######################################################################
         return $args;
@@ -207,18 +207,45 @@ sub _initialize_args {
 
 =cut
 
- sub columns {
-   my ($self) = shift @_;
+sub columns {
+    my ($self) = shift @_;
+    
+    if (! $self->{columns}) {
+	$self->{columns} = [qw(chrom pos end rid vid vvp_gene transcript
+			    type parentage zygosity phevor coverage
+			    vvp_hemi vvp_het vvp_hom clinvar
+			    chrom_code gnomad_af vaast_dom_p
+			    vaast_rec_p distance alt_count gnomad_code
+			    gq csq)];
+	
+	push @{$self->{columns}}, 'payload' if $self->payload;
+    }
+    
+    return wantarray ? @{$self->{columns}} : $self->{columns};
+}
 
-   $self->{columns} ||= [qw(chrom pos end rid vid vvp_gene transcript
-                            type parentage zygosity phevor coverage
-                            vvp_hemi vvp_het vvp_hom clinvar
-                            chrom_code gnomad_af vaast_dom_p
-                            vaast_rec_p distance alt_count gnomad_code
-                            gq csq payload)];
+#-----------------------------------------------------------------------------
 
-   return wantarray ? @{$self->{columns}} : $self->{columns};
- }
+=head2 payload
+
+  Title   : payload
+  Usage   : $payload = $self->payload($payload_value);
+  Function: Get/set payload
+  Returns : An payload value
+  Args    : An payload value
+
+=cut
+
+sub payload {
+    my ($self, $payload) = @_;
+    
+    if (defined $payload) {
+	$self->{payload} = $payload;
+    }
+    $payload ||= 0;
+    
+    return $self->{payload};
+}
 
 #-----------------------------------------------------------------------------
 
@@ -289,10 +316,24 @@ sub parse_record {
     map {$_ = '' unless defined $_} @cols;
 
     my $col_count = scalar @cols;
-    if ($col_count < 25 || $col_count > 26) {
+    my $payload = $self->payload;
+    if ($payload && $col_count != 26) {
         handle_message('FATAL', 'incorrect_column_count',
-		       "(expected 25 or 26 columns, but got $col_count " .
-		       "columns) $line");
+		       "(expected 26 columns with payload set, but got " .
+		       "$col_count columns with payload=$payload) $line");
+    }
+    elsif (! $payload && $col_count != 25) {
+	if ($col_count == 26) {
+	    handle_message('FATAL', 'incorrect_column_count',
+			   "(expected 25 columns, but got " .
+			   "$col_count columns with payload=$payload. Maybe " .
+			   "you need to set \$parser->payload(1)) $line");
+	}
+	else {
+	    handle_message('FATAL', 'incorrect_column_count',
+			   "(expected 25 columns, but got " .
+			   "$col_count columns. $line");
+	}
     }
 
     my %record;
