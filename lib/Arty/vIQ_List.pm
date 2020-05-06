@@ -215,7 +215,7 @@ sub _initialize_args {
                             vvp_hemi vvp_het vvp_hom clinvar
                             chrom_code gnomad_af vaast_dom_p
                             vaast_rec_p distance alt_count gnomad_code
-                            gq csq)];
+                            gq csq payload)];
 
    return wantarray ? @{$self->{columns}} : $self->{columns};
  }
@@ -289,8 +289,10 @@ sub parse_record {
     map {$_ = '' unless defined $_} @cols;
 
     my $col_count = scalar @cols;
-    if ($col_count != 25) {
-        handle_message('FATAL', 'incorrect_column_count', "(expected 25 got $col_count columns) $line");
+    if ($col_count < 25 || $col_count > 26) {
+        handle_message('FATAL', 'incorrect_column_count',
+		       "(expected 25 or 26 columns, but got $col_count " .
+		       "columns) $line");
     }
 
     my %record;
@@ -298,7 +300,7 @@ sub parse_record {
     # chrom pos end id vid gene transcript type parentage zygosity
     # phevor coverage vvp_hemi vvp_het vvp_hom clinvar chrom_code
     # gnomad_af vaast_dom_p vaast_rec_p distance alt_count gnomad_code
-    # gq csq
+    # gq csq payload
 
     @record{($self->columns)} = @cols;
 

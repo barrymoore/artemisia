@@ -37,8 +37,8 @@ GFF3 file (that shouldn't happen) the distance is set to null.
      * And the annotated transcript is an mRNA in the GFF3 file,
        * And the variant overlaps the CDS portion of the mRNA,
      * Or the annotated transcript is an ncRNA in the GFF3 file,
-       * Ant the variant overlaps the exon portion of the transcript,
-     * Then the distance value is 0.
+       * And the variant overlaps the exon portion of the transcript,
+     * Then the distance value is set to 0.
      * Next.
 
  * Rule #3 (Distance to nearest exon/CDS within transcript)
@@ -52,7 +52,7 @@ GFF3 file (that shouldn't happen) the distance is set to null.
  * Rule #4 (Distance to nearest exon/CDS within nearby transcripts)
      * If the variant has a distance value of 1 (annotated as
        noncoding by VVP or polish_skeleton.pl),
-     * And the variant is annotated by with transcript 'NONE',
+     * And the variant is annotated by VVP with transcript 'NONE',
      * And the variant lies <= RANGE (2KB) from an exon (CDS for mRNA)
        in the GFF3 file
      * Then the distance is set to the nearest exon/CDS
@@ -400,20 +400,21 @@ sub print_list_record {
                                       zygosity phevor coverage
                                       vvp_hemi vvp_het vvp_hom clinvar
                                       chrom_code gnomad_af vaast_dom_p
-                                      vaast_rec_p distance
-                                      alt_count gnomad_code gq csq)};
+                                      vaast_rec_p distance alt_count
+                                      gnomad_code gq csq payload)};
 
         if (! $SEEN{$key}++) {
             $record->{rid} = sprintf("%08d", $ROW_COUNT++);
 
-            print join "\t", @{$record}{qw(chrom pos end rid vid vvp_gene
-                                           transcript type parentage
-                                           zygosity phevor coverage
-                                           vvp_hemi vvp_het vvp_hom
-                                           clinvar chrom_code
+            print join "\t", @{$record}{qw(chrom pos end rid vid
+                                           vvp_gene transcript type
+                                           parentage zygosity phevor
+                                           coverage vvp_hemi vvp_het
+                                           vvp_hom clinvar chrom_code
                                            gnomad_af vaast_dom_p
                                            vaast_rec_p distance
-                                           alt_count gnomad_code gq csq)};
+                                           alt_count gnomad_code gq
+                                           csq payload)};
 
             print "\n";
         }
