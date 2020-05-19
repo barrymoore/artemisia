@@ -437,10 +437,11 @@ sub parse_record {
     # p_scor s_scor PHEV/K VVP/SVP VAAST RPROB G_tag p_mod s_mod
     # G_tag_scr ClinVar var_qual vID
 
-    @record{qw(rank chr gene transcript vid csq dist denovo type zygo csn pldy
-    sites par loc length gqs gflg gflpr ppp vpene breath fix viqscr
-    p_scor s_scor phev_k vvp_svp vaast rprob g_tag p_mod s_mod
-    g_tag_scr clinvar var_qual rid)} = @cols;
+    @record{qw(rank chr gene transcript vid csq dist denovo type zygo
+               csn pldy sites par loc length gqs gflg gflpr ppp vpene
+               breath fix viqscr p_scor s_scor phev_k vvp_svp vaast
+               rprob g_tag p_mod s_mod g_tag_scr clinvar var_qual
+               rid)} = @cols;
 
     # Parse denovo
     ($record{denovo}, $record{maf}) = split /\(/, $record{denovo};

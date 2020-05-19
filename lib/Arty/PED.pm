@@ -162,6 +162,10 @@ sub _initialize_args {
              chomp $line;
              push @{$self->{header}}, $line;
          }
+	 elsif ($line =~ /^kindred/i) {
+             chomp $line;
+             push @{$self->{header}}, $line;
+         }
          else {
              $self->_push_stack($line);
              last LINE;
