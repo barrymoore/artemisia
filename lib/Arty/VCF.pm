@@ -252,12 +252,103 @@ sub parse_info {
 
 	my %info;
 	for my $pair (@pairs) {
+
 	    my ($key, $value) = split(/=/, $pair);
 	    $value ||= '';
-	   my @values = split /,/, $value;
-	   push @{$info{$key}}, @values;
+
+	    my $value_struct;
+	    if ($key eq 'CSQ') {
+		$value_struct = parse_info_csq($key, $value);
+	    }
+	    elsif ($key eq 'YYY') { # Placeholder for future INFO parsing.
+		$value_struct = parse_info_XXX($key, $value);
+	    }
+	    else {
+		my @values = split /,/, $value;
+		$value_struct = \@values
+	    }
+
+	    if (exists $info{$key}) {
+		if (ref $info{$key} eq 'ARRAY' && ref $value_struct eq 'ARRAY') {
+		    push @{$info{$key}}, @{$value_struct};
+		}
+		else {
+		    warn_msg('replacing_existing_index_key', "$key: $info{$key} => $value");
+		    $info{$key} = $value_struct;
+		}
+	    }
+	    else {
+		$info{$key} = $value_struct;
+	    }
 	}
 	return wantarray ? %info : \%info;
+}
+
+#-----------------------------------------------------------------------------
+
+=head2 parse_info_csq
+
+ Title   : parse_info_csq
+ Usage   : $vcf->parse_info_csq($csq_txt);
+ Function: Parse a VCF INFO CSQ string into a data structure.
+ Returns : A hash (or reference) of VCF INFO CSQ  data.
+ Args    : A scalar containing a string of VCF INFO CSQ text.
+
+=cut
+
+sub parse_info_csq {
+	my ($self, $csq_txt) = @_;
+	chomp $csq_txt;
+	# T|stop_gained|HIGH|GZMM|ENSG00000197540|Transcript|ENST00000264553|protein_coding|4/5||||636|598|200|Q/*|Cag/Tag|||1||||Homo_sapiens.GRCh37.87-Cncl-ncRNA.gff3.gz|
+	# A|missense_variant&splice_region_variant|MODERATE|PPAP2C|ENSG00000141934|Transcript|ENST00000327790|protein_coding|4/6||||706|602|201|A/V|gCg/gTg|||-1||||Homo_sapiens.GRCh37.87-Cncl-ncRNA.gff3.gz|
+	# -|splice_acceptor_variant&frameshift_variant|HIGH|HSH2D|ENSG00000196684|Transcript|ENST00000253680|protein_coding|8/9||||1194|663|221|L/X|ctA/ct|||1||||Homo_sapiens.GRCh37.87-Cncl-ncRNA.gff3.gz|
+        # -|downstream_gene_variant|MODIFIER|CIB3|ENSG00000141977|Transcript|ENST00000269878|protein_coding|||||||||||3971|-1||||Homo_sapiens.GRCh37.87-Cncl-ncRNA.gff3.gz|
+	# TATATATTATAGAATATAATATATATTTTATTATATAA|intron_variant|MODIFIER|OR4F17|ENSG00000176695|Transcript|ENST00000585993|protein_coding||1/1||||||||||1||||Homo_sapiens.GRCh37.87-Cncl-ncRNA.gff3.gz|
+
+	# https://uswest.ensembl.org/info/docs/tools/vep/vep_formats.html#vcf
+	# Allele|Consequence|IMPACT|SYMBOL|Gene|Feature_type|Feature|BIOTYPE|EXON|INTRON|HGVSc|HGVSp|cDNA_position|CDS_position|Protein_position|Amino_acids|Codons|Existing_variation|DISTANCE|STRAND|FLAGS|SYMBOL_SOURCE|HGNC_ID
+
+	#  Allele              T                    TATATATTAT...
+	#  Consequence         stop_gained          intron_variant
+	#  IMPACT              HIGH                 MODIFIER
+	#  SYMBOL              GZMM                 OR4F17
+	#  Gene                ENSG00000197540      ENSG00000176695
+	#  Feature_type        Transcript           Transcript
+	#  Feature             ENST00000264553      ENST00000585993
+	#  BIOTYPE             protein_coding       protein_coding
+	#  EXON                4/5                  .
+	#  INTRON              .                    1/1
+	#  HGVSc               .                    .
+	#  HGVSp               .                    .
+	#  cDNA_position       636                  .
+	#  CDS_position        598                  .
+	#  Protein_position    200                  .
+	#  Amino_acids         Q/*                  .
+	#  Codons              Cag/Tag              .
+	#  Existing_variation  .                    .
+	#  DISTANCE            .                    .
+	#  STRAND              1                    1
+	#  FLAGS               .                    .
+	#  SYMBOL_SOURCE       .                    .
+	#  HGNC_ID             .                    .
+	#  Source              gene_models.gff3.gz  gene_models.gff3.gz
+	#  Unknown             ???
+
+	my @csq_structs;
+	my @csq_data_set = split /,/, $csq_txt;
+	for my $csq_datum (@csq_data_set) {
+	    my %csq;
+
+	    @csq{qw(allele consequence impact symbol gene feature_type
+	       	    feature biotype exon intron hgvsc hgvsp
+	       	    cdna_position cds_position protein_position
+	       	    amino_acids codons existing_variation distance
+	       	    strand flags symbol_source hgnc_id source
+	       	    unknown)} = split /\|/, $csq_datum;
+
+	    push @csq_structs, \%csq;
+	}
+	return wantarray ? @csq_structs : \@csq_structs;
 }
 
 #-----------------------------------------------------------------------------

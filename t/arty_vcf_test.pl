@@ -2,14 +2,12 @@
 use strict;
 use warnings;
 
-use lib "$ENV{HOME}/artemisia/lib/";
-use Arty::VCF;
 use Test::More;
 
 BEGIN {
   use FindBin;
-  use lib "$FindBin::RealBin/../../";
-  use_ok('GAL::Parser::VCFv4_1');
+  use lib "$FindBin::RealBin/../lib";
+  use_ok('Arty::VCF');
 }
 
 my $path = $0;
@@ -17,7 +15,7 @@ $path =~ s/[^\/]+$//;
 $path ||= '.';
 chdir($path);
 
-my $parser = GAL::Parser::VCFv4_1->new(file => 'data/1KG_VCF4_1_test.vcf');
+my $parser = Arty::::VCF->new(file => 'data/test.vcf');
 
 isa_ok($parser, 'GAL::Parser::VCFv4_1');
 
