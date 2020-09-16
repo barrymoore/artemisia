@@ -228,7 +228,7 @@ sub parse_record {
     my ($self, $line) = @_;
     chomp $line;
 
-    my @cols = split /\s+/, $line;
+    my @cols = split /\t/, $line;
 
     my %record;
 
