@@ -38,11 +38,8 @@ my $viq = Arty::vIQ->new(file => $file);
 
 while (my $record = $viq->next_record) {
 
-    print join "\t", @{$record}{qw(rank gene transcript vid coding
-               			   denovo type zygo par loc breath
-               			   viqscr p_scor s_scor phev vvp vaast
-               			   g_tag p_mod s_mod g_tag_scr clinvar
-               			   vid)};
+    print join "\t", @{$record}{qw(rank gene transcript vid csq denovo type zygo par loc breath viqscr p_scor s_scor phev_k vvp_svp vaast g_tag p_mod s_mod g_tag_scr clinvar vid)};
 
     print "\n";
+    print '';
 }
