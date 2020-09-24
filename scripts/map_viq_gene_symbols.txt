@@ -173,8 +173,8 @@ if (exists $data->{header}) {
 	my @cols = @{$data_record->{data}};
 	my $gene = $cols[$column];
 
-	if (exists $map_data{hgnc_symbols}{$gene}) {
-	    print STDERR "INFO : hgnc_symbol_exists : Not mapping $gene\n";  
+	if (exists $map_data{fabric_symbols}{$gene}) {
+	    print STDERR "INFO : fabric_symbol_exists : Not mapping $gene\n";  
 	    print join "\t", @cols;
 	    print "\n";
 	    print '';
@@ -187,7 +187,24 @@ if (exists $data->{header}) {
 	    print '';
 	}
 	else {
-	    if (exists $map_data{hgnc}{$gene}) {
+	    if (exists $map_data{fabric}{$gene}) {
+		my @symbols = keys %{$map_data{fabric}{$gene}};
+		if (scalar @symbols > 1) {
+		    print STDERR "WARN : multi_mapped_fabric_alias_error : Not mapping $gene => @symbols\n";  
+		    print join "\t", @cols;
+		    print "\n";
+		    print '';
+		}
+		else {
+		    ($cols[$column]) = keys %{$map_data{fabric}{$gene}};
+		    print STDERR "WARN : fabric_mapped_symbol : $gene => $cols[$column]\n";  
+		    print join "\t", @cols;
+		    print "\n";
+		    print '';
+		}
+		print ''
+	    }
+	    elsif (exists $map_data{hgnc}{$gene}) {
 		my @locs = keys %{$map_data{hgnc}{$gene}};
 		my @symbols = keys %{$map_data{hgnc}{$gene}{ALL}};
 		if (scalar @symbols > 1) {
@@ -206,23 +223,6 @@ if (exists $data->{header}) {
 		    print "\n";
 		    print '';
 		}
-	    }
-	    elsif (exists $map_data{fabric}{$gene}) {
-		my @symbols = keys %{$map_data{fabric}{$gene}};
-		if (scalar @symbols > 1) {
-		    print STDERR "WARN : multi_mapped_fabric_alias_error : Not mapping $gene => @symbols\n";  
-		    print join "\t", @cols;
-		    print "\n";
-		    print '';
-		}
-		else {
-		    ($cols[$column]) = keys %{$map_data{fabric}{$gene}};
-		    print STDERR "WARN : fabric_mapped_symbol : $gene => $cols[$column]\n";  
-		    print join "\t", @cols;
-		    print "\n";
-		    print '';
-		}
-		print ''
 	    }
 	    else {
 		print STDERR "WARN : unable_to_map_invalid_symbol : $gene\n";  
