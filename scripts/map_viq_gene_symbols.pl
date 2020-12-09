@@ -13,7 +13,7 @@ my $usage = "
 
 Synopsis:
 
-map_gene_symbols.pl --hgnc hgnc_complete_set.txt --fabric gene_synonym_2020_08.tsv gene_data.txt
+map_viq_gene_symbols.pl --hgnc hgnc_complete_set.txt --fabric gene_synonym_2020_08.tsv gene_data.txt
 
 Description:
 

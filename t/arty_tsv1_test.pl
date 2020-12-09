@@ -32,10 +32,10 @@ die $usage if $help || ! $opt_success;
 my $file = shift;
 die $usage unless $file;
 
-my $tsv = Arty::TSV->new(file => $file)->all_records;
+my $tsv = Arty::TSV->new(file => $file);
 
-for my $record (@{$tsv}) {
-    print join "\t", @{$record};
+while (my $record = $tsv->next_record) {
+    print join "\t", @{$record->{data}};
     print "\n";
 }
 

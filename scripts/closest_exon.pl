@@ -3,6 +3,7 @@ use strict;
 use warnings;
 use Getopt::Long;
 use Storable;
+use Fcntl qw(:flock);
 
 use Arty::Utils qw(:all);
 use Arty::GFF3;
@@ -134,75 +135,94 @@ die $usage unless $data_file && $gff3_file;
 
 my $gff3_store = $gff3_file . '.stor';
 
+my %gff3_transcripts;
 if (! -e $gff3_store ||
     (stat($gff3_file))[9] > (stat($gff3_store))[9]) {
-
-        my $gff3 = Arty::GFF3->new(file => $gff3_file);
-
-        my %seen_ncRNAs;
-	# First pass to record all ncRNAs for logic below.
-        while (my $record = $gff3->next_record) {
-	    if (exists $SUPPORTED_NCRNAS{$record->{type}}) {
-		$seen_ncRNAs{$record->{attributes}{Parent}[0]}++
+    
+    my $gff3 = Arty::GFF3->new(file => $gff3_file);
+    
+    my %seen_ncRNAs;
+    # First pass to record all ncRNAs for logic below.
+    while (my $record = $gff3->next_record) {
+	if (exists $SUPPORTED_NCRNAS{$record->{type}}) {
+	    $seen_ncRNAs{$record->{attributes}{Parent}[0]}++
+	}
+    }
+    
+    # Reopen GFF3 file
+    $gff3 = Arty::GFF3->new(file => $gff3_file);
+    
+    my %mapped_cds;
+    my %mapped_exon;
+  RECORD:
+    while (my $record = $gff3->next_record) {
+	# Store transcripts
+	if (exists $SUPPORTED_RNAS{$record->{type}}) {
+	    $record->{attributes}{ID}[0] =~ s/^transcript://;
+	    $record->{attributes}{Parent}[0] =~ s/^gene://;
+	    push @{$gff3_transcripts{chrs}{$record->{chrom}}}, $record;
+	    $gff3_transcripts{ids}{$record->{attributes}{ID}[0]} = $record;
+	}
+	# Store CDSs (will only happen for mRNA)
+	elsif ($record->{type} eq 'CDS') {
+	    $record->{attributes}{Parent}[0] =~ s/^transcript://;
+	    next RECORD unless exists $record->{attributes}{Parent} &&
+		defined $record->{attributes}{Parent}[0];
+	    my $parent = $record->{attributes}{Parent}[0];
+	    push @{$mapped_cds{$parent}}, $record;
+	    print '';
+	}
+	# Store exons...
+	elsif ($record->{type} eq 'exon') {
+	    $record->{attributes}{Parent}[0] =~ s/^transcript://;
+	    #...only for ncRNAs
+	    if (exists $seen_ncRNAs{$record->{type}}) {
+		next RECORD unless exists $record->{attributes}{Parent} &&
+		    defined $record->{attributes}{Parent}[0];
+		my $parent = $record->{attributes}{Parent}[0];
+		push @{$mapped_exon{$parent}}, $record;
+		print '';
 	    }
 	}
-
-	# Reopen GFF3 file
-        $gff3 = Arty::GFF3->new(file => $gff3_file);
-
-        my %transcripts;
-        my %mapped_cds;
-        my %mapped_exon;
-      RECORD:
-        while (my $record = $gff3->next_record) {
-                # Store transcripts
-                if (exists $SUPPORTED_RNAS{$record->{type}}) {
-                        $record->{attributes}{ID}[0] =~ s/^transcript://;
-                        $record->{attributes}{Parent}[0] =~ s/^gene://;
-                        push @{$transcripts{chrs}{$record->{chrom}}}, $record;
-                        $transcripts{ids}{$record->{attributes}{ID}[0]} = $record;
-                }
-                # Store CDSs (will only happen for mRNA)
-                elsif ($record->{type} eq 'CDS') {
-                        $record->{attributes}{Parent}[0] =~ s/^transcript://;
-                        next RECORD unless exists $record->{attributes}{Parent} &&
-                          defined $record->{attributes}{Parent}[0];
-                        my $parent = $record->{attributes}{Parent}[0];
-                        push @{$mapped_cds{$parent}}, $record;
-                        print '';
-                }
-                # Store exons...
-                elsif ($record->{type} eq 'exon') {
-                        $record->{attributes}{Parent}[0] =~ s/^transcript://;
-                        #...only for ncRNAs
-                        if (exists $seen_ncRNAs{$record->{type}}) {
-                                next RECORD unless exists $record->{attributes}{Parent} &&
-                                  defined $record->{attributes}{Parent}[0];
-                                my $parent = $record->{attributes}{Parent}[0];
-                                push @{$mapped_exon{$parent}}, $record;
-                                print '';
-                        }
-                }
-                print '';
-        }
-
-        # Copy CDSs on top of exons.  This will clobber mRNA exons
-        # which is what we want - exons for ncRNA and CDSs for mRNAs.
-        for my $mrna (keys %mapped_cds) {
-                $mapped_exon{$mrna} = $mapped_cds{$mrna};
-        }
-
-        for my $chrom (keys %{$transcripts{chrs}}) {
-                my $chrom_transcripts = $transcripts{chrs}{$chrom};
-                for my $transcript (@{$chrom_transcripts}) {
-                        my $id = $transcript->{attributes}{ID}[0];
-                        $transcript->{exon} = $mapped_exon{$id} || [];
-                }
-        }
-        store \%transcripts, $gff3_store;
+	print '';
+  }
+    
+    # Copy CDSs on top of exons.  This will clobber mRNA exons
+    # which is what we want - exons for ncRNA and CDSs for mRNAs.
+    for my $mrna (keys %mapped_cds) {
+	$mapped_exon{$mrna} = $mapped_cds{$mrna};
+  }
+    
+    for my $chrom (keys %{$gff3_transcripts{chrs}}) {
+	my $chrom_transcripts = $gff3_transcripts{chrs}{$chrom};
+	for my $transcript (@{$chrom_transcripts}) {
+	    my $id = $transcript->{attributes}{ID}[0];
+	    $transcript->{exon} = $mapped_exon{$id} || [];
+	}
+  }
+    
+    if (open(my $STORE, '>', $gff3_store)) {
+	if (flock($STORE, LOCK_EX)) {
+	    store \%gff3_transcripts, $gff3_store;
+	    flock($STORE, LOCK_UN) or die "FATAL : cannot_unlock_storable_file : $gff3_store$!\n";
+	    close $STORE;
+	}
+	else {
+	    warn "WARN : cannot_lock_storable_file : $gff3_store Using data in $gff3_file";
+	}
+  }
+    else {
+	print "WARN : could_not_open_storable_file : $gff3_store Using data in $gff3_file";
+  }
 }
 
-my $transcripts = retrieve($gff3_store);
+my $transcripts = (retrieve($gff3_store) || \%gff3_transcripts);
+
+my $transcript_count = scalar keys %{$transcripts->{ids}};
+
+die "FATAL : no_transcript_loaded : Check $gff3_file and $gff3_store for problems.\n"
+    unless $transcript_count > 0;
+print STDERR "INFO : loaded_transcripts : $transcript_count transcripts loaded\n";
 
 my $parser;
 if ($format =~ /^viq_list/) {
@@ -449,8 +469,23 @@ sub get_exon_distance {
 
     if ($rcd_chrom ne $transcript_chrom) {
         my $rcd_txt = join ',', @{$record}{qw(chrom pos rid vid)};
-        die("FATAL : mismatched_chromosomes_in_get_exon_distance : " .
-            "transcript=$transcript_chrom, record=$rcd_txt\n");
+        warn("WARN : mismatched_chromosomes_in_get_exon_distance : " .
+	     "transcript=$transcript_chrom, record=$rcd_txt. Will
+	     return a very large distance to allow the script to
+	     complete\n");
+
+	# Edit 12/08/20 changing this from fatal error to warn and
+	# returning distance=260,000,000 because Javier found case
+	# where VEP was annotating a variant to a gene on another
+	# chromosome.  We coudn't figure out why, so he is reporting
+	# it as a bug to the VEP dev team and we will add a workaround
+	# here in the mean time to allow the script to run on cases
+	# where a variant is annotated to a gene on another
+	# chromosome.  The solution here is to simply return a
+	# distance greather than the largest chromosome.
+
+	my $distance = 250_000_000;
+	return $distance;
     }
 
     my $transcript_length = $transcript->{end} - $transcript->{start};
