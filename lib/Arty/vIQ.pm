@@ -159,29 +159,20 @@ sub _initialize_args {
 	     ##------------------------------------------------------------------------------
 	     ##------------------------ POSSIBLE MENDELIAN DIAGNOSES ------------------------
 	     ##------------------------------------------------------------------------------
-	     ##	RANK	MIM	GENE      	PHEV_GENE	PHEV_MIM	MIM_MPR	M_G_JACC	vIQscr	mIQscr	INC	DISEASE
-	     #A	0	617140	SON       	0.974     	0.983     	0.978  	0.368   	0.547	0.717	N  	ZTTK SYNDROME
-	     #A	1	614607	ARID1A    	0.968     	0.97      	0.966  	0.416   	0.341	0.256	N  	COFFIN-SIRIS SYNDROME 2
-	     #A	2	617159	CHD4      	0.937     	0.865     	0.86   	1       	0.322	-0.556	N  	SIFRIM-HITZ-WEISS SYNDROME
-	     #A	3	617988	GTPBP2    	0.855     	0.904     	0.9    	1       	-1.102	-0.685	Y  	JABERI-ELAHI SYNDROME
-	     #A	4	611490	CLCN7     	0.85      	0.823     	0.819  	0.16    	-0.701	-0.926	Y  	OSTEOPETROSIS, AUTOSOMAL RECESSIVE 4
-	     #A	5	210600	ATR       	0.938     	0.878     	0.874  	0.7     	-0.368	-1.161	Y  	SECKEL SYNDROME 1
-	     ##	RANK	MIM	GENE      	PHEV_GENE	PHEV_MIM	MIM_MPR	M_G_JACC	vIQscr	mIQscr	INC	DISEASE
-	     ##------------------------------------------------------------------------------
-
+	     ##  RANK  MIM     GENE    PHEV_GENE  PHEV_MIM  MIM_MPR  IMPRM  vIQscr  mIQscr  mIQcdf  INC  DISEASE
+	     #B  0     118450  JAG1    0.961      0.992     0.987    0.5    1.578   2.678   0.916   N    AWS
+	     #B  1     617140  SON     0.957      0.979     0.975    0.5    0.585   1.123   0.914   N    ZTTK SYNDROME
+	     #B  2     618786  SUZ12   0.944      0.904     0.9      0.5    1.528   0.891   0.913   N    Imagawa-Matsumoto syndrome
+	     #B  3     614607  ARID1A  0.948      0.964     0.959    0.5    0.381   0.643   0.912   N    COFFIN-SIRIS SYNDROME 2
+	     #B  4     617159  CHD4    0.895      0.836     0.832    0.5    0.706   0.161   0.91    N    SIFRIM-HITZ-WEISS SYNDROME
 	     ##------------------------------------------------------------------------------
 	     ##------------------------ POSSIBLE MULTIGENIC DIAGNOSES -----------------------
 	     ##------------------------------------------------------------------------------
-	     ##	RANK	VID               	NUM_G	TYPE	ZYG	CSQS	PLOIDY	PHEV	mIQscr	INC	CHR	NAME
-	     #B	0	BadgeGrp22556.2   	2	4	1	1	1	0.976	1.436	N  	20	multigenic 1-somy
-	     #B	1	BadgeGrp14180.2   	2	6	1	8	3	0.869	-0.501	N  	6	multigenic 3-somy
-	     #B	2	BadgeGrp22557.4   	4	4	1	1	1	0.086	-2.412	Y  	20	multigenic 1-somy
-	     #B	3	BadgeGrp17651.3   	3	6	1	8	3	0.08 	-2.644	Y  	14	multigenic 3-somy
-	     #B	4	BadgeGrp27318.2   	2	4	1	35	1	0.074	-2.772	Y  	2	multigenic 1-somy
-	     #B	5	BadgeGrp27602.3   	3	8	1	8	4	0.08 	-2.997	Y  	10	multigenic 4-somy
-	     ##	RANK	VID               	NUM_G	TYPE	ZYG	CSQS	PLOIDY	PHEV	mIQscr	INC	CHR	NAME
-	     ##------------------------------------------------------------------------------
-
+	     ##  RANK  MIM     VID              NUM_G  TYPE  ZYG  CSQS  PLOIDY  PHEV_GENE  PHEV_MIM  MIM_MPR  vIQscr  mIQscr  mIQcdf
+	     #C  0  113100  BadgeGrp40344.2  2  4  1  1  1  0.923  0.662  0.66   -0.907  -2.718  0.858
+	     #C  1  NO_MIM  BadgeGrp35612.2  2  4  1  1  1  0.232  0.012  0.002  -1.298  -7.197  VNF
+	     #C  2  NO_MIM  BadgeGrp20236.2  2  4  1  1  1  0.297  0.001  0.002  -1.348  -7.028  VNF
+	     #C  3  NO_MIM  BadgeGrp27188.3  3  6  1  8  3  0.234  0      0.002  -1.712  -7.614  VNF
 	     ##------------------------------------------------------------------------------
 	     ##------------------------------------ HPO -------------------------------------
 	     ##------------------------------------------------------------------------------
@@ -192,7 +183,6 @@ sub _initialize_args {
 	     ##	4	HP:0005120	Abnormal cardiac atrium morphology
 	     ##	5	HP:0001671	Abnormal cardiac septum morphology
 	     ##------------------------------------------------------------------------------
-
 	     ## GENOTYPE SKEW CHECK. P_value alpha = 0.00217391 based upon 90 previous observations.
 	     ## CHR  	NUM_HET 	NUM_HOM 	%HOM_OBS	%HOM_EXP	P_VALUE      	 het <- SKEW -> hom
 	     ## 1    	989     	475     	0.307122	0.274696	0.107468	          |
@@ -286,41 +276,37 @@ sub _initialize_args {
 	     ## VERSION:6.1.2d
 	     ## GMT:Tue Sep  1 19:04:47 2020
 	     ## EOF
-	     
+
 	     ##------------------------------------------------------------------------------
 	     ##------------------------ POSSIBLE MENDELIAN DIAGNOSES ------------------------
 	     ##------------------------------------------------------------------------------
-	     ##      RANK    MIM     GENE            PHEV_GENE       PHEV_MIM        MIM_MPR EXCM    vIQscr  mIQscr  INC     DISEASE
-	     #B      0       253270  HLCS            0.899           0.681           0.678   0       1.606   0.16    Y       HOLOCARBOXYLASE SYNTHETASE DEFICIENCY
-	     #B      1       605724  BRCA2           0.896           0.642           0.639   0       1.669   0.084   Y       FANCONI ANEMIA, COMPLEMENTATION GROUP D
-	     #B      2       617404  INPP5K          0.953           0.94            0.936   0       -0.381  -0.719  Y       MUSCULAR DYSTROPHY, CONGENITAL, WITH CA
-	     #B      3       175780  COL4A1          0.942           0.879           0.874   0       -0.15   -1.006  N       PORENCEPHALY 1
-	     #B      4       617799  CAMK2B          0.953           0.94            0.936   0       -0.698  -1.032  Y       MENTAL RETARDATION, AUTOSOMAL DOMINANT
-	     #B      5       617284  KMT2B           0.907           0.714           0.711   0       -0.021  -1.399  N       DYSTONIA 28, CHILDHOOD-ONSET
+	     ##  RANK  MIM     GENE    PHEV_GENE  PHEV_MIM  MIM_MPR  IMPRM  vIQscr  mIQscr  mIQcdf  INC  DISEASE
+	     #B  0     118450  JAG1    0.961      0.992     0.987    0.5    1.578   2.678   0.916   N    AWS
+	     #B  1     617140  SON     0.957      0.979     0.975    0.5    0.585   1.123   0.914   N    ZTTK SYNDROME
+	     #B  2     618786  SUZ12   0.944      0.904     0.9      0.5    1.528   0.891   0.913   N    Imagawa-Matsumoto syndrome
+	     #B  3     614607  ARID1A  0.948      0.964     0.959    0.5    0.381   0.643   0.912   N    COFFIN-SIRIS SYNDROME 2
+	     #B  4     617159  CHD4    0.895      0.836     0.832    0.5    0.706   0.161   0.91    N    SIFRIM-HITZ-WEISS SYNDROME
              if ($line =~ s/^\#B\s+//) {
 		 my %data;
-		 @data{qw(rank mim gene phev_gene phev_mim mim_mpr excm viqscr miqscr inc disease)} = split /\t/, $line;
+		 @data{qw(rank mim gene phev_gene phev_mim mim_mpr
+			  excm viqscr miqscr miqcdf inc disease)} =
+		     split /\t/, $line;
 		 map {$_ =~ s/\s+$//} values %data;
 		 push @{$self->{mendelian_diagnoses}}, \%data;
              }
 	     ##------------------------------------------------------------------------------
 	     ##------------------------ POSSIBLE MULTIGENIC DIAGNOSES -----------------------
 	     ##------------------------------------------------------------------------------
-	     ##      RANK    MIM     VID                     NUM_G   TYPE    ZYG     CSQS    PLOIDY  PHEV_GENE       PHEV_MIM        MIM_MPR vIQscr  mIQscr  INC
-	     #C      0       NO_MIM  BadgeGrp30355.2         2       4       1       1       1       0.215           0.1             0.016   -2.128  -5.968  Y
-	     #C      1       NO_MIM  BadgeGrp3817.2          2       6       1       8       3       0.346           0.1             0.016   -2.443  -5.87   Y
-	     #C      2       NO_MIM  BadgeGrp24319.2         2       4       1       1       1       0.266           0.1             0.016   -2.901  -6.552  Y
-	     #C      3       NO_MIM  BadgeGrp16902.2         2       8       1       8       4       0.086           0.1             0.016   -2.939  -7.628  Y
-	     #C      4       NO_MIM  BadgeGrp13380.3         3       8       1       8       4       0.287           0.1             0.017   -3.167  -6.753  Y
-	     #C      5       NO_MIM  BadgeGrp3279.2          2       8       1       8       5       0.349           0.1             0.016   -3.205  -6.625  Y
-	     #C      6       NO_MIM  BadgeGrp39024.3         3       8       1       8       4       0.088           0.1             0.017   -3.566  -8.237  Y
-	     #C      7       NO_MIM  BadgeGrp39023.2         2       8       1       8       4       0.081           0.1             0.016   -3.939  -8.691  Y
-	     #C      8       NO_MIM  BadgeGrp20604.2         2       6       1       8       3       0.125           0.1             0.016   -5.945  -10.284 Y
-	     ##      RANK    MIM     VID                     NUM_G   TYPE    ZYG     CSQS    PLOIDY  PHEV_GENE       PHEV_MIM        MIM_MPR vIQscr  mIQscr  INC
-	     ##------------------------------------------------------------------------------
+	     ##  RANK  MIM     VID              NUM_G  TYPE  ZYG  CSQS  PLOIDY  PHEV_GENE  PHEV_MIM  MIM_MPR  vIQscr  mIQscr  mIQcdf
+	     #C  0     113100  BadgeGrp40344.2  2      4     1    1     1       0.923      0.662     0.66     -0.907  -2.718  0.858
+	     #C  1     NO_MIM  BadgeGrp35612.2  2      4     1    1     1       0.232      0.012     0.002    -1.298  -7.197  VNF
+	     #C  2     NO_MIM  BadgeGrp20236.2  2      4     1    1     1       0.297      0.001     0.002    -1.348  -7.028  VNF
+	     #C  3     NO_MIM  BadgeGrp27188.3  3      6     1    8     3       0.234      0         0.002    -1.712  -7.614  VNF
              elsif ($line =~ s/^\#C\s+//) {
 		 my %data;
-		 @data{qw(rank mim vid num_g type zyg csqs ploidy phev_gene phev_mim mim_mpr viqscr miqscr inc)} = split /\t/, $line;
+		 @data{qw(rank mim vid num_g type zyg csqs ploidy
+			  phev_gene phev_mim mim_mpr viqscr miqscr miqcdf)} =
+		     split /\t/, $line;
 		 map {$_ =~ s/\s+$//} values %data;
 		 push @{$self->{multigenic_diagnoses}}, \%data;
              }
