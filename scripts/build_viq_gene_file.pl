@@ -14,6 +14,7 @@ my $usage = "
 Synopsis:
 
 build_viq_gene_file.pl -type mRNA,snRNA,snoRNA genes.gff3
+build_viq_gene_file.pl -type ENST genes.gff3
 
 Description:
 
@@ -29,7 +30,8 @@ Options:
 
   --type, -t [mRNA]
 
-    The transcript types that should be printed.
+    The transcript types that should be printed.  If the type is 'all'
+    then print every record with an ID matching the pattern /ENST\\d+/;
 
   --pad, -t [2000]
 
@@ -62,7 +64,10 @@ my $gff3 = Arty::GFF3->new(file => $gff3_file);
 RECORD:
 while (my $record = $gff3->next_record) {
         # Store transcripts
-        if (exists $types{$record->{type}}) {
+        if (exists $types{$record->{type}} ||
+            (exists $types{all} &&
+             $record->{attributes}{ID}[0] =~ /^ENST\d+$/)
+           ) {
 
                 my $id = $record->{attributes}{ID}[0];
                 my $parent = $record->{attributes}{Parent}[0];
