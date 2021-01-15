@@ -3,7 +3,8 @@ use strict;
 use warnings;
 use Getopt::Long;
 
-use lib "$ENV{HOME}/artemisia/lib/";
+use FindBin;
+use lib "$FindBin::RealBin/../lib";
 use Arty::CDR;
 
 #-----------------------------------------------------------------------------

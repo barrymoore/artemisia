@@ -1,0 +1,100 @@
+#Format: entrez-gene-id<tab>entrez-gene-symbol<tab>HPO-Term-Name<tab>HPO-Term-ID<tab>Frequency-Raw<tab>Frequency-HPO<tab>Additional Info from G-D source<tab>G-D source<tab>disease-ID for link
+8192	CLPP	HP:0000815	Hypergonadotropic hypogonadism	-		-	mim2gene	OMIM:614129
+8192	CLPP	HP:0001250	Seizure	-	HP:0040283	-	mim2gene	OMIM:614129
+8192	CLPP	HP:0004322	Short stature	-	HP:0040283	-	mim2gene	OMIM:614129
+8192	CLPP	HP:0000786	Primary amenorrhea	-		-	mim2gene	OMIM:614129
+8192	CLPP	HP:0008527	Congenital sensorineural hearing impairment	-		-	mim2gene	OMIM:614129
+8192	CLPP	HP:0000013	Hypoplasia of the uterus	-		-	mim2gene	OMIM:614129
+8192	CLPP	HP:0000007	Autosomal recessive inheritance	-		-	mim2gene	OMIM:614129
+8192	CLPP	HP:0000252	Microcephaly	-	HP:0040283	-	mim2gene	OMIM:614129
+2	A2M	HP:0002185	Neurofibrillary tangles	-		susceptibility	mim2gene	OMIM:104300
+2	A2M	HP:0002423	Long-tract signs	-		susceptibility	mim2gene	OMIM:104300
+2	A2M	HP:0410054	Decreased level of GABA in serum	-		susceptibility	mim2gene	OMIM:104300
+2	A2M	HP:0001300	Parkinsonism	-		susceptibility	mim2gene	OMIM:104300
+2	A2M	HP:0002511	Alzheimer disease	-		susceptibility	mim2gene	OMIM:104300
+2	A2M	HP:0000006	Autosomal dominant inheritance	-		susceptibility	mim2gene	OMIM:104300
+2	A2M	HP:0000726	Dementia	-		susceptibility	mim2gene	OMIM:104300
+2	A2M	HP:0001425	Heterogeneous	-		susceptibility	mim2gene	OMIM:104300
+8195	MKKS	HP:0001508	Failure to thrive	null			orphadata	ORPHA:2473
+8195	MKKS	HP:0012227	Urethral stricture	null			orphadata	ORPHA:2473
+8195	MKKS	HP:0001156	Brachydactyly	null			orphadata	ORPHA:2473
+8195	MKKS	HP:0000003	Multicystic kidney dysplasia	null			orphadata	ORPHA:2473
+8195	MKKS	HP:0001162	Postaxial hand polydactyly	null			orphadata	ORPHA:2473
+8195	MKKS	HP:0001643	Patent ductus arteriosus	null			orphadata	ORPHA:2473
+8195	MKKS	HP:0000807	Glandular hypospadias	null			orphadata	ORPHA:2473
+8195	MKKS	HP:0004397	Ectopic anus	null			orphadata	ORPHA:2473
+8195	MKKS	HP:0030010	Hydrometrocolpos	null			orphadata	ORPHA:2473
+8195	MKKS	HP:0001629	Ventricular septal defect	null			orphadata	ORPHA:2473
+8195	MKKS	HP:0004383	Hypoplastic left heart	null			orphadata	ORPHA:2473
+8195	MKKS	HP:0001249	Intellectual disability	null			orphadata	ORPHA:2473
+8195	MKKS	HP:0001263	Global developmental delay	null			orphadata	ORPHA:2473
+8195	MKKS	HP:0001830	Postaxial foot polydactyly	null			orphadata	ORPHA:2473
+8195	MKKS	HP:0000175	Cleft palate	null			orphadata	ORPHA:2473
+8195	MKKS	HP:0000218	High palate	null			orphadata	ORPHA:2473
+8195	MKKS	HP:0001636	Tetralogy of Fallot	null			orphadata	ORPHA:2473
+8195	MKKS	HP:0100779	Urogenital sinus anomaly	null			orphadata	ORPHA:2473
+8195	MKKS	HP:0008368	Tarsal synostosis	null			orphadata	ORPHA:2473
+8195	MKKS	HP:0004322	Short stature	null			orphadata	ORPHA:2473
+8195	MKKS	HP:0002023	Anal atresia	null			orphadata	ORPHA:2473
+8195	MKKS	HP:0001163	Abnormality of the metacarpal bones	null			orphadata	ORPHA:2473
+8195	MKKS	HP:0002251	Aganglionic megacolon	null			orphadata	ORPHA:2473
+8195	MKKS	HP:0000126	Hydronephrosis	null			orphadata	ORPHA:2473
+8195	MKKS	HP:0000028	Cryptorchidism	null			orphadata	ORPHA:2473
+8195	MKKS	HP:0006101	Finger syndactyly	null			orphadata	ORPHA:2473
+8195	MKKS	HP:0001631	Atrial septal defect	null			orphadata	ORPHA:2473
+8195	MKKS	HP:0008678	Renal hypoplasia/aplasia	null			orphadata	ORPHA:2473
+8195	MKKS	HP:0000148	Vaginal atresia	-		-	mim2gene	OMIM:236700
+8195	MKKS	HP:0001586	Vesicovaginal fistula	-		-	mim2gene	OMIM:236700
+8195	MKKS	HP:0000028	Cryptorchidism	-		-	mim2gene	OMIM:236700
+8195	MKKS	HP:0000143	Rectovaginal fistula	-		-	mim2gene	OMIM:236700
+8195	MKKS	HP:0001162	Postaxial hand polydactyly	-		-	mim2gene	OMIM:236700
+8195	MKKS	HP:0000072	Hydroureter	-		-	mim2gene	OMIM:236700
+8195	MKKS	HP:0010741	Pedal edema	-		-	mim2gene	OMIM:236700
+8195	MKKS	HP:0002089	Pulmonary hypoplasia	-		-	mim2gene	OMIM:236700
+8195	MKKS	HP:0030680	Abnormality of cardiovascular system morphology	-		-	mim2gene	OMIM:236700
+8195	MKKS	HP:0000145	Transverse vaginal septum	-		-	mim2gene	OMIM:236700
+8195	MKKS	HP:0000969	Edema	-		-	mim2gene	OMIM:236700
+8195	MKKS	HP:0001159	Syndactyly	-		-	mim2gene	OMIM:236700
+8195	MKKS	HP:0000007	Autosomal recessive inheritance	-		-	mim2gene	OMIM:236700
+8195	MKKS	HP:0000126	Hydronephrosis	-		-	mim2gene	OMIM:236700
+8195	MKKS	HP:0002251	Aganglionic megacolon	-		-	mim2gene	OMIM:236700
+8195	MKKS	HP:0002023	Anal atresia	-		-	mim2gene	OMIM:236700
+8195	MKKS	HP:0001374	Congenital hip dislocation	-		-	mim2gene	OMIM:236700
+8195	MKKS	HP:0000113	Polycystic kidney dysplasia	-		-	mim2gene	OMIM:236700
+8195	MKKS	HP:0006159	Mesoaxial hand polydactyly	-		-	mim2gene	OMIM:236700
+8195	MKKS	HP:0030010	Hydrometrocolpos	-		-	mim2gene	OMIM:236700
+8195	MKKS	HP:0003202	Skeletal muscle atrophy	null			orphadata	ORPHA:110
+8195	MKKS	HP:0000135	Hypogonadism	null			orphadata	ORPHA:110
+8195	MKKS	HP:0000580	Pigmentary retinopathy	null			orphadata	ORPHA:110
+8195	MKKS	HP:0000494	Downslanted palpebral fissures	null			orphadata	ORPHA:110
+8195	MKKS	HP:0000100	Nephrotic syndrome	null			orphadata	ORPHA:110
+8195	MKKS	HP:0002167	Neurological speech impairment	null			orphadata	ORPHA:110
+8195	MKKS	HP:0008736	Hypoplasia of penis	null			orphadata	ORPHA:110
+8195	MKKS	HP:0001162	Postaxial hand polydactyly	null			orphadata	ORPHA:110
+8195	MKKS	HP:0000639	Nystagmus	null			orphadata	ORPHA:110
+8195	MKKS	HP:0006101	Finger syndactyly	null			orphadata	ORPHA:110
+8195	MKKS	HP:0000365	Hearing impairment	null			orphadata	ORPHA:110
+8195	MKKS	HP:0000470	Short neck	null			orphadata	ORPHA:110
+8195	MKKS	HP:0000822	Hypertension	null			orphadata	ORPHA:110
+8195	MKKS	HP:0000426	Prominent nasal bridge	null			orphadata	ORPHA:110
+8195	MKKS	HP:0001395	Hepatic fibrosis	null			orphadata	ORPHA:110
+8195	MKKS	HP:0000028	Cryptorchidism	null			orphadata	ORPHA:110
+8195	MKKS	HP:0000368	Low-set, posteriorly rotated ears	null			orphadata	ORPHA:110
+8195	MKKS	HP:0010747	Medial flaring of the eyebrow	null			orphadata	ORPHA:110
+8195	MKKS	HP:0008724	Hypoplasia of the ovary	null			orphadata	ORPHA:110
+8195	MKKS	HP:0001249	Intellectual disability	null			orphadata	ORPHA:110
+8195	MKKS	HP:0001513	Obesity	null			orphadata	ORPHA:110
+8195	MKKS	HP:0004322	Short stature	null			orphadata	ORPHA:110
+8195	MKKS	HP:0000512	Abnormal electroretinogram	null			orphadata	ORPHA:110
+8195	MKKS	HP:0000003	Multicystic kidney dysplasia	null			orphadata	ORPHA:110
+8195	MKKS	HP:0002230	Generalized hirsutism	null			orphadata	ORPHA:110
+8195	MKKS	HP:0000510	Rod-cone dystrophy	-		-	mim2gene	OMIM:605231
+8195	MKKS	HP:0010442	Polydactyly	-		-	mim2gene	OMIM:605231
+8195	MKKS	HP:0000047	Hypospadias	-		-	mim2gene	OMIM:605231
+8195	MKKS	HP:0001159	Syndactyly	-		-	mim2gene	OMIM:605231
+8195	MKKS	HP:0000107	Renal cyst	-		-	mim2gene	OMIM:605231
+8195	MKKS	HP:0000007	Autosomal recessive inheritance	-		-	mim2gene	OMIM:605231
+8195	MKKS	HP:0001513	Obesity	-		-	mim2gene	OMIM:605231
+8195	MKKS	HP:0000819	Diabetes mellitus	-		-	mim2gene	OMIM:605231
+8195	MKKS	HP:0001249	Intellectual disability	-		-	mim2gene	OMIM:605231
+8195	MKKS	HP:0003241	External genital hypoplasia	-		-	mim2gene	OMIM:605231

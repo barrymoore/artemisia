@@ -1,4 +1,4 @@
-package Arty::PED;
+package Arty::HPO_Genes2Phenotypes;
 
 use strict;
 use warnings;
@@ -10,16 +10,16 @@ use Arty::Utils qw(:all);
 
 =head1 NAME
 
-Arty::PED - Parse PED files
+Arty::HPO_Genes2Phenotypes - Parse HPO_Genes2Phenotypes files
 
 =head1 VERSION
 
-This document describes Arty::PED version 0.0.1
+This document describes Arty::HPO_Genes2Phenotypes version 0.0.1
 
 =head1 SYNOPSIS
 
-    use Arty::PED;
-    my $ped = Arty::PED->new('pedigree.ped');
+    use Arty::HPO_Genes2Phenotypes;
+    my $tsv = Arty::HPO_Genes2Phenotypes->new('data.tsv');
 
     while (my $record = $parser->next_record) {
 	print $record->{gene} . "\n";
@@ -27,38 +27,39 @@ This document describes Arty::PED version 0.0.1
 
 =head1 DESCRIPTION
 
-L<Arty::PED> provides pedigree (PED) file parsing ability for the
-Artemisia suite of genomics tools.  The format supported is L<PED
-format|http://zzz.bwh.harvard.edu/plink/data.shtml#ped> from the PLINK
-tool with the following columns:
+L<Arty::HPO_Genes2Phenotypes> provides HPO_Genes2Phenotypes (tab-separated values) parsing ability for
+the Artemisia suite of genomics tools.  This file can be found here:
 
- * Family ID
- * Individual ID
- * Paternal ID
- * Maternal ID
- * Sex (1=male; 2=female; 0|9=unknown)
- * Phenotype (1=unaffected; 2=affected; 0|9=unknown)
+https://hpo.jax.org/app/download/annotation
 
-Lines begining with '#' are treated as headers and ignored.  The
-sematic content of headers are not considered.
+This file is tab-delimited with the following columns.  The data
+structure returned by this object is a hash and the keys for that hash
+for each column are shown in parentheses:
 
-Additional columns are allowed and will simply be stored in an array
-as $record->{data}.
+entrez-gene-id (gene_id)
+entrez-gene-symbol (gene_symbol)
+HPO-Term-Name (hpo_name)
+HPO-Term-ID (hpo_id)
+Frequency-Raw (freq_raw)
+Frequency-HPO (freq_hpo)
+Additional Info from G-D source (gd_info)
+G-D source (gd_source)
+disease-ID for link (disease_id)
 
 =head1 CONSTRUCTOR
 
-New L<Arty::PED> objects are created by the class method new.
+New L<Arty::HPO_Genes2Phenotypes> objects are created by the class method new.
 Arguments should be passed to the constructor as a list (or reference)
 of key value pairs.  If the argument list has only a single argument,
 then this argument is applied to the 'file' attribute and thus
-specifies the PED filename.  All attributes of the L<Arty::PED>
+specifies the HPO_Genes2Phenotypes filename.  All attributes of the L<Arty::HPO_Genes2Phenotypes>
 object can be set in the call to new. An simple example of object
 creation would look like this:
 
-    my $parser = Arty::PED->new('pedigree.ped');
+    my $parser = Arty::HPO_Genes2Phenotypes->new('genes_to_phenotype.txt');
 
     # This is the same as above
-    my $parser = Arty::PED->new('file' => 'pedigree.ped');
+    my $parser = Arty::HPO_Genes2Phenotypes->new('file' => 'genes_to_phenotype.txt');
 
 
 The constructor recognizes the following parameters which will set the
@@ -66,7 +67,7 @@ appropriate attributes:
 
 =over
 
-=item * C<< file => pedigree.ped >>
+=item * C<< file => data.tsv >>
 
 This optional parameter provides the filename for the file containing
 the data to be parsed. While this parameter is optional either it, or
@@ -89,9 +90,9 @@ must be set.
 =head2 new
 
      Title   : new
-     Usage   : Arty::PED->new();
-     Function: Creates a Arty::PED object;
-     Returns : An Arty::PED object
+     Usage   : Arty::HPO_Genes2Phenotypes->new();
+     Function: Creates a Arty::HPO_Genes2Phenotypes object;
+     Returns : An Arty::HPO_Genes2Phenotypes object
      Args    :
 
 =cut
@@ -114,7 +115,9 @@ sub new {
  Title   : _initialize_args
  Usage   : $self->_initialize_args($args);
  Function: Initialize the arguments passed to the constructor.  In particular
-           set all attributes passed.
+           set all attributes passed.  For most classes you will just need to
+           customize the @valid_attributes array within this method as you add
+           Get/Set methods for each attribute.
  Returns : N/A
  Args    : A hash or array reference of arguments.
 
@@ -152,22 +155,14 @@ sub _initialize_args {
  sub _process_header {
      my $self = shift @_;
 
-     my $fh = $self->fh;
-
    LINE:
      while (my $line = $self->readline) {
-         return undef if ! defined $line;
-
          if ($line =~ /^\#/) {
              chomp $line;
              push @{$self->{header}}, $line;
          }
-	 elsif ($line =~ /^kindred/i) {
-             chomp $line;
-             push @{$self->{header}}, $line;
-         }
          else {
-             $self->_push_stack($line);
+	     $self->_push_stack($line);
              last LINE;
          }
      }
@@ -181,7 +176,7 @@ sub _initialize_args {
 
 =cut
 
-# =head2 attribute
+#  =head2 attribute
 # 
 #   Title   : attribute
 #   Usage   : $attribute = $self->attribute($attribute_value);
@@ -189,7 +184,7 @@ sub _initialize_args {
 #   Returns : An attribute value
 #   Args    : An attribute value
 # 
-# =cut
+#  =cut
 # 
 #  sub attribute {
 #    my ($self, $attribute_value) = @_;
@@ -211,21 +206,21 @@ sub _initialize_args {
 
  Title   : next_record
  Usage   : $record = $vcf->next_record();
- Function: Return the next record from the PED file.
- Returns : A hash (or reference) of PED record data.
+ Function: Return the next record from the HPO_Genes2Phenotypes file.
+ Returns : A hash (or reference) of HPO_Genes2Phenotypes record data.
  Args    : N/A
 
 =cut
 
 sub next_record {
-        my $self = shift @_;
+    my $self = shift @_;
 
-        my $line = $self->readline;
-        return undef if ! defined $line;
+    my $line = $self->readline;
+    return undef if ! defined $line;
 
-	my $record = $self->parse_record($line);
-
-        return wantarray ? %{$record} : $record;
+    my $record = $self->parse_record($line);
+    
+    return wantarray ? %{$record} : $record;
 }
 
 #-----------------------------------------------------------------------------
@@ -233,36 +228,41 @@ sub next_record {
 =head2 parse_record
 
  Title   : parse_record
- Usage   : $record = $vcf->parse_record();
- Function: Parse PED line into a data structure.
- Returns : A hash (or reference) of PED record data.
- Args    : A scalar containing a string of PED record text.
+ Usage   : $record = $tempalte->parse_record($line);
+ Function: Parse HPO_Genes2Phenotypes line into a data structure.
+ Returns : A hash (or reference) of HPO_Genes2Phenotypes record data.
+ Args    : A scalar containing a string of Tempalte record text.
 
 =cut
 
 sub parse_record {
-        my ($self, $line) = @_;
-        chomp $line;
+    my ($self, $line) = @_;
+    chomp $line;
+    
+    my %record;
 
-        my @cols = split /\s+/, $line;
-
-	my %record;
-
-        @record{qw(kindred sample father mother sex phenotype)} = splice(@cols, 0, 6);
-	$record{data} = \@cols if scalar @cols;
-
-	return wantarray ? %record : \%record;
+    @record{qw(gene_id        
+	       gene_symbol
+	       hpo_name
+	       hpo_id
+	       freq_raw
+	       freq_hpo
+	       gd_info
+	       gd_source
+	       disease_id)} = split /\t/, $line;
+    
+    return wantarray ? %record : \%record;
 }
 
 #-----------------------------------------------------------------------------
 
 =head1 DIAGNOSTICS
 
-L<Arty::PED> does not throw any warnings or errors.
+L<Arty::HPO_Genes2Phenotypes> does not throw any warnings or errors.
 
 =head1 CONFIGURATION AND ENVIRONMENT
 
-L<Arty::PED> requires no configuration files or environment variables.
+L<Arty::HPO_Genes2Phenotypes> requires no configuration files or environment variables.
 
 =head1 DEPENDENCIES
 

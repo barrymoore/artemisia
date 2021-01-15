@@ -1,4 +1,4 @@
-package Arty::PED;
+package Arty::Exomiser_Genes;
 
 use strict;
 use warnings;
@@ -10,16 +10,16 @@ use Arty::Utils qw(:all);
 
 =head1 NAME
 
-Arty::PED - Parse PED files
+Arty::Exomiser_Genes - Parse Exomiser Genes TSV files
 
 =head1 VERSION
 
-This document describes Arty::PED version 0.0.1
+This document describes Arty::Exomiser_Genes version 0.0.1
 
 =head1 SYNOPSIS
 
-    use Arty::PED;
-    my $ped = Arty::PED->new('pedigree.ped');
+    use Arty::Exomiser_Genes;
+    my $parser = Arty::Exomiser_Genes->new('data.txt');
 
     while (my $record = $parser->next_record) {
 	print $record->{gene} . "\n";
@@ -27,38 +27,23 @@ This document describes Arty::PED version 0.0.1
 
 =head1 DESCRIPTION
 
-L<Arty::PED> provides pedigree (PED) file parsing ability for the
-Artemisia suite of genomics tools.  The format supported is L<PED
-format|http://zzz.bwh.harvard.edu/plink/data.shtml#ped> from the PLINK
-tool with the following columns:
-
- * Family ID
- * Individual ID
- * Paternal ID
- * Maternal ID
- * Sex (1=male; 2=female; 0|9=unknown)
- * Phenotype (1=unaffected; 2=affected; 0|9=unknown)
-
-Lines begining with '#' are treated as headers and ignored.  The
-sematic content of headers are not considered.
-
-Additional columns are allowed and will simply be stored in an array
-as $record->{data}.
+L<Arty::Exomiser_Genes> provides Exomiser Genes TSV file parsing
+ability for the Artemisia suite of genomics tools.
 
 =head1 CONSTRUCTOR
 
-New L<Arty::PED> objects are created by the class method new.
-Arguments should be passed to the constructor as a list (or reference)
-of key value pairs.  If the argument list has only a single argument,
-then this argument is applied to the 'file' attribute and thus
-specifies the PED filename.  All attributes of the L<Arty::PED>
-object can be set in the call to new. An simple example of object
-creation would look like this:
+New L<Arty::Exomiser_Genes> objects are created by the class method
+new.  Arguments should be passed to the constructor as a list (or
+reference) of key value pairs.  If the argument list has only a single
+argument, then this argument is applied to the 'file' attribute and
+thus specifies the Exomiser Genes TSV filename.  All attributes of the
+L<Arty::Exomiser_Genes> object can be set in the call to new. An
+simple example of object creation would look like this:
 
-    my $parser = Arty::PED->new('pedigree.ped');
+    my $parser = Arty::Exomiser_Genes->new('exomiser_AD.genes.tsv');
 
     # This is the same as above
-    my $parser = Arty::PED->new('file' => 'pedigree.ped');
+    my $parser = Arty::Exomiser_Genes->new('file' => 'exomiser_AD.genes.tsv');
 
 
 The constructor recognizes the following parameters which will set the
@@ -66,7 +51,7 @@ appropriate attributes:
 
 =over
 
-=item * C<< file => pedigree.ped >>
+=item * C<< file => exomiser_AD.genes.tsv >>
 
 This optional parameter provides the filename for the file containing
 the data to be parsed. While this parameter is optional either it, or
@@ -89,9 +74,9 @@ must be set.
 =head2 new
 
      Title   : new
-     Usage   : Arty::PED->new();
-     Function: Creates a Arty::PED object;
-     Returns : An Arty::PED object
+     Usage   : Arty::Exomiser_Genes->new();
+     Function: Creates a Arty::Exomiser_Genes object;
+     Returns : An Arty::Exomiser_Genes object
      Args    :
 
 =cut
@@ -114,7 +99,9 @@ sub new {
  Title   : _initialize_args
  Usage   : $self->_initialize_args($args);
  Function: Initialize the arguments passed to the constructor.  In particular
-           set all attributes passed.
+           set all attributes passed.  For most classes you will just need to
+           customize the @valid_attributes array within this method as you add
+           Get/Set methods for each attribute.
  Returns : N/A
  Args    : A hash or array reference of arguments.
 
@@ -143,7 +130,7 @@ sub _initialize_args {
 
   Title   : _process_header
   Usage   : $self->_process_header
-  Function: Parse and store header data
+  Function: Parse and store header lines
   Returns : N/A
   Args    : N/A
 
@@ -153,6 +140,7 @@ sub _initialize_args {
      my $self = shift @_;
 
      my $fh = $self->fh;
+     $self->{header} ||= [];
 
    LINE:
      while (my $line = $self->readline) {
@@ -160,11 +148,10 @@ sub _initialize_args {
 
          if ($line =~ /^\#/) {
              chomp $line;
-             push @{$self->{header}}, $line;
-         }
-	 elsif ($line =~ /^kindred/i) {
-             chomp $line;
-             push @{$self->{header}}, $line;
+	     $line =~ s/^\#//;
+             $self->{header} = $line;
+	     @{$self->{cols}} = split /\t/, $self->{header};
+	     map {$_ = lc $_} @{$self->{cols}};
          }
          else {
              $self->_push_stack($line);
@@ -210,22 +197,22 @@ sub _initialize_args {
 =head2 next_record
 
  Title   : next_record
- Usage   : $record = $vcf->next_record();
- Function: Return the next record from the PED file.
- Returns : A hash (or reference) of PED record data.
+ Usage   : $record = $parser->next_record();
+ Function: Return the next record from the Exomiser_Genes file.
+ Returns : A hash (or reference) of Exomiser_Genes record data.
  Args    : N/A
 
 =cut
 
 sub next_record {
-        my $self = shift @_;
+ my $self = shift @_;
 
-        my $line = $self->readline;
-        return undef if ! defined $line;
+ my $line = $self->readline;
+ return undef if ! defined $line;
 
-	my $record = $self->parse_record($line);
+ my $record = $self->parse_record($line);
 
-        return wantarray ? %{$record} : $record;
+ return wantarray ? %{$record} : $record;
 }
 
 #-----------------------------------------------------------------------------
@@ -233,36 +220,53 @@ sub next_record {
 =head2 parse_record
 
  Title   : parse_record
- Usage   : $record = $vcf->parse_record();
- Function: Parse PED line into a data structure.
- Returns : A hash (or reference) of PED record data.
- Args    : A scalar containing a string of PED record text.
+ Usage   : $record = $parser->parse_record($line);
+ Function: Parse Exomiser_Genes line into a data structure.
+ Returns : A hash (or reference) of Exomiser_Genes record data.
+ Args    : A scalar containing a string of Tempalte record text.
 
 =cut
 
 sub parse_record {
-        my ($self, $line) = @_;
-        chomp $line;
+    my ($self, $line) = @_;
+    chomp $line;
 
-        my @cols = split /\s+/, $line;
+    my @cols = split /\t/, $line;
 
-	my %record;
+    my %record;
 
-        @record{qw(kindred sample father mother sex phenotype)} = splice(@cols, 0, 6);
-	$record{data} = \@cols if scalar @cols;
+    @record{@{$self->{cols}}} = @cols;
 
-	return wantarray ? %record : \%record;
+    return wantarray ? %record : \%record;
+}
+
+#-----------------------------------------------------------------------------
+
+=head2 get_header
+
+ Title   : get_header
+ Usage   : @header = $parser->get_header();
+ Function: Get the Exomiser_Genes header lines as a list.
+ Returns : An array (or reference) of Exomiser_Genes header lines.
+ Args    : N/A
+
+=cut
+
+sub get_header {
+ my $self = shift @_;
+
+ return $self->{header};
 }
 
 #-----------------------------------------------------------------------------
 
 =head1 DIAGNOSTICS
 
-L<Arty::PED> does not throw any warnings or errors.
+L<Arty::Exomiser_Genes> does not throw any warnings or errors.
 
 =head1 CONFIGURATION AND ENVIRONMENT
 
-L<Arty::PED> requires no configuration files or environment variables.
+L<Arty::Exomiser_Genes> requires no configuration files or environment variables.
 
 =head1 DEPENDENCIES
 

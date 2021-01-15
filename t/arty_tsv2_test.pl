@@ -5,7 +5,7 @@ use Getopt::Long;
 
 use FindBin;
 use lib "$FindBin::RealBin/../lib";
-use Arty::BED;
+use Arty::TSV;
 
 #-----------------------------------------------------------------------------
 #----------------------------------- MAIN ------------------------------------
@@ -14,11 +14,11 @@ my $usage = "
 
 Synopsis:
 
-arty_bed_test.pl data/cds.bed
+arty_tsv_test.pl data/tsv.txt
 
 Description:
 
-Test script for developing Arty::BED.pm
+Test script for developing Arty::TSV.pm
 
 ";
 
@@ -32,14 +32,18 @@ die $usage if $help || ! $opt_success;
 my $file = shift;
 die $usage unless $file;
 
-my $bed = Arty::BED->new(file => $file)->all_records;
+my $tsv = Arty::TSV->new(file       => $file,
+			 has_header => 1,
+			 as_hash    => 1,
+    );
 
-for my $record (@{$bed}) {
-    print join "\t", @{$record}{qw(chrom start end)};
+my @cols = $tsv->cols;
+while (my $record = $tsv->next_record) {
+    print join "\t", @{$record}{@cols};
     print "\n";
 }
 
-# while (my $record = $bed->next_record) {
+# while (my $record = $tsv->next_record) {
 # 
 #     print join "\t", @{$record}{qw(chrom start end)};
 #     print "\n";
