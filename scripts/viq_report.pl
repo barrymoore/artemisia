@@ -197,7 +197,6 @@ for my $viq_file (@viq_files) {
                 $record->{clinvar} = (exists $clinvar_map{$record->{clinvar}} ?
                                       $clinvar_map{$record->{clinvar}}
                                       : $record->{clinvar});
-                # $record->{clinvar} .= '*' if $clinvar_incdt;
 
                 next RECORD if $record->{viqscr} < $min_score;
 		next RECORD if $max_rank > 0 && $record->{rank} > $max_rank;
@@ -222,7 +221,6 @@ for my $viq_file (@viq_files) {
                 }
 
                 print join "\t", $viq_file, @print_data;
->>>>>>> 54a3377c0f15067c10f6abe2b5fe7fe6870e14bb
 
                 print "\n";
                 print '';
