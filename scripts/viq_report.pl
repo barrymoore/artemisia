@@ -18,124 +18,52 @@ viq_report.pl viq_output.txt
 
 Description:
 
-A script to produce a report of vIQ output that has key fields human
-consumption in a tab-delimited format.
-
+A script to produce various types of reports of vIQ output.
 
 Options:
 
-  --ped, -p
+  --format, -f
 
-    Peidgree file of family. Optional. Not yet implimented.
+    The following arguments define which type of report is generated: 
+
+      tsv: currently the default and only format.
+
+The remaining arguments instruct viq_report.pl to not parse rows with
+various cut-offs:
 
   --min_score, -m [0]
 
-    Minimum vIQ score to print.
+    Minimum vIQ score to print.  Default is 0, don't skip any rows.
+
+  --max_rank, -r [-1]
+
+    Maximum rank of genes to include.  A value <= 0 indicates no
+    max_rank.  Default is -1 - don't skip any rows.
 
   --skip_incdt, -s
 
-    Skip indendental findings.  Default is false.
-
-
+    Skip indendental findings.  Default is false - don't skip
+    incendental rows.
 
 ";
 
-my ($help, $ped_file, $min_score, $skip_incdt);
+my ($help, $format, $min_score, $skip_incdt, $max_rank);
 
 my $opt_success = GetOptions('help'            => \$help,
+			     'format'          => \$format,
                              'min_score|m=s'   => \$min_score,
+			     'max_rank|r=i'    => \$max_rank,
                              'skip_incdt|s'    => \$skip_incdt,
-                             'ped|p=s'         => \$ped_file,
     );
 
 die $usage if $help || ! $opt_success;
 
-$min_score = 0 unless defined $min_score;
+$min_score = 0  unless defined $min_score;
+$max_rank  = -1 unless defined $max_rank;
 
 my @viq_files = @ARGV;
 
 die "$usage\n\nFATAL : missing_viq_file(s)\n" unless @viq_files;
-
-# my %ped_data;
-# my $ped = Arty::PED->new(file => $ped_file);
-#
-# while (my $record = $ped->next_record) {
-#     print '';
-#     my $kindred = $record->{kindred};
-#     my $sample  = $record->{sample};
-#     my $father  = $record->{father};
-#     my $mother  = $record->{mother};
-#     my $sex     = $record->{sex};
-#     my $pheno   = $record->{phenotype};
-#     # $ped_data{graph}{$kindred}{$sample}{father} = $father if $father;
-#     # $ped_data{graph}{$kindred}{$sample}{mother} = $mother if $mother;
-#     # $ped_data{data}{$kindred}{$sample} = $record;
-#
-#     if ($ped_data{$kindred}{samples}{$sample}++ > 1) {
-#         print STDERR "WARN : sample_id_seen_before_in_family : $kindred $sample\n";
-#     }
-#     if ($record->{father} ne '0') {
-#         $ped_data{$kindred}{father} = $father;
-#         $ped_data{$kindred}{children}{$sample}++;
-#     }
-#     if ($record->{mother} ne '0') {
-#         $ped_data{$kindred}{mother} = $mother;
-#         $ped_data{$kindred}{children}{$sample}++;
-#     }
-#
-#     if ($record->{phenotype} eq '2') {
-#         $ped_data{$kindred}{affected}{$sample}++;
-#         $ped_data{$kindred}{affected_count}++
-#     }
-#     elsif ($record->{phenotype} eq '1') {
-#         $ped_data{$kindred}{unaffected}{$sample}++;
-#         $ped_data{$kindred}{unaffected_count}++
-#     }
-#     $ped_data{$kindred}{samples}{$sample} = $record;
-#     print '';
-# }
-#
-# my %ped_summary;
-# for my $kindred (keys %ped_data) {
-#     my $fam = $ped_data{$kindred};
-#     my $father = $fam->{father};
-#     my $mother = $fam->{mother};
-#     my $samples = $fam->{samples};
-#
-#     my @member_types;
-#     my $child_count = 0;
-#   SAMPLE:
-#     for my $sample (sort {$fam->{samples}{$b}{phenotype} <=> $fam->{samples}{$a}{phenotype}} keys %{$samples}) {
-#         # Skip the parents here and process them separately below
-#         next SAMPLE if exists $fam->{father} && $fam->{father} eq $sample;
-#         next SAMPLE if exists $fam->{mother} && $fam->{mother} eq $sample;
-#         my $child_type = ++$child_count > 1 ? 'S' : 'P';
-#         push @member_types, ($fam->{samples}{$sample}{phenotype} == 2 ? "${child_type}2" :
-#                              $fam->{samples}{$sample}{phenotype} == 1 ? '${child_type}1' :
-#                              '${child_type}0');
-#   }
-#     if (exists $fam->{father}) {
-#         push @member_types, ($fam->{samples}{$fam->{father}}{phenotype} == 2 ? 'F2' :
-#                              $fam->{samples}{$fam->{father}}{phenotype} == 1 ? 'F1' :
-#                              'F0');
-#   }
-#     else {
-#         push @member_types, 'F-';
-#   }
-#
-#     if (exists $fam->{mother}) {
-#         push @member_types, ($fam->{samples}{$fam->{mother}}{phenotype} == 2 ? 'M2' :
-#                              $fam->{samples}{$fam->{mother}}{phenotype} == 1 ? 'M1' :
-#                              'M0');
-#   }
-#     else {
-#         push @member_types, 'M-';
-#   }
-#
-#
-#     $ped_summary{$kindred} = join ':', @member_types;
-# }
-# print '';
 
 my %csq_map = (
                0  => 'sequence_variant',
@@ -185,6 +113,8 @@ my %clinvar_map =  (0    => 'benign_het',
                     5    => 'likely_pathogenic_hom',
                     6    => 'pathogenic_het',
                     7    => 'pathogenic_hom',
+		    8    => 'drug_het',
+		    9    => 'drug_hom',
                     null => 'unknown',
                    );
 
@@ -201,7 +131,7 @@ my %type_map = (1 => 'SNV',
 
 my @headers = qw(kindred rank chr gene vid csq denovo type zygo pldy
                  sites par length gqs viqscr phev_k vvp_svp vaast
-                 g_tag p_mod clinvar var_qual);
+                 g_tag p_mod clinvar incndtl var_qual);
 
 print join "\t", @headers;
 print "\n";
@@ -228,8 +158,8 @@ for my $viq_file (@viq_files) {
                                    $type_map{$record->{type}}        :
                                    $record->{type});
 
-                # Remove whitespace from ploidy
-                $record->{pldy} =~ s/\s+/,/g;
+                # Extract numeric value from ploidy
+                $record->{pldy} =~ s/^(\d+).*/$1/g;
 
                 # Remove whitespace from vid
                 $record->{vid} =~ s/\s+/-/g;
@@ -237,21 +167,31 @@ for my $viq_file (@viq_files) {
                 # my $var_qual_txt = join ":", $ad_txt, $record->{var_qual}{bayesf}, $record->{var_qual}{prob};
                 $record->{var_qual} =~ s/\s+/,/g;
 
-                my $clinvar_incdt = $record->{clinvar} =~ s/(\*)$//;
+                ($record->{clinvar_incdt}) = $record->{clinvar} =~ s/([g|p])$//;
+		$record->{clinvar_incdt} ||= 'none';
                 $record->{clinvar} = (exists $clinvar_map{$record->{clinvar}} ?
                                       $clinvar_map{$record->{clinvar}}
                                       : $record->{clinvar});
-                $record->{clinvar} .= '*' if $clinvar_incdt;
+                # $record->{clinvar} .= '*' if $clinvar_incdt;
 
                 next RECORD if $record->{viqscr} < $min_score;
-                next RECORD if $skip_incdt && $clinvar_incdt;
+		next RECORD if $max_rank > 0 && $record->{rank} > $max_rank;
+                next RECORD if $skip_incdt && $record->{clinvar_incdt};
 
-                print join "\t", $viq_file, @{$record}{qw(rank chr gene vid csq
-                                                          denovo type zygo pldy
-                                                          sites par length gqs
-                                                          viqscr phev_k vvp_svp
-                                                          vaast g_tag p_mod
-                                                          clinvar var_qual)};
+                print join "\t", $viq_file, @{$record}{qw(rank chr
+                                                          gene vid csq
+                                                          denovo type
+                                                          zygo pldy
+                                                          sites par
+                                                          length gqs
+                                                          viqscr
+                                                          phev_k
+                                                          vvp_svp
+                                                          vaast g_tag
+                                                          p_mod
+                                                          clinvar
+                                                          clinvar_incdt
+                                                          var_qual)};
 
                 print "\n";
                 print '';
