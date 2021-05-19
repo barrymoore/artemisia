@@ -45,15 +45,21 @@ various cut-offs:
     Skip indendental findings.  Default is false - don't skip
     incendental rows.
 
+  --add_miq, -d
+
+    Add columns for mQIscr, MIM and disease name for best hit from Mendelian Diagnosis section for
+    each gene.
+
 ";
 
-my ($help, $format, $min_score, $skip_incdt, $max_rank);
+my ($help, $min_score, $skip_incdt, $add_miq);
 
 my $opt_success = GetOptions('help'            => \$help,
 			     'format'          => \$format,
                              'min_score|m=s'   => \$min_score,
 			     'max_rank|r=i'    => \$max_rank,
                              'skip_incdt|s'    => \$skip_incdt,
+                             'add_miq|d'       => \$add_miq,
     );
 
 die $usage if $help || ! $opt_success;
@@ -133,6 +139,10 @@ my @headers = qw(kindred rank chr gene vid csq denovo type zygo pldy
                  sites par length gqs viqscr phev_k vvp_svp vaast
                  g_tag p_mod clinvar incndtl var_qual);
 
+if ($add_miq) {
+        push @headers, qw(miqscr mim disease);
+}
+
 print join "\t", @headers;
 print "\n";
 
@@ -141,6 +151,20 @@ for my $viq_file (@viq_files) {
         my $viq = Arty::vIQ->new(file => $viq_file);
 
         # print "## $viq_file\n";
+
+        my %miq_data;
+        if ($add_miq) {
+                my %seen_miq;
+              MIQ:
+                for my $miq_record (sort {($b->{viqscr} <=>
+                                           $a->{viqscr})}
+                                    @{$viq->{mendelian_diagnoses}}) {
+                        my $gene = $miq_record->{gene};
+                        next MIQ if $seen_miq{$gene}++;
+                        @{$miq_data{$gene}}{qw(miqscr mim disease)} = 
+                          @{$miq_record}{qw(miqscr mim disease)};
+                }
+        }
 
       RECORD:
         while (my $record = $viq->next_record) {
@@ -161,6 +185,7 @@ for my $viq_file (@viq_files) {
                 # Extract numeric value from ploidy
                 $record->{pldy} =~ s/^(\d+).*/$1/g;
 
+
                 # Remove whitespace from vid
                 $record->{vid} =~ s/\s+/-/g;
                 # my $ad_txt = join '\,', @{$record->{var_qual}{ad}};
@@ -176,22 +201,28 @@ for my $viq_file (@viq_files) {
 
                 next RECORD if $record->{viqscr} < $min_score;
 		next RECORD if $max_rank > 0 && $record->{rank} > $max_rank;
-                next RECORD if $skip_incdt && $record->{clinvar_incdt};
+                next RECORD if $skip_incdt && $clinvar_incdt;
 
-                print join "\t", $viq_file, @{$record}{qw(rank chr
-                                                          gene vid csq
-                                                          denovo type
-                                                          zygo pldy
-                                                          sites par
-                                                          length gqs
-                                                          viqscr
-                                                          phev_k
-                                                          vvp_svp
-                                                          vaast g_tag
-                                                          p_mod
-                                                          clinvar
-                                                          clinvar_incdt
-                                                          var_qual)};
+                my @print_data = @{$record}{qw(rank chr gene vid csq
+                                               denovo type zygo pldy
+                                               sites par length gqs
+                                               viqscr phev_k vvp_svp
+                                               vaast g_tag p_mod
+                                               clinvar var_qual)};
+
+                if ($add_miq) {
+                        my $miqscr  = 0;
+                        my $mim     = 'NA';
+                        my $disease = 'NA';
+                        if (exists $miq_data{$record->{gene}}) {
+                                ($miqscr, $mim, $disease) =
+                                  @{$miq_data{$record->{gene}}}{qw(miqscr mim disease)};
+                        }
+                        push @print_data, ($miqscr, $mim, $disease);
+                }
+
+                print join "\t", $viq_file, @print_data;
+>>>>>>> 54a3377c0f15067c10f6abe2b5fe7fe6870e14bb
 
                 print "\n";
                 print '';
