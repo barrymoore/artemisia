@@ -52,10 +52,9 @@ various cut-offs:
 
 ";
 
-my ($help, $min_score, $skip_incdt, $add_miq);
+my ($help, $min_score, $max_rank, $skip_incdt, $add_miq);
 
 my $opt_success = GetOptions('help'            => \$help,
-			     'format'          => \$format,
                              'min_score|m=s'   => \$min_score,
 			     'max_rank|r=i'    => \$max_rank,
                              'skip_incdt|s'    => \$skip_incdt,
@@ -137,7 +136,7 @@ my %type_map = (1 => 'SNV',
 
 my @headers = qw(kindred rank chr gene vid csq denovo type zygo pldy
                  sites par length gqs viqscr phev_k vvp_svp vaast
-                 g_tag p_mod clinvar incndtl var_qual);
+                 g_tag p_mod clinvar clinvar_incdt var_qual);
 
 if ($add_miq) {
         push @headers, qw(miqscr mim disease);
@@ -192,22 +191,26 @@ for my $viq_file (@viq_files) {
                 # my $var_qual_txt = join ":", $ad_txt, $record->{var_qual}{bayesf}, $record->{var_qual}{prob};
                 $record->{var_qual} =~ s/\s+/,/g;
 
-                ($record->{clinvar_incdt}) = $record->{clinvar} =~ s/([g|p])$//;
-		$record->{clinvar_incdt} ||= 'none';
+		if ($record->{clinvar} =~ /([gpd])$/) {
+		    ($record->{clinvar_incdt}) = $1;
+		    $record->{clinvar} =~ s/[gpd]$//;
+		}
+		$record->{clinvar_incdt} ||= '';
                 $record->{clinvar} = (exists $clinvar_map{$record->{clinvar}} ?
                                       $clinvar_map{$record->{clinvar}}
                                       : $record->{clinvar});
 
                 next RECORD if $record->{viqscr} < $min_score;
 		next RECORD if $max_rank > 0 && $record->{rank} > $max_rank;
-                next RECORD if $skip_incdt && $clinvar_incdt;
+                next RECORD if $skip_incdt && $record->{clinvar_incdt};
 
                 my @print_data = @{$record}{qw(rank chr gene vid csq
                                                denovo type zygo pldy
                                                sites par length gqs
                                                viqscr phev_k vvp_svp
                                                vaast g_tag p_mod
-                                               clinvar var_qual)};
+                                               clinvar clinvar_incdt
+					       var_qual)};
 
                 if ($add_miq) {
                         my $miqscr  = 0;
