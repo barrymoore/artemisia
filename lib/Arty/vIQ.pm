@@ -428,6 +428,15 @@ sub _initialize_args {
              elsif ($line =~ /^\#\#\s+U_PRIOR_PROB:\s*(.*)/) {
                  $self->{u_prior_prob} = $1;
              }
+	     ## AVE DEPTH OF COVERAGE 1 MEAN:44.4034482758621 VARIANCE:512.670576303544
+             elsif ($line =~ /^\#\#\s+AVE DEPTH OF COVERAGE\s+(.*)\s+MEAN:(.*)\s+VARIANCE:(.*)/) {
+                 $self->{ave_depth_of_coverage_chr_mean}{$1} = $2;
+                 $self->{ave_depth_of_coverage_chr_variance}{$1} = $3;
+             }
+	     ## CHR    AVE DEPTH       NUM_HET         NUM_HOM         %HOM_OBS        %HOM_EXP        P_VALUE          het <- SKEW ->
+             elsif ($line =~ /^\#\#\s+Threshold for SV support \(BFT\):\s*(.*)/) {
+                 $self->{bft} = $1;
+             }
 	     ## AVE DEPTH OF COVERAGE a MEAN:51.7116350985698 VARIANCE:321.153472460763
              elsif ($line =~ /^\#\#\s+AVE DEPTH OF COVERAGE a MEAN:(.*)\s+VARIANCE:(.*)/) {
                  $self->{ave_depth_of_coverage_a_mean} = $1;
