@@ -3,7 +3,10 @@ use strict;
 use warnings;
 use Getopt::Long;
 
-use Arty::GFF3;
+use FindBin;
+use lib "$FindBin::RealBin/../lib";
+use Arty::TSV;use Arty::GFF3;
+
 
 #-----------------------------------------------------------------------------
 #----------------------------------- MAIN ------------------------------------
@@ -25,6 +28,7 @@ Build the VIQ gene file.  The file has the following columns:
 3. End (transcript)
 4. Gene ID/Name
 5. Transcript ID/Name
+6. Type (1=protein coding, 2=other)
 
 Options:
 
@@ -61,17 +65,19 @@ die $usage unless $gff3_file;
 
 my $gff3 = Arty::GFF3->new(file => $gff3_file);
 
+print join "\t", qw(chr start end gene transcript type);
+print "\n";
+
 RECORD:
 while (my $record = $gff3->next_record) {
         # Store transcripts
         if (exists $types{$record->{type}} ||
             (exists $types{all} &&
-             $record->{attributes}{ID}[0] =~ /^ENST\d+$/)
+             $record->{attributes}{ID}[0] =~ /^ENST\d+/)
            ) {
-
                 my $id = $record->{attributes}{ID}[0];
                 my $parent = $record->{attributes}{Parent}[0];
-                my $type  = $record->{attributes}{biotype}[0];
+                my $type  = $record->{attributes}{transcript_type}[0];
                 $type = $type eq 'protein_coding' ? 1 : 0;
 
                 $record->{start} -= $pad;
