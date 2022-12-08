@@ -546,8 +546,9 @@ sub _initialize_args {
          my @cols = split /\t/, $line;
          map {$_ =~ s/\s+$//} @cols;
          my $col_count = scalar @cols;
-         if ($col_count != 39) {
-             handle_message('FATAL', 'incorrect_column_count', "(expected 39 got $col_count columns) $line");
+         if ($col_count != 39 &&
+	     $col_count != 42) {
+             handle_message('FATAL', 'incorrect_column_count', "(expected 39 or 42 got $col_count\ncolumns)\n$line\n\n");
          }
      }
 
@@ -632,8 +633,9 @@ sub parse_record {
     map {$_ =~ s/\s+$//;$_ = '' unless defined $_} @cols;
 
     my $col_count = scalar @cols;
-    if ($col_count != 39) {
-        handle_message('FATAL', 'incorrect_column_count', "(expected 39 got $col_count columns) $line");
+    if ($col_count != 39 &&
+	$col_count != 42) {
+	handle_message('FATAL', 'incorrect_column_count', "(expected 39 or 42 got $col_count\ncolumns)\n$line\n\n");
     }
 
     my %record;
