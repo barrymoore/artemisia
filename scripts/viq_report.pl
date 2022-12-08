@@ -2,7 +2,11 @@
 use strict;
 use warnings;
 use Getopt::Long;
+use JSON;
+use Storable qw(dclone);
 
+use FindBin;
+use lib "$FindBin::RealBin/../lib";
 use Arty::vIQ;
 use Arty::PED;
 
@@ -18,8 +22,8 @@ viq_report.pl viq_output.txt
 
 Description:
 
-A script to produce a report of vIQ output that has key fields human
-consumption in a tab-delimited format.
+A script to produce a report of vIQ output that has key fields for
+human consumption in a tab-delimited format.
 
 
 Options:
@@ -41,15 +45,34 @@ Options:
     Add columns for mQIscr, MIM and disease name for best hit from Mendelian Diagnosis section for
     each gene.
 
+  --payload, -y 'INFO:CSQ:CADD_PHRED,INFO:gnomad_AF'
+
+    Data to include in the report from the listfile 'payload' section.
+    This data is added as a JSON string by viq_tool vcf2viq.  The
+    values supplied to this argument are in the form --payload
+    INFO:CSQ:CADD_PHRED,INFO:gnomad_AF.  Note that in most cases
+    payloads are only two-levels deep (e.g. INFO:gnomad_AF'), but in
+    the case of the CSQ tag, the parser understands additional levels
+    'INFO:CSQ:CADD_PHRED' as a special case.
+
+  --adjust_rank, -r
+
+    A boolean flag that indicates if the vIQ gene rank should be
+    adjusted to not count incendental candidates and not double-count
+    compound hets.
+
 ";
 
-my ($help, $ped_file, $min_score, $skip_incdt, $add_miq);
+my ($help, $ped_file, $min_score, $skip_incdt, $add_miq, $payload,
+    $adjust_rank);
 
 my $opt_success = GetOptions('help'            => \$help,
                              'min_score|m=s'   => \$min_score,
                              'skip_incdt|s'    => \$skip_incdt,
                              'ped|p=s'         => \$ped_file,
                              'add_miq|d'       => \$add_miq,
+                             'payload|y=s'     => \$payload,
+                             'adjust_rank|r'   => \$adjust_rank,
     );
 
 die $usage if $help || ! $opt_success;
@@ -189,8 +212,16 @@ my %clinvar_map =  (0    => 'benign_het',
                     5    => 'likely_pathogenic_hom',
                     6    => 'pathogenic_het',
                     7    => 'pathogenic_hom',
+                    8    =>  'drug_resp_het',
+                    9    =>  'drug_resp_hom',
                     null => 'unknown',
                    );
+
+my %incdt_map = (
+                 g => 'gene',
+                 p => 'phenotype',
+                 d => 'drug',
+);
 
 my %type_map = (1 => 'SNV',
                 2 => 'INDEL',
@@ -205,14 +236,24 @@ my %type_map = (1 => 'SNV',
 
 my @headers = qw(kindred rank chr gene vid csq denovo type zygo pldy
                  sites par length gqs viqscr phev_k vvp_svp vaast
-                 g_tag p_mod clinvar var_qual);
+                 g_tag p_mod clinvar incdt var_qual);
 
 if ($add_miq) {
         push @headers, qw(miqscr mim disease);
 }
 
+my @payloads;
+if ($payload) {
+        for my $payload_txt (split /,/, $payload) {
+                my @keys = split /:/, $payload_txt;
+                push @payloads, \@keys;
+                push @headers, $keys[-1];
+        }
+}
+
 print join "\t", @headers;
 print "\n";
+print '';
 
 for my $viq_file (@viq_files) {
 
@@ -234,6 +275,8 @@ for my $viq_file (@viq_files) {
                 }
         }
 
+        my $adj_rank = 0;
+        my %g_tag_count;
       RECORD:
         while (my $record = $viq->next_record) {
 
@@ -260,32 +303,90 @@ for my $viq_file (@viq_files) {
                 # my $var_qual_txt = join ":", $ad_txt, $record->{var_qual}{bayesf}, $record->{var_qual}{prob};
                 $record->{var_qual} =~ s/\s+/,/g;
 
-                my $clinvar_incdt = $record->{clinvar} =~ s/(\*)$//;
-                $record->{clinvar} = (exists $clinvar_map{$record->{clinvar}} ?
-                                      $clinvar_map{$record->{clinvar}}
-                                      : $record->{clinvar});
-                $record->{clinvar} .= '*' if $clinvar_incdt;
+                $record->{incdt} = '';
+                my ($clinvar_incdt) = $record->{clinvar} =~ /([gpd])$/;
+                if ($clinvar_incdt) {
+                        $record->{clinvar} =~ s/([gpd])$//;
+                        $clinvar_incdt = (exists $incdt_map{$clinvar_incdt} ?
+                                          $incdt_map{$clinvar_incdt} :
+                                          $clinvar_incdt);
+                        $record->{incdt} = $clinvar_incdt;
+                        # $record->{rank} = '@';
+                        # $record->{clinvar} .= ":$clinvar_incdt" if $clinvar_incdt;
+                }
 
-                next RECORD if $record->{viqscr} < $min_score;
+                $record->{clinvar} = (exists $clinvar_map{$record->{clinvar}} ?
+                                      $clinvar_map{$record->{clinvar}} : 
+                                      $record->{clinvar});
+
                 next RECORD if $skip_incdt && $clinvar_incdt;
+                next RECORD if $record->{viqscr} < $min_score;
+
+                # Manage rank
+                if ($adjust_rank) {
+                        my $increment;
+                        if ($clinvar_incdt) {
+                                $record->{rank} = '@';
+                                $increment = 0;
+                        }
+                        else {
+                                $increment = 1 unless defined $increment;
+                        }
+
+                        if ($record->{g_tag} ne 'null') {
+                                if (exists $g_tag_count{$record->{g_tag}}) {
+                                        # Don't double count compound hets
+                                        $increment = 0;
+                                }
+                                else {
+                                        $increment = 1 unless defined $increment;
+                                        $g_tag_count{$record->{g_tag}}++
+
+                                }
+                        }
+                        $adj_rank++ if $increment;
+                        $record->{rank} = $adj_rank unless $record->{rank} eq '@';
+                }
 
                 my @print_data = @{$record}{qw(rank chr gene vid csq
                                                denovo type zygo pldy
                                                sites par length gqs
                                                viqscr phev_k vvp_svp
                                                vaast g_tag p_mod
-                                               clinvar var_qual)};
+                                               clinvar incdt var_qual)};
 
                 if ($add_miq) {
                         my $miqscr  = 0;
                         my $mim     = 'NA';
                         my $disease = 'NA';
                         if (exists $miq_data{$record->{gene}}) {
-                                ($miqscr, $mim, $disease) =
-                                  @{$miq_data{$record->{gene}}}{qw(miqscr mim disease)};
+                                $miqscr  = $miq_data{$record->{gene}}{miqscr}  || $miqscr;
+                                $mim     = $miq_data{$record->{gene}}{mim}     || $mim;
+                                $disease = $miq_data{$record->{gene}}{disease} || $disease;
                         }
                         push @print_data, ($miqscr, $mim, $disease);
                 }
+
+                if ($payload) {
+                        my $json = decode_json $record->{payload};
+                        my $my_payloads = dclone(\@payloads);
+                        for my $payload_keys (@{$my_payloads}) {
+                                my $key = shift @{$payload_keys};
+                                my $value = $json->{$key};
+                                while (ref $value eq 'HASH') {
+                                        $key = shift @{$payload_keys};
+                                        $value = $value->{$key};
+                                }
+                                if (ref $value eq 'ARRAY') {
+                                        map {$_ = '' unless defined $_} @{$value};
+                                        $value = join ',', @{$value};
+                                }
+                                # $value = '' unless defined $value;
+                                push @print_data, $value;
+                        }
+                }
+
+                map {$_ = '' unless defined $_} @print_data;
 
                 print join "\t", $viq_file, @print_data;
 

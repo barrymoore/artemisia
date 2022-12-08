@@ -16,6 +16,7 @@ use IO::All;
 #-----------------------------------------------------------------------------
 #----------------------------------- MAIN ------------------------------------
 #-----------------------------------------------------------------------------
+
 my $usage = "
 
 Synopsis:
@@ -30,12 +31,12 @@ Options:
 
   --chunks <integer>
 
-      Split a single multi-fasta file into the given number of sub
-      files specified by chunks.
+    Split a single multi-fasta file into the given number of sub
+    files specified by chunks.
 
   --split
 
-      Split a multi-fasta into individual files.  One for each fasta.
+    Split a multi-fasta into individual files.  One for each fasta.
 
 
   --break <integer>
@@ -45,123 +46,123 @@ Options:
 
   --eval_code <code>
 
-      Run the given code on (\$seq_obj, \$seq or \$header).  If
-      the code block returns a positive value then the sequence is
-      printed.  This can be used to build complex and custom filters.
+    Run the given code on (\$seq_obj, \$seq or \$header).  If
+    the code block returns a positive value then the sequence is
+    printed.  This can be used to build complex and custom filters.
 
   --eval_all <code>
 
-      Run the given code on (\$seq_obj, \$seq or \$header).
-      Prints all sequences regardless of the return value of the
-      evaled code.  This can but used to perform operations (e.g. soft
-      to hard masking with s/[a-z]/N/g, but still print every sequence
-      even if it's unaltered.
+    Run the given code on (\$seq_obj, \$seq or \$header).
+    Prints all sequences regardless of the return value of the
+    evaled code.  This can but used to perform operations (e.g. soft
+    to hard masking with s/[a-z]/N/g, but still print every sequence
+    even if it's unaltered.
 
   --extract_ids <id_file.txt>
 
-      Extract all of the sequences who's IDs are found in the given
-      file.
+    Extract all of the sequences who's IDs are found in the given
+    file.
 
   --grep_header <pattern>
 
-      Grep through a multi fasta file and print out only the fasta
-      sequences that have a match in the header. Use grepv_header for
-      negation.
+    Grep through a multi fasta file and print out only the fasta
+    sequences that have a match in the header. Use grepv_header for
+    negation.
 
   --grepv_header <pattern>
 
-      Grep through a multi fasta file and print out only the fasta
-      sequences that DO NOT have a match in the header.
+    Grep through a multi fasta file and print out only the fasta
+    sequences that DO NOT have a match in the header.
 
   --grep_seq <pattern>
 
-      Grep through a multi fasta file and print out only the fasta
-      sequences that have a match in the sequence. Use grepv_seq for
-      negation.
+    Grep through a multi fasta file and print out only the fasta
+    sequences that have a match in the sequence. Use grepv_seq for
+    negation.
 
   --grepv_seq <pattern>
 
-      Grep through a multi fasta file and print out only the fasta
-      sequences that DO NOT have a match in the sequence.
+    Grep through a multi fasta file and print out only the fasta
+    sequences that DO NOT have a match in the sequence.
 
   --wrap <integer>
 
-      Wrap the sequence output to a given number of columns.
+    Wrap the sequence output to a given number of columns.
 
   --translate <string>
 
-      Translate a given nucleotide sequence to protein sequence.
-      Accepts 0,1,2 (for the phase) or 'maker' if you want to use the
-      frame from MAKER produced headers
+    Translate a given nucleotide sequence to protein sequence.
+    Accepts 0,1,2 (for the phase) or 'maker' if you want to use the
+    frame from MAKER produced headers
 
   --trim_maker_utr
 
-      Prints MAKER produced transcipts without the leading and
-      trailing UTR sequence
+    Prints MAKER produced transcipts without the leading and
+    trailing UTR sequence
 
   --seq_only
 
-      Print only the sequence (without the header) to STDOUT.  This
-      can also be accomplished with grep -v '>' fasta_file.
+    Print only the sequence (without the header) to STDOUT.  This
+    can also be accomplished with grep -v '>' fasta_file.
 
   --nt_count
 
-      Print the number and percentage of every nt/aa found in the
-      sequence.
+    Print the number and percentage of every nt/aa found in the
+    sequence.
 
   --summary
 
-      For functions that can report data for every sequence
-      (nt_count), use this flag to report only summary data for all
-      sequences combined.
+    For functions that can report data for every sequence
+    (nt_count), use this flag to report only summary data for all
+    sequences combined.
 
   --length
 
-      Print the length of each sequence.
+    Print the length of each sequence.
 
   --mapable_length
 
-      Print the mapable length (remove all Ns) of each sequence.
+    Print the mapable length (remove all Ns) of each sequence.
 
   --total_length
 
-      Print the total length of all sequences.
+    Print the total length of all sequences.
 
   --n50
 
-      Calculate the N-50 (http://en.wikipedia.org/wiki/N50_statistic)
-      of the sequences in the file.
+    Calculate the N-50 (http://en.wikipedia.org/wiki/N50_statistic)
+    of the sequences in the file.
 
   --tab
 
-      Print the header and sequence on the same line separated by a
-      tab.
+    Print the header and sequence on the same line separated by a
+    tab.
 
   --table
 
-      Print in table format rather than fasta format.
+    Print in table format rather than fasta format.
 
   --print
 
-      Print the sequence.  Use in conjuction with 'wrap' or other
-      formatting commands to reformat the sequence.
+    Print the sequence.  Use in conjuction with 'wrap' or other
+    formatting commands to reformat the sequence.
 
   --reverse
 
-      Reverse the order of the sequences in a fasta file.
+    Reverse the order of the sequences in a fasta file.
 
   --rev_seq
 
-      Reverse the sequence (the order of the nt/aa).
+    Reverse the sequence (the order of the nt/aa).
 
   --comp_seq
 
-      Complement the nucleotide sequence.
+    Complement the nucleotide sequence.
 
   --rev_comp
 
-      Reverse compliment a sequence.  Same as --rev_seq && --comp_seq
-      together.
+    Reverse compliment a sequence.  Same as --rev_seq && --comp_seq
+    together.
 
   --uniq
 
@@ -175,35 +176,35 @@ Options:
 
   --shuffle_order
 
-      Randomize the order of the sequences in a multi-fasta file.
+    Randomize the order of the sequences in a multi-fasta file.
 
   --shuffle_seq
 
-      Randomize the sequence (the order of the nt/aa).
+    Randomize the sequence (the order of the nt/aa).
 
   --shuffle_codon
 
-      Randomize the order of the codons in a nucleotide sequence.
+    Randomize the order of the codons in a nucleotide sequence.
 
   --shuffle_pick
 
-      Pick a given number of sequences from a multi-fasta file.
+    Pick a given number of sequences from a multi-fasta file.
 
   --select
 
-      Pass in a file with IDs and return sequences with these IDs.
+    Pass in a file with IDs and return sequences with these IDs.
 
   --remove
 
-      Pass in a file with IDs and remove sequences with these IDs.
+    Pass in a file with IDs and remove sequences with these IDs.
 
   --map_ids
 
-      Pass in a file with two columns of IDs and map the IDs in the
-      fasta headers from the first column of the ID file to the second
-      column of the ID file.  If an ID in the fasta header is not
-      found in the first column of the ID file then issue a warning,
-      but leave the ID unmapped.
+    Pass in a file with two columns of IDs and map the IDs in the
+    fasta headers from the first column of the ID file to the second
+    column of the ID file.  If an ID in the fasta header is not
+    found in the first column of the ID file then issue a warning,
+    but leave the ID unmapped.
 
   --fix_prot
 
@@ -216,14 +217,17 @@ Options:
     requested coordinates are in the form seqid:start-end;
 
   --filter_horter
+
     Filter (remove) entries shorter than the filter. IE \"--filter_shorter 800\"
     will filter all sequences <= 800 basepairs long.
 
   --filter_longer
+
     Filter (remove entries longer than the filter. IE \"--filter_longer 800\" 
     will filter all sequences > 800 basepairs long.
 
   --mask_fasta
+
     Masks the genome using coordinates from a gff3 file
 
 ";
@@ -236,7 +240,7 @@ my ($summary, $chunks, $split, $break, $eval_code, $eval_all,
     $shuffle_seq, $shuffle_codon, $shuffle_pick, $select_file,
     $remove_file, $print, $mRNAseq, $EST, $trim_maker_utr, $table,
     $map_ids, $fix_prot, $subseq, $tile, $filter_shorter,
-    $filter_longer,$mask_fasta);
+    $filter_longer, $mask_fasta);
 
 GetOptions('summary'          => \$summary,
 	   'chunks=i'         => \$chunks,
