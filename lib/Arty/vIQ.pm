@@ -585,14 +585,9 @@ sub parse_record {
     map {$_ =~ s/\s+$//;$_ = '' unless defined $_} @cols;
 
     my $col_count = scalar @cols;
-<<<<<<< HEAD
     if ($col_count != 39 &&
 	$col_count != 42) {
 	handle_message('FATAL', 'incorrect_column_count', "(expected 39 or 42 got $col_count\ncolumns)\n$line\n\n");
-=======
-    if ($col_count != 39 && $col_count != 40) {
-        handle_message('FATAL', 'incorrect_column_count', "(expected 39 or 40, but got $col_count columns) $line");
->>>>>>> ec763eacef1c051ff0e5616e305e488830b27949
     }
 
     my %record;
