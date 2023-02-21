@@ -82,11 +82,11 @@ my %map_data;
 
 if ($supp_file) {
     my $supp = Arty::TSV->new(file => $supp_file);
-    
+
   SUPP_LINE:
     while (my $supp_record = $supp->next_record) {
 	my ($alias, $symbol) = @{$supp_record->{data}};
-	
+
 	next SUPP_LINE if $alias eq $symbol;
 	if (exists $map_data{supp}{$alias}) {
 	    my $new = join ',', $map_data{supp}{$alias}, $symbol;
@@ -95,25 +95,69 @@ if ($supp_file) {
 	}
 	$map_data{supp}{$alias} = $symbol;
   }
-    
+
     print '';
+}
+else {
+    $map_data{supp} = {};
 }
 
 my $hgnc = Arty::TSV->new(file => $hgnc_file);
 
-my @hgnc_cols = qw(hgnc_id symbol name locus_group locus_type status
-		   location location_sortable alias_symbol alias_name
-		   prev_symbol prev_name gene_family gene_family_id
-		   date_approved_reserved date_symbol_changed
-		   date_name_changed date_modified entrez_id
-		   ensembl_gene_id vega_id ucsc_id ena
-		   refseq_accession ccds_id uniprot_ids pubmed_id
-		   mgd_id rgd_id lsdb cosmic omim_id mirbasehomeodb
-		   snornabase bioparadigms_slc orphanet pseudogene.org
-		   horde_id merops imgt iuphar kznf_gene_catalog
-		   mamit-trnadb cd lncrnadb enzyme_id
-		   intermediate_filament_db rna_central_ids lncipedia
-		   gtrnadb agr);
+my @hgnc_cols = qw(hgnc_id
+		   symbol
+		   name
+		   locus_group
+		   locus_type
+		   status
+		   location
+		   location_sortable
+		   alias_symbol
+		   alias_name
+		   prev_symbol
+		   prev_name
+		   gene_family
+		   gene_family_id
+		   date_approved_reserved
+		   date_symbol_changed
+		   date_name_changed
+		   date_modified
+		   entrez_id
+		   ensembl_gene_id
+		   vega_id
+		   ucsc_id
+		   ena
+		   refseq_accession
+		   ccds_id
+		   uniprot_ids
+		   pubmed_id
+		   mgd_id
+		   rgd_id
+		   lsdb
+		   cosmic
+		   omim_id
+		   mirbasehomeodb
+		   snornabase
+		   bioparadigms_slc
+		   orphanet
+		   pseudogene.org
+		   horde_id
+		   merops
+		   imgt
+		   iuphar
+		   kznf_gene_catalog
+		   mamit-trnadb
+		   cd
+		   lncrnadb
+		   enzyme_id
+		   intermediate_filament_db
+		   rna_central_ids
+		   lncipedia
+		   gtrnadb
+		   agr
+		   mane_select
+		   gencc
+    );
 
  HGNC_LINE:
     while (my $arty_record = $hgnc->next_record) {
@@ -122,12 +166,12 @@ my @hgnc_cols = qw(hgnc_id symbol name locus_group locus_type status
 	map {next unless defined $_;s/^"//;s/"$//} values %record;
 	$map_data{hgnc_symbols}{$record{symbol}}++;
 	print '';
-	     
+
 	my @aliases = split /\|/, $record{alias_symbol};
 	my @prev_symbols = split /\|/, $record{prev_symbol};
 	my ($loc) = $record{location} =~ /^(\d+|X|Y|mitochondria)/i;
 	$loc ||= 'ALL';
-	
+
       HGNC_ALT:
 	for my $alternate (@aliases, @prev_symbols) {
 	    next HGNC_ALT if $alternate eq $record{symbol};
@@ -143,13 +187,14 @@ my @hgnc_cols = qw(hgnc_id symbol name locus_group locus_type status
 }
 print '';
 
-my $fabric = Arty::TSV->new(file => $fabric_file);
+if ($fabric_file) {
+    my $fabric = Arty::TSV->new(file => $fabric_file);
 
- FABRIC_LINE:
+  FABRIC_LINE:
     while (my $fabric_record = $fabric->next_record) {
 	my ($gene_id, $alias, $symbol) = @{$fabric_record->{data}};
-	
-	$map_data{fabric_symbols}{$symbol}++;	
+
+	$map_data{fabric_symbols}{$symbol}++;
 	next FABRIC_LINE if $alias eq $symbol;
 	if (exists $map_data{fabric}{$alias}) {
 	    my $new = join ',', keys(%{$map_data{fabric}{$alias}}), $symbol;
@@ -157,8 +202,13 @@ my $fabric = Arty::TSV->new(file => $fabric_file);
 	    print '';
 	}
 	$map_data{fabric}{$alias}{$symbol}++;
+  }
+     print '';
 }
-
+else {
+    $map_data{fabric} = {};
+    $map_data{fabric_symbols} = {};
+}
 print '';
 
 my $data = Arty::TSV->new(file => $file);
@@ -174,14 +224,14 @@ if (exists $data->{header}) {
 	my $gene = $cols[$column];
 
 	if (exists $map_data{fabric_symbols}{$gene}) {
-	    print STDERR "INFO : fabric_symbol_exists : Not mapping $gene\n";  
+	    print STDERR "INFO : fabric_symbol_exists : Not mapping $gene\n";
 	    print join "\t", @cols;
 	    print "\n";
 	    print '';
 	}
 	elsif (exists $map_data{supp}{$gene}) {
 	    $cols[$column] = $map_data{supp}{$gene};
-	    print STDERR "WARN : supplemental_mapped_symbol : $gene => $cols[$column]\n";  
+	    print STDERR "WARN : supplemental_mapped_symbol : $gene => $cols[$column]\n";
 	    print join "\t", @cols;
 	    print "\n";
 	    print '';
@@ -190,14 +240,14 @@ if (exists $data->{header}) {
 	    if (exists $map_data{fabric}{$gene}) {
 		my @symbols = keys %{$map_data{fabric}{$gene}};
 		if (scalar @symbols > 1) {
-		    print STDERR "WARN : multi_mapped_fabric_alias_error : Not mapping $gene => @symbols\n";  
+		    print STDERR "WARN : multi_mapped_fabric_alias_error : Not mapping $gene => @symbols\n";
 		    print join "\t", @cols;
 		    print "\n";
 		    print '';
 		}
 		else {
 		    ($cols[$column]) = keys %{$map_data{fabric}{$gene}};
-		    print STDERR "WARN : fabric_mapped_symbol : $gene => $cols[$column]\n";  
+		    print STDERR "WARN : fabric_mapped_symbol : $gene => $cols[$column]\n";
 		    print join "\t", @cols;
 		    print "\n";
 		    print '';
@@ -208,7 +258,7 @@ if (exists $data->{header}) {
 		my @locs = keys %{$map_data{hgnc}{$gene}};
 		my @symbols = keys %{$map_data{hgnc}{$gene}{ALL}};
 		if (scalar @symbols > 1) {
-		    print STDERR "WARN : multi_mapped_hgnc_alias_error : Not mapping $gene => @symbols\n";  
+		    print STDERR "WARN : multi_mapped_hgnc_alias_error : Not mapping $gene => @symbols\n";
 		    if (scalar @locs > 2) {
 			print STDERR "WARN : multi_mapped_hgnc_alias_has_locs : $gene => @locs\n";
 		    }
@@ -218,14 +268,14 @@ if (exists $data->{header}) {
 		}
 		else {
 		    ($cols[$column]) = keys %{$map_data{hgnc}{$gene}{ALL}};
-		    print STDERR "WARN : hgnc_mapped_symbol : $gene => $cols[$column]\n";  
+		    print STDERR "WARN : hgnc_mapped_symbol : $gene => $cols[$column]\n";
 		    print join "\t", @cols;
 		    print "\n";
 		    print '';
 		}
 	    }
 	    else {
-		print STDERR "WARN : unable_to_map_invalid_symbol : $gene\n";  
+		print STDERR "WARN : unable_to_map_invalid_symbol : $gene\n";
 		print join "\t", @cols;
 		print "\n";
 		print '';
