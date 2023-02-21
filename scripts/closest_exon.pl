@@ -450,6 +450,8 @@ sub print_record {
 
         my ($record, $format) = @_;
 
+        $record->{chrom} =~ s/^chr//;
+
         if ($format =~ '^viq_list') {
                 print_list_record($record);
         }

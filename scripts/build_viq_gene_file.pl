@@ -83,6 +83,7 @@ while (my $record = $gff3->next_record) {
                 $record->{start} -= $pad;
                 $record->{start} = 0 if $record->{start} < 0;
                 $record->{end} += $pad;
+                $record->{chrom} =~ s/^chr//;
                 print join "\t", @{$record}{qw(chrom start end)}, $parent, $id, $type;
                 print "\n";
                 print '';
