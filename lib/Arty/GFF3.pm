@@ -204,7 +204,12 @@ sub _initialize_args {
 sub next_record {
  my $self = shift @_;
 
- my $line = $self->readline;
+ my $line;
+ while (1) {
+   $line = $self->readline;
+   last unless $line;
+   last if $line !~ /^\#/;
+ }
  return undef if ! defined $line;
 
  my $record = $self->parse_record($line);
