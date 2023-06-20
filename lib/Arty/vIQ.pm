@@ -146,12 +146,12 @@ sub _initialize_args {
 
      my $file = $self->file;
 
-     my $fh = File::ReadBackwards->new($file) ||
+     my $bfh = File::ReadBackwards->new($file) ||
          throw_msg('cant_open_file_for_reading', $file);
 
      my %footer;
    LINE:
-     while (my $line = $fh->readline) {
+     while (my $line = $bfh->readline) {
          return undef if ! defined $line;
          if ($line !~ /^\#A/) {
              chomp $line;
@@ -491,6 +491,24 @@ sub _initialize_args {
      $self->{footer} = \%footer;
 
      my $line = $self->readline;
+
+     # Handle vIQ2X data
+     if ($line =~ /\# CSQ_PRB/) {
+	 # CSQ_PRB       NUM_OBS         MEAN            VARIANCE        CSQ_STRNG
+	 # VAR_SCR       CSQ_SCR         CMB_SCR         CNT_ADJ         FREQ            NUM_OBS         CSQ             ZYG     PLDY    TYPE            SYM
+	 my $tag_count = 0;
+       LINE2:
+	 while ($line = $self->readline) {
+	     if ($line =~ /\# VAR_SCR/) {
+		 $tag_count++
+	     }
+	     if ($tag_count == 2) {
+		 $line = $self->readline;
+		 last LINE2;
+	     }
+       }
+     }
+
      if ($line !~ /^\#/) {
          throw_msg('missing_header_row', "First line: $line\n");
      }

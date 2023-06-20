@@ -217,11 +217,15 @@ my %clinvar_map =  (0    => 'benign_het',
                     null => 'unknown',
                    );
 
-my %incdt_map = (
-                 g => 'gene',
-                 p => 'phenotype',
-                 d => 'drug',
-);
+my %incdt_map = 
+    (
+     e => 'panel',
+     g => 'gene',
+     d => 'drug',
+     p => 'phenotype',
+     u => 'unknown',
+     v => 'variant',
+    );
 
 my %type_map = (1 => 'SNV',
                 2 => 'INDEL',
@@ -304,7 +308,7 @@ for my $viq_file (@viq_files) {
                 $record->{var_qual} =~ s/\s+/,/g;
 
                 $record->{incdt} = '';
-                my ($clinvar_incdt) = $record->{clinvar} =~ /([gpd])$/;
+                my ($clinvar_incdt) = $record->{clinvar} =~ /([edgpuv])$/;
                 if ($clinvar_incdt) {
                         $record->{clinvar} =~ s/([gpd])$//;
                         $clinvar_incdt = (exists $incdt_map{$clinvar_incdt} ?
